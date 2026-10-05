@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dokumenten-Scanner</title>
+  <meta name="description" content="Kostenloser, privater Dokumenten-Scanner – alles läuft lokal in deinem Browser.">
+  <meta name="theme-color" content="#1a73e8">
+  <!-- Restrictive CSP: everything must come from this origin. No CDNs, no telemetry. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' blob: data:; worker-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self';">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+  <header id="app-header">
+    <h1 id="app-title">Dokumenten-Scanner</h1>
+    <div id="header-actions">
+      <button id="btn-language" class="icon-btn" type="button" title="Sprache / Language">DE</button>
+    </div>
+  </header>
+
+  <main id="app-main">
+    <!-- ============ HOME: page list ============ -->
+    <section id="view-home" class="view">
+      <div id="import-buttons">
+        <button id="btn-camera" class="btn btn-primary" type="button">📷 <span data-i18n="takePhoto">Foto aufnehmen</span></button>
+        <button id="btn-gallery" class="btn btn-primary" type="button">🖼️ <span data-i18n="fromGallery">Aus Galerie wählen</span></button>
+      </div>
+      <p id="import-hint" class="hint" data-i18n="importHint">Fotos werden lokal verarbeitet – nichts verlässt dein Gerät.</p>
+      <div id="page-grid" class="page-grid"></div>
+      <p id="empty-state" class="empty-state" data-i18n="emptyState">Noch keine Seiten. Fotografiere oder importiere ein Dokument, um zu beginnen.</p>
+      <div id="home-footer" class="home-footer hidden">
+        <span id="page-counter" class="page-counter"></span>
+        <div class="home-footer-actions">
+          <button id="btn-delete-all" class="btn btn-danger" type="button" data-i18n="deleteAll">Alle löschen</button>
+          <button id="btn-export" class="btn btn-success" type="button" data-i18n="exportPdf">Als PDF exportieren</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CROP: corner editor ============ -->
+    <section id="view-crop" class="view hidden">
+      <div class="view-toolbar">
+        <button id="btn-crop-back" class="btn" type="button" data-i18n="back">Zurück</button>
+        <span class="toolbar-title" data-i18n="cropTitle">Zuschneiden</span>
+        <button id="btn-crop-done" class="btn btn-success" type="button" data-i18n="apply">Übernehmen</button>
+      </div>
+      <div id="crop-stage" class="crop-stage">
+        <canvas id="crop-canvas"></canvas>
+      </div>
+      <div class="view-toolbar crop-actions">
+        <button id="btn-redetect" class="btn" type="button" data-i18n="redetect">Erneut erkennen</button>
+        <button id="btn-reset-crop" class="btn" type="button" data-i18n="resetCrop">Auf ganzes Bild</button>
+        <button id="btn-a4-snap" class="btn toggle" type="button" aria-pressed="false" data-i18n="snapA4">A4-Verhältnis</button>
+      </div>
+      <p id="crop-hint" class="hint" data-i18n="cropHint">Ziehe die Ecken, um den Rahmen anzupassen.</p>
+    </section>
+
+    <!-- ============ EDIT: filters ============ -->
+    <section id="view-edit" class="view hidden">
+      <div class="view-toolbar">
+        <button id="btn-edit-back" class="btn" type="button" data-i18n="backToCrop">Zurück zum Zuschneiden</button>
+        <span class="toolbar-title" data-i18n="editTitle">Bearbeiten</span>
+        <button id="btn-edit-done" class="btn btn-success" type="button" data-i18n="done">Fertig</button>
+      </div>
+      <div id="edit-preview-wrap" class="edit-preview-wrap">
+        <canvas id="edit-preview"></canvas>
+        <div id="edit-spinner" class="spinner hidden"></div>
+      </div>
+      <div id="filter-chips" class="chip-row"></div>
+      <div class="slider-row">
+        <label for="slider-brightness" data-i18n="brightness">Helligkeit</label>
+        <input type="range" id="slider-brightness" min="-100" max="100" value="0">
+        <span id="val-brightness" class="slider-val">0</span>
+      </div>
+      <div class="slider-row">
+        <label for="slider-contrast" data-i18n="contrast">Kontrast</label>
+        <input type="range" id="slider-contrast" min="-100" max="100" value="0">
+        <span id="val-contrast" class="slider-val">0</span>
+      </div>
+      <div class="slider-row">
+        <label for="slider-sharpen" data-i18n="sharpen">Schärfe</label>
+        <input type="range" id="slider-sharpen" min="0" max="100" value="0">
+        <span id="val-sharpen" class="slider-val">0</span>
+      </div>
+      <div class="edit-actions">
+        <button id="btn-rotate-left" class="btn" type="button" data-i18n="rotateLeft">↶ Links</button>
+        <button id="btn-rotate-right" class="btn" type="button" data-i18n="rotateRight">↷ Rechts</button>
+      </div>
+    </section>
+
+    <!-- ============ EXPORT ============ -->
+    <section id="view-export" class="view hidden">
+      <div class="view-toolbar">
+        <button id="btn-export-back" class="btn" type="button" data-i18n="back">Zurück</button>
+        <span class="toolbar-title" data-i18n="exportTitle">PDF exportieren</span>
+        <span></span>
+      </div>
+      <div class="export-options">
+        <div class="option-row">
+          <label for="opt-margin" data-i18n="margin">Rand</label>
+          <select id="opt-margin">
+            <option value="0" data-i18n="marginNone">Kein Rand</option>
+            <option value="18" selected data-i18n="marginSmall">Kleiner Rand</option>
+          </select>
+        </div>
+        <div class="option-row">
+          <label for="opt-quality" data-i18n="quality">Qualität</label>
+          <select id="opt-quality">
+            <option value="0.7" data-i18n="qualityNormal">Normal</option>
+            <option value="0.85" selected data-i18n="qualityHigh">Hoch</option>
+            <option value="0.95" data-i18n="qualityMax">Maximum</option>
+          </select>
+        </div>
+        <div class="option-row">
+          <label for="opt-ocr" data-i18n="ocrToggle">Text erkennen (OCR)</label>
+          <input type="checkbox" id="opt-ocr" checked>
+        </div>
+        <div class="option-row">
+          <label for="opt-filename" data-i18n="filename">Dateiname</label>
+          <input type="text" id="opt-filename" value="scan.pdf">
+        </div>
+      </div>
+      <div id="export-progress" class="export-progress hidden">
+        <div class="progress-bar"><div id="export-progress-fill"></div></div>
+        <p id="export-progress-text"></p>
+        <button id="btn-export-cancel" class="btn btn-danger" type="button" data-i18n="cancel">Abbrechen</button>
+      </div>
+      <button id="btn-export-start" class="btn btn-success btn-big" type="button" data-i18n="startExport">PDF erstellen</button>
+    </section>
+  </main>
+
+  <!-- Hidden file inputs (camera + gallery) -->
+  <input type="file" id="input-camera" accept="image/*" capture="environment" hidden>
+  <input type="file" id="input-gallery" accept="image/*" multiple hidden>
+
+  <!-- Install / update / toast UI -->
+  <div id="install-banner" class="banner hidden">
+    <span data-i18n="installHint">App installieren</span>
+    <div>
+      <button id="btn-install" class="btn btn-primary" type="button" data-i18n="install">Installieren</button>
+      <button id="btn-install-dismiss" class="btn" type="button" data-i18n="dismiss">Nicht jetzt</button>
+    </div>
+  </div>
+  <div id="update-banner" class="banner hidden">
+    <span data-i18n="updateHint">Neue Version verfügbar</span>
+    <div>
+      <button id="btn-update" class="btn btn-primary" type="button" data-i18n="reload">Neu laden</button>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden" role="status"></div>
+  <div id="busy-overlay" class="busy-overlay hidden">
+    <div class="spinner"></div>
+    <p id="busy-text"></p>
+  </div>
+
+  <!-- Vendor libraries (classic scripts, self-hosted, pinned versions) -->
+  <script src="./vendor/pdf-lib/pdf-lib.min.js"></script>
+  <script src="./vendor/pdf-lib/fontkit.umd.min.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
