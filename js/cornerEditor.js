@@ -245,25 +245,20 @@ export class CornerEditor {
     cx = Math.max(LOUPE_RADIUS, Math.min(rect.width - LOUPE_RADIUS, cx));
     cy = Math.max(LOUPE_RADIUS, Math.min(rect.height - LOUPE_RADIUS, cy));
 
-    // Region of the image visible in the loupe (image coords).
-    const regionDisplay = (2 * LOUPE_RADIUS) / LOUPE_ZOOM; // display px
-    const regionImage = regionDisplay / f.scale;             // image px
-    const half = regionImage / 2;
-    // Clamp the source rect to the image bounds.
-    const sx = Math.max(0, Math.min(this.imageWidth - regionImage, corner.x - half));
-    const sy = Math.max(0, Math.min(this.imageHeight - regionImage, corner.y - half));
-
     ctx.save();
     // Circle clip.
     ctx.beginPath();
     ctx.arc(cx, cy, LOUPE_RADIUS, 0, Math.PI * 2);
     ctx.clip();
-    // Magnified image region.
-    ctx.drawImage(
-      this.image,
-      sx, sy, regionImage, regionImage,
-      cx - LOUPE_RADIUS, cy - LOUPE_RADIUS, 2 * LOUPE_RADIUS, 2 * LOUPE_RADIUS
-    );
+    // Backdrop for areas beyond the image edges.
+    ctx.fillStyle = '#12100b';
+    ctx.fillRect(cx - LOUPE_RADIUS, cy - LOUPE_RADIUS, 2 * LOUPE_RADIUS, 2 * LOUPE_RADIUS);
+    // Draw the image transformed so the corner always maps exactly
+    // to the crosshair at the loupe center – even right at the
+    // image edges (no source-rect clamping, so no dead zones).
+    ctx.translate(cx - corner.x * f.scale * LOUPE_ZOOM, cy - corner.y * f.scale * LOUPE_ZOOM);
+    ctx.scale(f.scale * LOUPE_ZOOM, f.scale * LOUPE_ZOOM);
+    ctx.drawImage(this.image, 0, 0);
     ctx.restore();
 
     // Crosshair at the exact corner position.

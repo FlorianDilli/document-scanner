@@ -149,6 +149,11 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  /* Views longer than the viewport scroll here instead of being
+     clipped by the fixed-height body (iOS Safari safe-area quirks
+     can also shrink the visible viewport). */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .view {
