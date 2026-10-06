@@ -67,6 +67,12 @@ filter(params) → [OCR] → PDF`. The original photo is never modified; warped
 and filtered results are cached in memory for fast filter switching and are
 invalidated automatically when their inputs change.
 
+**Detection inset:** a detected outline is shrunk ~1% per side toward its
+center before it reaches the corner editor, so the selection forwarded on
+"apply" is slightly smaller than the raw detection and no background
+artifacts (a sliver of the table, shadows) remain at the edges of the
+cropped document. Corners can still be dragged outward.
+
 **Threading:** all OpenCV work runs in a dedicated Web Worker (pixel buffers
 are transferred, not copied). Tesseract.js runs in its own worker (one
 instance, reused, terminated after 2 minutes idle). The UI thread stays

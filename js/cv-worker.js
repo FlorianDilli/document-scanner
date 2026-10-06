@@ -89,6 +89,30 @@ function track() {
 
 // ---------- Helpers ----------
 
+// Detected outlines are shrunk toward their centroid by this
+// fraction before they are handed to the editor. Contours
+// typically follow the page edge within a few pixels and often
+// catch a sliver of the surrounding background (blur,
+// morphological close), so the selection forwarded on apply is
+// made slightly smaller than the raw detection to keep edge
+// artifacts (a bit of the table, shadows) out of the crop.
+// 0.02 shrinks each corner 2% toward the center, i.e. ~1%
+// inset per edge.
+const DETECT_INSET = 0.02;
+
+// Shrink a quadrilateral toward its centroid by `factor`
+// (0..1). A homothety preserves convexity and corner order,
+// so the result stays a valid crop selection.
+function shrinkQuad(corners, factor) {
+  const cx = (corners[0].x + corners[1].x + corners[2].x + corners[3].x) / 4;
+  const cy = (corners[0].y + corners[1].y + corners[2].y + corners[3].y) / 4;
+  const k = 1 - factor;
+  return corners.map((c) => ({
+    x: cx + (c.x - cx) * k,
+    y: cy + (c.y - cy) * k,
+  }));
+}
+
 // Order 4 points as TL, TR, BR, BL:
 // TL = smallest x+y, BR = largest x+y, TR = smallest y-x, BL = largest y-x.
 function orderCorners(pts) {
@@ -231,6 +255,10 @@ function handleDetect(msg) {
         { x: width - mx, y: height - my },
         { x: mx, y: height - my },
       ];
+    } else {
+      // Safety inset so no background artifacts remain
+      // at the edges of the cropped document.
+      corners = shrinkQuad(corners, DETECT_INSET);
     }
     return { type: 'detect-done', id: msg.id, corners, detected };
   } finally {
