@@ -12,6 +12,14 @@
 
 const MAX_EDGE = 4000;
 
+// The pending file picker, if any: { input, resolve }.
+// The input stays in the DOM (off-screen) and strongly referenced
+// until the picker settles. A detached input can be garbage-collected
+// while the native camera/gallery is open (high memory pressure),
+// in which case the change event never fires and the photo is
+// silently lost – the classic "photo taken but not imported" bug.
+let pendingPick = null;
+
 export function pickFromCamera() {
   return pickFiles({ capture: 'environment', multiple: false });
 }
@@ -22,18 +30,43 @@ export function pickFromGallery() {
 
 function pickFiles({ capture, multiple }) {
   return new Promise((resolve) => {
+    // Settle a previous picker that never resolved (user cancelled
+    // on a browser that fires no 'cancel' event).
+    if (pendingPick) {
+      const prev = pendingPick;
+      pendingPick = null;
+      prev.input.remove();
+      prev.resolve([]);
+    }
+
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     if (capture) input.capture = capture;
     if (multiple) input.multiple = true;
-    input.onchange = () => {
-      const files = Array.from(input.files || []);
+
+    const finish = (files) => {
+      // Ignore a late event from an already-settled picker.
+      if (!pendingPick || pendingPick.input !== input) return;
+      pendingPick = null;
+      input.remove();
       resolve(files);
-      URL.revokeObjectURL(input.src || '');
     };
-    // User pressing back/cancel fires no event; resolve with [] on next tick
-    // is not reliable, so callers treat "no files" as cancel.
+
+    input.addEventListener('change', () => {
+      finish(Array.from(input.files || []));
+    });
+    // User dismissing the picker (where 'cancel' is supported).
+    input.addEventListener('cancel', () => finish([]));
+
+    // Keep the input in the document while the picker is open.
+    // Off-screen, not display:none – iOS Safari refuses to open
+    // the picker for programmatically clicked hidden inputs.
+    input.style.position = 'fixed';
+    input.style.top = '-10000px';
+    document.body.appendChild(input);
+    pendingPick = { input, resolve };
+
     input.click();
   });
 }
