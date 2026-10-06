@@ -140,14 +140,23 @@ body {
 #app-main {
   padding: 20px clamp(16px, 4vw, 28px) calc(48px + var(--safe-bottom));
   max-width: 1020px;
+  /* Definite width. With only `margin: 0 auto` this flex item is
+     sized as fit-content, and one child with a wide intrinsic size
+     (e.g. the export filename input) would make the whole main
+     column – and every view inside – wider than the screen. */
+  width: 100%;
   margin: 0 auto;
   flex: 1 1 0%;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   /* Views longer than the viewport scroll here instead of being
      clipped by the fixed-height body (iOS Safari safe-area quirks
-     can also shrink the visible viewport). */
+     can also shrink the visible viewport). Hide x-overflow so a
+     stray too-wide element can never make content pan sideways
+     or look cut off at the screen edge on phones. */
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -156,6 +165,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  /* Never grow past the shell: a child with wide intrinsic size
+     (long labels, form fields with a default `size`) would
+     otherwise inflate the whole view past the screen edge. */
+  min-width: 0;
   animation: view-in 0.18s ease-out;
 }
 @keyframes view-in {
@@ -421,6 +434,9 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  /* On very narrow screens a long button + title row would be wider
+     than the viewport; wrapping keeps everything on screen. */
+  flex-wrap: wrap;
 }
 .toolbar-title {
   font-weight: 800;
@@ -552,8 +568,8 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 1.5px 1.5px 0 var(--line);
 }
 
-.edit-actions { display: flex; gap: 12px; }
-.edit-actions .btn { flex: 1; }
+.edit-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.edit-actions .btn { flex: 1 1 auto; min-width: 44px; }
 
 /* ---------- export ---------- */
 
@@ -568,11 +584,15 @@ input[type="range"]::-moz-range-thumb {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 0;
+  /* Rows must be able to shrink inside the view; the filename
+     field's intrinsic width (default `size`) would otherwise be
+     wider than the screen on phones. */
+  min-width: 0;
 }
 .option-row + .option-row { border-top: var(--hairline); }
 .option-row:first-child { padding-top: 10px; }
 .option-row:last-child { padding-bottom: 10px; }
-.option-row label { font-weight: 700; }
+.option-row label { font-weight: 700; min-width: 0; }
 
 .option-row select,
 .option-row input[type="text"] {
@@ -584,6 +604,9 @@ input[type="range"]::-moz-range-thumb {
   color: var(--text);
   font: inherit;
   font-weight: 600;
+  /* May shrink below the intrinsic form-field width; cap so the
+     control never pushes its row past the screen edge. */
+  min-width: 0;
   max-width: 60%;
 }
 .option-row select {
@@ -593,7 +616,16 @@ input[type="range"]::-moz-range-thumb {
   background-image: var(--select-chevron);
   background-repeat: no-repeat;
   background-position: right 14px center;
+  /* When a narrow screen squeezes the control, clip the text
+     instead of running it into the arrow. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+/* The filename field can use a wider share than the selects; it is
+   the widest control and its value fits once the row can flex. */
+#opt-filename { max-width: 70%; }
 
 /* OCR checkbox as pill toggle */
 .option-row input[type="checkbox"] {
