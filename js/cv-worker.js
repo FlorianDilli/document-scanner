@@ -423,12 +423,17 @@ function handleFilter(msg) {
         break;
       }
     }
-    // Brightness / contrast (convertTo: alpha = contrast, beta = brightness).
+    // Brightness / contrast. Contrast must pivot around mid-gray
+    // (out = (v - 127.5) * alpha + 127.5), not around 0: a pure gain
+    // pushes near-white pages toward saturation exactly like a
+    // brightness lift, making both sliders behave identically on
+    // document scans. The pivot folds into beta: convertTo applies
+    // src * alpha + beta.
     const alpha = 1 + (params.contrast || 0) / 100;
     const beta = (params.brightness || 0) * 1.27; // +/-100 -> +/-127
     if (alpha !== 1 || beta !== 0) {
       const adjusted = t.add(new cv.Mat());
-      work.convertTo(adjusted, -1, alpha, beta);
+      work.convertTo(adjusted, -1, alpha, 127.5 * (1 - alpha) + beta);
       work = adjusted;
     }
     // Sharpen: unsharp mask, strength from slider.
