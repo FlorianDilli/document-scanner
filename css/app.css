@@ -135,8 +135,6 @@ body {
   flex: none;
   width: 30px;
   height: 30px;
-  border-radius: 9px;
-  box-shadow: 0 0 0 1.5px var(--line), var(--shadow-mini);
 }
 
 #app-main {
