@@ -6,6 +6,7 @@ let toastTimer = null;
 export function toast(message, ms = 3200) {
   const el = document.getElementById('toast');
   el.textContent = message;
+  el.classList.remove('toast-action');
   el.classList.remove('hidden');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.add('hidden'), ms);
@@ -17,13 +18,11 @@ export function toastAction(message, actionLabel, ms = 5000) {
   return new Promise((resolve) => {
     const el = document.getElementById('toast');
     el.textContent = '';
+    el.classList.add('toast-action');
     const span = document.createElement('span');
     span.textContent = message;
     const btn = document.createElement('button');
-    btn.className = 'btn btn-primary';
-    btn.style.minHeight = '36px';
-    btn.style.padding = '4px 12px';
-    btn.style.marginLeft = '12px';
+    btn.className = 'btn btn-primary toast-btn';
     btn.textContent = actionLabel;
     el.appendChild(span);
     el.appendChild(btn);
@@ -35,6 +34,7 @@ export function toastAction(message, actionLabel, ms = 5000) {
       clearTimeout(timer);
       btn.removeEventListener('click', onClick);
       el.classList.add('hidden');
+      el.classList.remove('toast-action');
       el.textContent = '';
       resolve(val);
     };
