@@ -137,14 +137,14 @@ export async function renderPreview(page, canvas, maxEdge = 800) {
 }
 
 // Small JPEG thumbnail blob for the page list.
-export async function getThumbnail(page, maxEdge = 300) {
+export async function getThumbnail(page, maxEdge = 600) {
   const canvas = document.createElement('canvas');
   await renderPreview(page, canvas, maxEdge);
   const blob = await new Promise((resolve, reject) => {
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('thumbnail failed'))),
       'image/jpeg',
-      0.8
+      0.85
     );
   });
   canvas.width = 0;
@@ -153,9 +153,10 @@ export async function getThumbnail(page, maxEdge = 300) {
 }
 
 // Image used for OCR: the processed image, except for the
-// 'original' (Photo) filter, where a grayscale-enhanced copy
-// gives much better OCR accuracy while the photo version is
-// still what gets embedded in the PDF.
+// 'original' (Photo) filter, where a cleaned document copy
+// (background flattened, text darkened) gives much better OCR
+// accuracy while the photo version is still what gets embedded
+// in the PDF.
 export async function getOcrImage(page) {
   if (page.filter !== 'original') return getProcessed(page);
   const warped = await getWarped(page);
@@ -163,7 +164,7 @@ export async function getOcrImage(page) {
   if (page.rotation) {
     result = await cv.rotate(result, page.rotation);
   }
-  result = await cv.applyFilter(result, 'enhance', { brightness: 0, contrast: 0, sharpen: 0 });
+  result = await cv.applyFilter(result, 'document', { brightness: 0, contrast: 0, sharpen: 0 });
   const blob = await cv.imageDataToBlob(result);
   return { blob, width: result.width, height: result.height };
 }

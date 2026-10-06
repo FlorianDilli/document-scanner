@@ -4,17 +4,29 @@
 import * as state from '../state.js';
 import * as storage from '../storage.js';
 import { importFile } from '../camera.js';
-import { detectPageCorners, getThumbnail } from '../pipeline.js';
+import { detectPageCorners, getSnapA4, getThumbnail } from '../pipeline.js';
 import { newId } from '../state.js';
 
 const FILTER_DEFAULT = 'document'; // recommended default
 
 let ctx = null;
-// Persistent thumbnail cache: pageId -> object URL.
-// Thumbnails are only generated once per page and
-// reused across re-renders (state changes must not
-// regenerate all thumbnails).
+// Persistent thumbnail cache: pageId -> { url, key }.
+// key captures the current pipeline inputs (corners, rotation,
+// filter, params, A4-snap); unchanged pages reuse their object
+// URL across re-renders, while a re-cropped or edited page gets
+// a fresh thumbnail of the corrected document.
 let thumbnailUrls = new Map();
+
+// Fingerprint of everything that influences the processed image.
+function pipelineKey(page) {
+  return JSON.stringify([
+    page.corners,
+    page.rotation,
+    page.filter,
+    page.params,
+    getSnapA4(),
+  ]);
+}
 
 function pageCountText(n) {
   return n === 1 ? ctx.t('pageCountOne') : ctx.t('pageCount', { count: n });
@@ -23,9 +35,9 @@ function pageCountText(n) {
 // Revoke object URLs of pages that no longer exist.
 function pruneThumbnailCache(pages) {
   const ids = new Set(pages.map((p) => p.id));
-  for (const [id, url] of thumbnailUrls) {
+  for (const [id, entry] of thumbnailUrls) {
     if (!ids.has(id)) {
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(entry.url);
       thumbnailUrls.delete(id);
     }
   }
@@ -77,16 +89,27 @@ function render(pages) {
     img.alt = '';
     card.appendChild(img);
 
-    // Thumbnail: reuse the cached object URL, or
-    // generate it once (async) for new pages.
+    // Thumbnail: reuse the cached object URL while the page's
+    // pipeline state is unchanged; otherwise regenerate (async)
+    // from the corrected document.
+    const key = pipelineKey(page);
     const cached = thumbnailUrls.get(page.id);
-    if (cached) {
-      img.src = cached;
+    if (cached && cached.key === key) {
+      img.src = cached.url;
     } else {
+      if (cached) {
+        URL.revokeObjectURL(cached.url);
+        thumbnailUrls.delete(page.id);
+      }
       getThumbnail(page)
         .then((blob) => {
+          // Discard a stale result if the page changed in the meantime.
+          if (pipelineKey(page) !== key) return;
+          if (thumbnailUrls.get(page.id)) {
+            URL.revokeObjectURL(thumbnailUrls.get(page.id).url);
+          }
           const url = URL.createObjectURL(blob);
-          thumbnailUrls.set(page.id, url);
+          thumbnailUrls.set(page.id, { url, key });
           img.src = url;
         })
         .catch((err) => console.warn('thumbnail failed', err));

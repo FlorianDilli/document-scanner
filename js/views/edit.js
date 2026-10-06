@@ -8,15 +8,28 @@ import { t } from '../i18n.js';
 
 const FILTERS = [
   { id: 'original', key: 'filterPhoto' },
-  { id: 'enhance', key: 'filterEnhance' },
-  { id: 'gray', key: 'filterGray' },
-  { id: 'bw', key: 'filterBw' },
   { id: 'document', key: 'filterDocument' },
 ];
 
 let ctx = null;
 let currentPage = null;
 let canvas = null;
+
+// Preview resolution: render at the size the canvas is actually
+// displayed at (device pixels) so filter effects read clearly.
+// Display bounds come from CSS (#edit-preview: max-width 100%,
+// max-height 55vh). Capped so the CV worker stays responsive.
+const PREVIEW_MIN_EDGE = 800;
+const PREVIEW_MAX_EDGE = 2400;
+
+function previewMaxEdge() {
+  const wrap = document.getElementById('edit-preview-wrap');
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const availW = Math.max(1, wrap.clientWidth);
+  const availH = Math.max(1, parseFloat(getComputedStyle(canvas).maxHeight) || 0);
+  const edge = Math.ceil(Math.max(availW, availH) * dpr);
+  return Math.max(PREVIEW_MIN_EDGE, Math.min(edge, PREVIEW_MAX_EDGE));
+}
 
 // Preview rendering is serialized: rapid slider moves
 // queue up instead of piling up concurrent CV jobs.
@@ -35,7 +48,7 @@ async function requestPreview() {
     do {
       renderQueued = false;
       if (!currentPage) return;
-      await renderPreview(currentPage, canvas);
+      await renderPreview(currentPage, canvas, previewMaxEdge());
     } while (renderQueued);
   } catch (err) {
     console.error(err);
@@ -137,6 +150,14 @@ export function init(context) {
   wireSlider('slider-brightness', 'val-brightness', 'brightness');
   wireSlider('slider-contrast', 'val-contrast', 'contrast');
   wireSlider('slider-sharpen', 'val-sharpen', 'sharpen');
+
+  // Re-render when the display box or zoom changes
+  // (window resize, orientation change, browser zoom).
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => requestPreview(), 150);
+  });
 }
 
 export async function show({ pageId }) {

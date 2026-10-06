@@ -322,40 +322,6 @@ function handleWarp(msg) {
   }
 }
 
-// Contrast stretch with ~clip% clipped at both ends (per channel).
-function contrastStretch(mat, clipPercent, tracker) {
-  const channels = tracker.add(new cv.MatVector());
-  cv.split(mat, channels);
-  for (let i = 0; i < channels.size(); i++) {
-    const ch = tracker.add(channels.get(i));
-    // calcHist expects a MatVector, not a plain array.
-    const imgs = tracker.add(new cv.MatVector());
-    imgs.push_back(ch);
-    const hist = tracker.add(new cv.Mat());
-    const mask = tracker.add(new cv.Mat());
-    cv.calcHist(imgs, [0], mask, hist, [256], [0, 256]);
-    const total = ch.rows * ch.cols;
-    const loCount = Math.floor(total * clipPercent);
-    const hiCount = Math.floor(total * (1 - clipPercent));
-    let lo = 0, hi = 255, acc = 0;
-    const hd = hist.data;
-    for (let v = 0; v < 256; v++) { acc += hd[v]; if (acc >= loCount) { lo = v; break; } }
-    acc = 0;
-    for (let v = 255; v >= 0; v--) { acc += hd[v]; if (acc >= total - hiCount) { hi = v; break; } }
-    if (hi <= lo) { hi = Math.min(255, lo + 1); }
-    const lut = tracker.add(new cv.Mat(1, 256, cv.CV_8U));
-    const ld = lut.data;
-    for (let v = 0; v < 256; v++) {
-      ld[v] = Math.max(0, Math.min(255, Math.round(((v - lo) / (hi - lo)) * 255)));
-    }
-    cv.LUT(ch, lut, ch);
-    channels.set(i, ch);
-  }
-  const out = tracker.add(new cv.Mat());
-  cv.merge(channels, out);
-  return out;
-}
-
 function handleFilter(msg) {
   const t = track();
   try {
@@ -365,56 +331,66 @@ function handleFilter(msg) {
     // data – copy the pixels into the wasm heap explicitly.
     src.data.set(msg.data);
     let work;
+    // Two modes: 'original' (untouched photo) and 'document' – the one
+    // cleanup mode (grayscale, flattened background, sharp text). The
+    // former grayscale/bw looks are reached via the contrast slider:
+    // raising contrast on the flattened image drives it near-binary.
+    // 'gray', 'bw' and 'enhance' are legacy filter ids from before the
+    // unification; persisted pages carrying them render as document
+    // (storage.js additionally maps them on load, so the edit view's
+    // chip selection matches).
     switch (filter) {
+      case 'document':
+      case 'gray':
+      case 'bw':
       case 'enhance': {
-        // Auto-enhance: per-channel contrast stretch, 1% clip.
-        work = contrastStretch(src, 0.01, t);
-        break;
-      }
-      case 'gray': {
-        const gray = t.add(new cv.Mat());
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-        const stretched = contrastStretch(gray, 0.01, t);
-        work = t.add(new cv.Mat());
-        cv.cvtColor(stretched, work, cv.COLOR_GRAY2RGBA);
-        break;
-      }
-      case 'bw': {
-        const gray = t.add(new cv.Mat());
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-        // Adaptive threshold handles uneven lighting better than a global
-        // threshold. blockSize must be odd; C ~ 10-15.
-        const blockSize = 41;
-        const c = 12;
-        const bin = t.add(new cv.Mat());
-        cv.adaptiveThreshold(gray, bin, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, blockSize, c);
-        work = t.add(new cv.Mat());
-        cv.cvtColor(bin, work, cv.COLOR_GRAY2RGBA);
-        break;
-      }
-      case 'document': {
-        // Flattened background: estimate the background with a large-kernel
-        // blur, divide the image by it (removes shadows and paper tint),
-        // then mild unsharp mask + contrast stretch so paper is near-white
-        // and text stays dark.
+        // Clean-up look, tuned on real phone photos:
+        //
+        // 1. Background estimate with a MEDIAN blur (kernel ~4% of the
+        //    long edge): the median ignores dark ink (strokes, redaction
+        //    bars) and follows the illumination.
+        // 2. Guarded divide: gray*255/bg flattens shadows and paper tint
+        //    (paper -> pure white). The guard keeps pixels untouched where
+        //    the estimate is dark (bg < 120: inside fat ink or deep shadow)
+        //    – there the division would brighten ink into gray "holes".
+        //    The divide is written as an explicit JS loop: values are
+        //    clamped to 0..255 by hand (Uint8Array writes wrap modulo 256
+        //    instead of saturating like cv.divide does).
+        // 3. Fixed document levels (black 30 -> 0, white 238 -> 255):
+        //    content-independent so the look is identical page to page;
+        //    exposure variance is already removed by step 2, and a
+        //    histogram-based stretch (vendored calcHist) would be fragile.
+        // 4. Light unsharp mask (sigma 1.2, amount 0.5) for crisp strokes.
         const gray = t.add(new cv.Mat());
         cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
         const longEdge = Math.max(width, height);
-        let k = Math.round(longEdge * 0.05);
+        let k = Math.round(longEdge * 0.04);
         if (k % 2 === 0) k += 1;
         k = Math.max(31, k);
         const bg = t.add(new cv.Mat());
-        cv.GaussianBlur(gray, bg, new cv.Size(k, k), 0);
-        const divided = t.add(new cv.Mat());
-        cv.divide(gray, bg, divided, 255, cv.CV_8U);
-        // Mild unsharp mask.
+        cv.medianBlur(gray, bg, k);
+        const divided = t.add(new cv.Mat(height, width, cv.CV_8U));
+        {
+          const g = gray.data, b = bg.data, o = divided.data;
+          for (let p = 0; p < o.length; p++) {
+            const bb = b[p];
+            o[p] = bb < 120 ? g[p] : Math.min(255, (g[p] * 255 / bb) | 0);
+          }
+        }
+        const lut = t.add(new cv.Mat(1, 256, cv.CV_8U));
+        const LEV_LO = 30, LEV_HI = 238;
+        for (let v = 0; v < 256; v++) {
+          const walked = v < LEV_LO ? 0 : Math.round(((v - LEV_LO) / (LEV_HI - LEV_LO)) * 255);
+          lut.data[v] = Math.min(255, walked);
+        }
+        const leveled = t.add(new cv.Mat());
+        cv.LUT(divided, lut, leveled);
         const blurred = t.add(new cv.Mat());
-        cv.GaussianBlur(divided, blurred, new cv.Size(0, 0), 2);
+        cv.GaussianBlur(leveled, blurred, new cv.Size(0, 0), 1.2);
         const sharp = t.add(new cv.Mat());
-        cv.addWeighted(divided, 1.4, blurred, -0.4, 0, sharp);
-        const stretched = contrastStretch(sharp, 0.005, t);
+        cv.addWeighted(leveled, 1.5, blurred, -0.5, 0, sharp);
         work = t.add(new cv.Mat());
-        cv.cvtColor(stretched, work, cv.COLOR_GRAY2RGBA);
+        cv.cvtColor(sharp, work, cv.COLOR_GRAY2RGBA);
         break;
       }
       case 'original':

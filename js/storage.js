@@ -49,6 +49,12 @@ export async function savePage(page) {
   db.close();
 }
 
+// Persisted pages from before the filter unification carry one
+// of these ids; everything maps onto the unified document filter
+// (the cv-worker falls through to it as well for stale in-memory
+// pages).
+const LEGACY_FILTERS = { gray: 'document', bw: 'document', enhance: 'document' };
+
 export async function loadAllPages() {
   const db = await openDb();
   const records = await new Promise((resolve, reject) => {
@@ -58,6 +64,9 @@ export async function loadAllPages() {
     req.onerror = () => reject(req.error);
   });
   db.close();
+  for (const record of records) {
+    if (LEGACY_FILTERS[record.filter]) record.filter = LEGACY_FILTERS[record.filter];
+  }
   return records;
 }
 

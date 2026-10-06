@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Dokumenten-Scanner</title>
   <meta name="description" content="Kostenloser, privater Dokumenten-Scanner – alles läuft lokal in deinem Browser.">
-  <meta name="theme-color" content="#1a73e8">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1eee6">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#17150f">
   <!-- Restrictive CSP: everything must come from this origin. No CDNs, no telemetry. -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; img-src 'self' blob: data:; worker-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self';">
@@ -18,7 +19,7 @@
 </head>
 <body>
   <header id="app-header">
-    <h1 id="app-title">Dokumenten-Scanner</h1>
+    <h1 id="app-title" data-i18n="appTitle">Dokumenten-Scanner</h1>
     <div id="header-actions">
       <button id="btn-language" class="icon-btn" type="button" title="Sprache / Language">DE</button>
     </div>
@@ -27,11 +28,21 @@
   <main id="app-main">
     <!-- ============ HOME: page list ============ -->
     <section id="view-home" class="view">
-      <div id="import-buttons">
-        <button id="btn-camera" class="btn btn-primary" type="button">📷 <span data-i18n="takePhoto">Foto aufnehmen</span></button>
-        <button id="btn-gallery" class="btn btn-primary" type="button">🖼️ <span data-i18n="fromGallery">Aus Galerie wählen</span></button>
+      <div id="hero" class="hero">
+        <h2 class="hero-title" data-i18n="heroTitle">Scanne Dokumente. Direkt im Browser.</h2>
+        <p class="hero-sub" data-i18n="heroSub">Kein Konto, keine Cloud, keine Kosten – nur dein Browser, der seine Sache gut macht.</p>
       </div>
-      <p id="import-hint" class="hint" data-i18n="importHint">Fotos werden lokal verarbeitet – nichts verlässt dein Gerät.</p>
+      <div id="import-card" class="card import-card">
+        <div class="card-head">
+          <h3 data-i18n="newScan">Neu scannen</h3>
+          <span id="privacy-tag" class="tag-pill" data-i18n="privacyTag">100 % lokal</span>
+        </div>
+        <div id="import-buttons">
+          <button id="btn-camera" class="btn btn-primary" type="button"><span data-i18n="takePhoto">Foto aufnehmen</span></button>
+          <button id="btn-gallery" class="btn" type="button"><span data-i18n="fromGallery">Aus Galerie wählen</span></button>
+        </div>
+        <p id="import-hint" class="hint" data-i18n="importHint">Fotos werden lokal verarbeitet – nichts verlässt dein Gerät.</p>
+      </div>
       <div id="page-grid" class="page-grid"></div>
       <p id="empty-state" class="empty-state" data-i18n="emptyState">Noch keine Seiten. Fotografiere oder importiere ein Dokument, um zu beginnen.</p>
       <div id="home-footer" class="home-footer hidden">
@@ -73,20 +84,22 @@
         <div id="edit-spinner" class="spinner hidden"></div>
       </div>
       <div id="filter-chips" class="chip-row"></div>
-      <div class="slider-row">
-        <label for="slider-brightness" data-i18n="brightness">Helligkeit</label>
-        <input type="range" id="slider-brightness" min="-100" max="100" value="0">
-        <span id="val-brightness" class="slider-val">0</span>
-      </div>
-      <div class="slider-row">
-        <label for="slider-contrast" data-i18n="contrast">Kontrast</label>
-        <input type="range" id="slider-contrast" min="-100" max="100" value="0">
-        <span id="val-contrast" class="slider-val">0</span>
-      </div>
-      <div class="slider-row">
-        <label for="slider-sharpen" data-i18n="sharpen">Schärfe</label>
-        <input type="range" id="slider-sharpen" min="0" max="100" value="0">
-        <span id="val-sharpen" class="slider-val">0</span>
+      <div class="card sliders-card">
+        <div class="slider-row">
+          <label for="slider-brightness" data-i18n="brightness">Helligkeit</label>
+          <input type="range" id="slider-brightness" min="-100" max="100" value="0">
+          <span id="val-brightness" class="slider-val">0</span>
+        </div>
+        <div class="slider-row">
+          <label for="slider-contrast" data-i18n="contrast">Kontrast</label>
+          <input type="range" id="slider-contrast" min="-100" max="100" value="0">
+          <span id="val-contrast" class="slider-val">0</span>
+        </div>
+        <div class="slider-row">
+          <label for="slider-sharpen" data-i18n="sharpen">Schärfe</label>
+          <input type="range" id="slider-sharpen" min="0" max="100" value="0">
+          <span id="val-sharpen" class="slider-val">0</span>
+        </div>
       </div>
       <div class="edit-actions">
         <button id="btn-rotate-left" class="btn" type="button" data-i18n="rotateLeft">↶ Links</button>
@@ -112,9 +125,9 @@
         <div class="option-row">
           <label for="opt-quality" data-i18n="quality">Qualität</label>
           <select id="opt-quality">
-            <option value="0.7" data-i18n="qualityNormal">Normal</option>
-            <option value="0.85" selected data-i18n="qualityHigh">Hoch</option>
-            <option value="0.95" data-i18n="qualityMax">Maximum</option>
+            <option value="0.7" data-i18n="qualityLow">Niedrig</option>
+            <option value="0.85" data-i18n="qualityMedium">Mittel</option>
+            <option value="0.95" selected data-i18n="qualityHigh">Hoch</option>
           </select>
         </div>
         <div class="option-row">

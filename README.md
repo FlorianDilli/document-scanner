@@ -8,8 +8,9 @@ after the first load. Photos are processed entirely in the browser:
 - **Automatic document detection** (largest page-like quadrilateral) with
   draggable corner fine-tuning (incl. magnifier loupe)
 - **Perspective correction** (warp to a flat, upright rectangle)
-- **Filters**: Photo, Auto-enhance, Grayscale, Black & White, Document
-  (flattened background, sharp text) + sharpen, brightness, contrast
+- **Filters**: Photo (untouched) and Document (grayscale, flattened
+  background, sharp text; drive the contrast slider up for a hard
+  black-and-white look) + sharpen, brightness, contrast
 - **OCR** (German + English) → invisible but **selectable/searchable text**
   layer in the PDF
 - **Multi-page A4 PDF** export (Web Share API on mobile, download fallback)
@@ -100,10 +101,6 @@ runtime — the CSP (`default-src 'self'`) blocks it.
   handler). The app always works online; full offline support kicks in after
   the large files have been cached (first scan / first OCR). This follows the
   brief's allowance to lazy-load OpenCV/Tesseract on first need.
-- **Black & White filter:** the adaptive-threshold block size is fixed at 41
-  (C = 12) instead of a dedicated slider, to keep the slider set small
-  (brightness / contrast / sharpen). The brief's "expose as a slider" is
-  implemented as the brightness/contrast sliders which apply on top.
 - **Invisible text layer:** implemented with `opacity: 0` in `drawText`
   (verified: text is selectable/searchable in Chrome's PDF viewer, Firefox
   pdf.js, macOS Preview and iOS Files; the PDF contains a ToUnicode CMap and
