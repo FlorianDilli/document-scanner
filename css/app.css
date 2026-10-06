@@ -130,15 +130,13 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* brand dot (think of the round logo) */
-#app-title::before {
-  content: "";
+/* brand logo */
+#app-logo {
   flex: none;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 2px solid var(--line);
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  box-shadow: 0 0 0 1.5px var(--line), var(--shadow-mini);
 }
 
 #app-main {

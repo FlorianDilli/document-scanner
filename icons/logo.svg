@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#F6F6F8"/>
+
+  <g id="scanner-badge" transform="translate(25, 20)">
+    <!-- Tactile Shadow Base -->
+    <rect x="0" y="10" width="150" height="150" rx="36" fill="#141416"/>
+
+    <!-- Badge Surface -->
+    <rect x="0" y="0" width="150" height="150" rx="36" fill="#FFFFFF" stroke="#141416" stroke-width="3.5"/>
+
+    <!-- Viewfinder Optical Brackets (Equal 16px distance from all paper edges) -->
+    <path d="M 27 33 L 27 23 A 4 4 0 0 1 31 19 L 41 19" fill="none" stroke="#141416" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 109 19 L 119 19 A 4 4 0 0 1 123 23 L 123 33" fill="none" stroke="#141416" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 27 117 L 27 127 A 4 4 0 0 0 31 131 L 41 131" fill="none" stroke="#141416" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 123 117 L 123 127 A 4 4 0 0 1 119 131 L 109 131" fill="none" stroke="#141416" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Document Shadow Base -->
+    <path d="M 45 39 L 93 39 L 109 55 L 109 111 A 8 8 0 0 1 101 119 L 53 119 A 8 8 0 0 1 45 111 Z" fill="#141416"/>
+
+    <!-- Document Surface (64 x 80 px) -->
+    <path d="M 43 35 L 91 35 L 107 51 L 107 107 A 8 8 0 0 1 99 115 L 51 115 A 8 8 0 0 1 43 107 Z" fill="#FFFFFF" stroke="#141416" stroke-width="3"/>
+
+    <!-- Folded Corner Dog-Ear -->
+    <path d="M 91 35 L 91 51 L 107 51 Z" fill="#FE7E61" stroke="#141416" stroke-width="2.5" stroke-linejoin="round"/>
+
+    <!-- Document Content Lines -->
+    <rect x="55" y="47" width="28" height="6" rx="3" fill="#FE7E61"/>
+    <rect x="55" y="59" width="42" height="5" rx="2.5" fill="#141416"/>
+    <rect x="55" y="74" width="34" height="5" rx="2.5" fill="#141416" opacity="0.3"/>
+    <rect x="55" y="85" width="38" height="5" rx="2.5" fill="#141416" opacity="0.3"/>
+    <rect x="55" y="96" width="26" height="5" rx="2.5" fill="#141416" opacity="0.3"/>
+
+    <!-- Laser Scanner Line -->
+    <line x1="33" y1="69" x2="117" y2="69" stroke="#FE7E61" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="33" cy="69" r="4" fill="#FE7E61" stroke="#141416" stroke-width="2"/>
+    <circle cx="117" cy="69" r="4" fill="#FE7E61" stroke="#141416" stroke-width="2"/>
+  </g>
+</svg>

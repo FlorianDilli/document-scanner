@@ -11,7 +11,8 @@
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; img-src 'self' blob: data:; worker-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self';">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icons/icon-192.png" type="image/png">
+  <link rel="icon" href="./icons/logo.svg" type="image/svg+xml" sizes="any">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -19,7 +20,10 @@
 </head>
 <body>
   <header id="app-header">
-    <h1 id="app-title" data-i18n="appTitle">Dokumenten-Scanner</h1>
+    <h1 id="app-title">
+      <img id="app-logo" src="./icons/logo.svg" alt="" width="30" height="30">
+      <span data-i18n="appTitle">Dokumenten-Scanner</span>
+    </h1>
     <div id="header-actions">
       <button id="btn-language" class="icon-btn" type="button" title="Sprache / Language">DE</button>
     </div>

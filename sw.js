@@ -12,7 +12,7 @@
 //   * The cache name is versioned; old caches are
 //     deleted on activate.
 
-const CACHE = 'scanner-v6';
+const CACHE = 'scanner-v7';
 
 // App shell + small vendor files (precached at install).
 const PRECACHE = [
@@ -39,6 +39,7 @@ const PRECACHE = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-512-maskable.png',
+  './icons/logo.svg',
   './vendor/pdf-lib/pdf-lib.min.js',
   './vendor/pdf-lib/fontkit.umd.min.js',
   './vendor/fonts/NotoSans-Regular.ttf',
