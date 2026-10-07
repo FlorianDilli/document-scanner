@@ -55,6 +55,17 @@ export async function savePage(page) {
 // pages).
 const LEGACY_FILTERS = { gray: 'document', bw: 'document', enhance: 'document' };
 
+// Meta record holding the user's page order (ids, drag-reorder):
+// getAll() alone returns primary-key order, which would scramble
+// the arrangement on every reload.
+const ORDER_META_ID = '__order__';
+
+export async function saveOrder(ids) {
+  const db = await openDb();
+  await tx(db, 'readwrite', (store) => store.put({ id: ORDER_META_ID, ids }));
+  db.close();
+}
+
 export async function loadAllPages() {
   const db = await openDb();
   const records = await new Promise((resolve, reject) => {
@@ -67,7 +78,18 @@ export async function loadAllPages() {
   for (const record of records) {
     if (LEGACY_FILTERS[record.filter]) record.filter = LEGACY_FILTERS[record.filter];
   }
-  return records;
+  const meta = records.find((r) => r.id === ORDER_META_ID);
+  const pages = records.filter((r) => r.id !== ORDER_META_ID);
+  if (meta && Array.isArray(meta.ids)) {
+    const present = new Set(pages.map((p) => p.id));
+    const known = meta.ids.filter((id) => present.has(id));
+    const fresh = pages.filter((p) => !meta.ids.includes(p.id));
+    return [
+      ...known.map((id) => pages.find((p) => p.id === id)),
+      ...fresh,
+    ];
+  }
+  return pages;
 }
 
 export async function deletePage(id) {
