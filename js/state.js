@@ -77,12 +77,6 @@ export function movePage(id, toIndex) {
   notify();
 }
 
-// Re-insert a previously removed page (undo delete).
-export function insertPage(page, index) {
-  pages.splice(Math.max(0, Math.min(pages.length, index)), 0, page);
-  notify();
-}
-
 export function replaceAll(newPages) {
   pages = newPages;
   notify();

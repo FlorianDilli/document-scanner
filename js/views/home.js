@@ -7,7 +7,7 @@ import { importFile } from '../camera.js';
 import { detectPageCorners, getThumbnail } from '../pipeline.js';
 import { newId } from '../state.js';
 import { ic } from '../icons.js';
-import { deletePageWithUndo } from '../pageOps.js';
+import { deletePage } from '../pageOps.js';
 const FILTER_DEFAULT = 'document'; // recommended default
 
 let ctx = null;
@@ -387,7 +387,7 @@ function render(pages) {
     delBtn.appendChild(ic('trash', 16));
     delBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      deletePageWithUndo(ctx, page.id);
+      deletePage(ctx, page.id);
     });
 
     tools.appendChild(handle);
