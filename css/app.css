@@ -232,6 +232,10 @@ body {
 .btn .icon { width: 18px; height: 18px; }
 .icon-btn .icon { width: 18px; height: 18px; }
 
+/* wrapper around an injected SVG so it centers and never in
+   the text flow */
+.icon-slot { display: inline-grid; place-items: center; }
+
 .btn:disabled,
 .icon-btn:disabled {
   opacity: 0.45;
@@ -506,11 +510,15 @@ body {
 
 /* ---------- page editor ---------- */
 
-/* Bound the editor to the visible viewport: the Frame pane then
-   flexes to the leftover space (fit-to-viewport corner editor,
-   no scrolling), the Look pane simply overflows into the normal
-   document scroll of the app shell. */
-#view-editor {
+/* Look mode: the view keeps its natural content height, so the
+   app shell scrolls normally and nothing (rotate buttons, pager,
+   delete) is ever cut off at the bottom. */
+#view-editor { min-width: 0; }
+
+/* Frame mode (class toggled from pageEditor.js): bound to the
+   visible viewport so the corner editor letterboxes the photo in
+   the leftover space without scrolling. */
+#view-editor.in-frame {
   flex: 1 1 0%;
   min-height: 0;
 }
@@ -521,7 +529,7 @@ body {
   gap: 14px;
   min-width: 0;
 }
-#frame-pane {
+#view-editor.in-frame #frame-pane {
   flex: 1 1 0%;
   min-height: 0;
 }

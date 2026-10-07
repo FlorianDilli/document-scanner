@@ -8,8 +8,6 @@ import { detectPageCorners, getThumbnail } from '../pipeline.js';
 import { newId } from '../state.js';
 import { ic } from '../icons.js';
 import { deletePageWithUndo } from '../pageOps.js';
-import { getLastMode } from './pageEditor.js';
-
 const FILTER_DEFAULT = 'document'; // recommended default
 
 let ctx = null;
@@ -56,15 +54,21 @@ function fullImageCorners(width, height) {
 
 // ---------- drag & drop reorder (pointer events, touch-first) ----------
 
-// Handles live on the cards; a pointer drag inserts the card
-// before/after its neighbours, and on release the DOM order is
-// written back into the page model once.
+// Handles live on the cards; while dragging, the card follows the
+// finger in BOTH axes and swaps slots with any sibling its visual
+// rectangle overlaps ("makes way"). After every DOM swap the
+// translation is re-anchored ("rebased") to the card's new layout
+// slot, so the card stays exactly under the finger and reordering
+// keeps progressing while dragging. On release the final DOM order
+// is written back into the page model once.
 
-const DRAG_THRESHOLD = 6; // px before a touch becomes a drag
+const DRAG_THRESHOLD = 6; // px of movement before a touch becomes a drag
+const OVERLAP_QUORUM = 0.25; // sibling must be under the card by >= 25% of its area
 const DRAG_SCROLL_AREA = 70; // px band at the viewport edge that auto-scrolls
 const DRAG_SCROLL_STEP = 14; // px per pointermove inside the band
 
-let drag = null; // { grid, card, id, fromIndex, startY, startScroll, moved }
+let drag = null;
+// { grid, card, id, fromIndex, moved, grabOffsetX, grabOffsetY, curDx, curDy, pid }
 
 // After a keyboard reorder, re-focus that page's grip handle.
 let focusPageId = null;
@@ -75,15 +79,42 @@ let suppressCardClick = false;
 const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Insert card before/after ref; displaced siblings animate out of the way.
-function insertCard(dragSession, ref, before) {
-  const { grid, card } = dragSession;
-  if (before ? ref.previousElementSibling === card : ref.nextElementSibling === card) {
-    return; // already in position
+// The sibling most covered by the dragged card's visual rectangle
+// (the dragged card itself is pointer-events: none while lifted, so
+// it can never win over the slot it points at).
+function overlappingCard(grid, card) {
+  const r = card.getBoundingClientRect();
+  let best = null;
+  let bestArea = 0;
+  for (const other of grid.children) {
+    if (other === card) continue;
+    const o = other.getBoundingClientRect();
+    const w = Math.max(0, Math.min(r.right, o.right) - Math.max(r.left, o.left));
+    const h = Math.max(0, Math.min(r.bottom, o.bottom) - Math.max(r.top, o.top));
+    const area = w * h;
+    if (
+      area / (o.width * o.height) >= OVERLAP_QUORUM &&
+      area > bestArea
+    ) {
+      bestArea = area;
+      best = other;
+    }
   }
+  return best;
+}
+
+// Swap the dragged card before/after `ref`; the cards making way
+// get a FLIP animation.
+function placeCard(dragSession, ref, before) {
+  const { grid, card } = dragSession;
+  const willBeInPosition = before
+    ? ref.previousElementSibling === card
+    : ref.nextElementSibling === card;
+  if (willBeInPosition) return false;
+
   const moving = prefersReducedMotion()
     ? []
-    : Array.from(grid.children).filter((c) => c !== card && c !== ref);
+    : Array.from(grid.children).filter((c) => c !== card);
   const rects = new Map(moving.map((c) => [c, c.getBoundingClientRect()]));
   grid.insertBefore(card, before ? ref : ref.nextSibling);
   for (const c of moving) {
@@ -106,6 +137,7 @@ function insertCard(dragSession, ref, before) {
       );
     });
   }
+  return true;
 }
 
 // End a drag session. dropped=true writes the DOM order into state.
@@ -131,15 +163,20 @@ function endDrag(dropped) {
 function wireDragHandlers(grid, card, handle, pageId) {
   handle.addEventListener('pointerdown', (e) => {
     if (e.button !== undefined && e.button !== 0) return;
-    const main = document.getElementById('app-main');
+    const rect = card.getBoundingClientRect();
     drag = {
       grid,
       card,
       id: pageId,
       fromIndex: Array.prototype.indexOf.call(grid.children, card),
-      startY: e.clientY,
-      startScroll: main ? main.scrollTop : 0,
       moved: false,
+      startX: e.clientX,
+      startY: e.clientY,
+      grabOffsetX: e.clientX - rect.left,
+      grabOffsetY: e.clientY - rect.top,
+      curDx: 0,
+      curDy: 0,
+      pid: e.pointerId,
     };
     try {
       handle.setPointerCapture(e.pointerId);
@@ -151,17 +188,15 @@ function wireDragHandlers(grid, card, handle, pageId) {
 
   handle.addEventListener('pointermove', (e) => {
     if (!drag || drag.card !== card) return;
-    if (!drag.moved && Math.abs(e.clientY - drag.startY) < DRAG_THRESHOLD) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < DRAG_THRESHOLD) {
+      return;
+    }
     drag.moved = true;
-    const main = document.getElementById('app-main');
-    // Scroll-aware delta: the drag offset follows the finger even
-    // while the page auto-scrolls.
-    const dy =
-      e.clientY - drag.startY + (main ? main.scrollTop - drag.startScroll : 0);
     card.classList.add('drag-lift');
-    card.style.transform = `translateY(${dy}px)`;
 
-    // Auto-scroll near the viewport edges.
+    // Auto-scroll near the viewport edges (re-syncing happens on
+    // the next pointermove via the rebase below).
+    const main = document.getElementById('app-main');
     const vh = window.innerHeight;
     if (main) {
       if (e.clientY < DRAG_SCROLL_AREA) {
@@ -171,15 +206,27 @@ function wireDragHandlers(grid, card, handle, pageId) {
       }
     }
 
-    // Drop slot: the card under the pointer (the dragged card is
-    // pointer-events: none while lifted), placed before/after it
-    // depending on which half was hit.
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    const over = el && el.closest ? el.closest('.page-card') : null;
-    if (over && over !== card) {
-      const r = over.getBoundingClientRect();
-      insertCard(drag, over, e.clientY < r.top + r.height / 2);
+    // Where the finger wants the card (viewport coords): the finger
+    // minus the offset it grabbed the card with.
+    const desiredLeft = e.clientX - drag.grabOffsetX;
+    const desiredTop = e.clientY - drag.grabOffsetY;
+
+    // Swap slots while the card visually covers a sibling.
+    const over = overlappingCard(grid, card);
+    if (over) {
+      const o = over.getBoundingClientRect();
+      const cardH = card.getBoundingClientRect().height;
+      const before = desiredTop + cardH / 2 < o.top + o.height / 2;
+      placeCard(drag, over, before);
     }
+
+    // Anchor the card under the finger. After a slot swap the card
+    // still carries the old translation, so back it out to find
+    // its true layout position and rebase the translation.
+    const r = card.getBoundingClientRect();
+    drag.curDx = desiredLeft - (r.left - drag.curDx);
+    drag.curDy = desiredTop - (r.top - drag.curDy);
+    card.style.transform = `translate(${drag.curDx}px, ${drag.curDy}px)`;
     e.preventDefault();
   });
 
@@ -191,6 +238,11 @@ function wireDragHandlers(grid, card, handle, pageId) {
       /* already released */
     }
     endDrag(true);
+    // State changes that arrived mid-drag were not rendered (drag
+    // guard in render) – repaint now; page numbers refresh too.
+    // (When the order changed, movePage already notified and this
+    // second render is a cheap no-op via the thumbnail cache.)
+    render(state.getPages());
   };
   handle.addEventListener('pointerup', release);
   handle.addEventListener('pointercancel', release);
@@ -212,12 +264,6 @@ function wireDragHandlers(grid, card, handle, pageId) {
   });
 }
 
-// An animation-free, state-driven render while a drag is active
-// would orphan the dragged card – settle the drag first.
-function settleDragBeforeRender() {
-  if (drag) endDrag(false);
-}
-
 // ---------- rendering ----------
 
 function render(pages) {
@@ -227,12 +273,15 @@ function render(pages) {
   const view = document.getElementById('view-home');
   if (view.classList.contains('hidden')) return;
 
+  // Never rebuild the grid under an active pointer drag: the
+  // dragged card would be orphaned mid-gesture. The release
+  // handler repaints once the drag has ended.
+  if (drag) return;
+
   const grid = document.getElementById('page-grid');
   const empty = document.getElementById('empty-state');
   const footer = document.getElementById('home-footer');
   const counter = document.getElementById('page-counter');
-
-  settleDragBeforeRender();
 
   // Drop thumbnails of removed pages; keep the rest.
   pruneThumbnailCache(pages);
@@ -356,7 +405,8 @@ function makeFrameBadge() {
 }
 
 function openEditor(pageId) {
-  ctx.navigate('editor', { pageId, mode: getLastMode(pageId) });
+  // Same screen, same entry mode as after an import: Frame first.
+  ctx.navigate('editor', { pageId, mode: 'frame' });
 }
 
 // Persist the current order (all pages, in order).

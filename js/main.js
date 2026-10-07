@@ -67,10 +67,19 @@ function setupPwa() {
     })
     .catch((err) => console.warn('SW registration failed', err));
 
-  // Reload once the new SW has taken over.
+  // Reload once a NEW service worker has taken over – but only if
+  // this page was already controlled: the very first install of a
+  // service worker claims this client too (controllerchange), and
+  // reloading there would yank the user out of what they were
+  // doing (e.g. the frame editor during an import).
   let refreshing = false;
+  let hadController = Boolean(navigator.serviceWorker.controller);
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
+    if (!hadController) {
+      hadController = true;
+      return;
+    }
     refreshing = true;
     window.location.reload();
   });

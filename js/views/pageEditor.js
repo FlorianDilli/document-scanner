@@ -8,10 +8,9 @@
 //   sliders and rotation over the live processed preview.
 //
 // Opening rules:
-//   * a freshly imported page is opened in Frame mode (the auto
-//     detection is fresh there and framing changes everything);
-//   * reopening an existing page opens in the last used mode
-//     (default Look);
+//   * the editor ALWAYS opens in Frame mode first – the same screen
+//     as after an import (the user confirms/adjusts the frame, then
+//     switches to Look via the tabs);
 //   * Prev / Next steps through all pages while keeping the mode.
 //
 // All edits stay non-destructive (original -> warp -> rotate ->
@@ -38,11 +37,7 @@ const PREVIEW_MAX_EDGE = 2400;
 let ctx = null;
 let editor = null;
 let currentPage = null;
-let currentMode = 'look';
-
-// The last mode the user worked in per page (in-memory; the page
-// model stays free of UI state).
-const lastMode = new Map();
+let currentMode = 'frame';
 
 // Frame editor state: bitmap of the ORIGINAL photo loaded into the
 // corner editor, and the page it belongs to.
@@ -56,11 +51,6 @@ let renderQueued = false;
 
 // Debounced persistence so a reload does not lose edits.
 let persistTimer = null;
-
-// Home taps a card and asks where the user left off.
-export function getLastMode(pageId) {
-  return lastMode.get(pageId) || 'look';
-}
 
 // ---------- look mode: preview ----------
 
@@ -217,6 +207,11 @@ function syncModeButtons() {
   look.setAttribute('aria-selected', String(currentMode === 'look'));
   document.getElementById('frame-pane').classList.toggle('hidden', currentMode !== 'frame');
   document.getElementById('look-pane').classList.toggle('hidden', currentMode !== 'look');
+  // Frame mode fits the viewport (the stage flexes into it); look
+  // mode flows normally so nothing is cut off at the bottom.
+  document
+    .getElementById('view-editor')
+    .classList.toggle('in-frame', currentMode === 'frame');
 }
 
 function updatePager() {
@@ -255,7 +250,6 @@ async function setMode(next) {
   if (!currentPage || next === currentMode) return;
   if (next === 'look' && !commitFrame()) return;
   currentMode = next;
-  lastMode.set(currentPage.id, next);
   syncModeButtons();
   await enterPane();
 }
@@ -271,7 +265,6 @@ async function goPage(delta) {
   const target = pages[idx + delta];
   if (!target) return;
   currentPage = target;
-  lastMode.set(target.id, currentMode);
   if (bitmap) bitmap.close();
   bitmap = null;
   bitmapPageId = null;
@@ -376,8 +369,9 @@ export async function show({ pageId, mode: requestedMode } = {}) {
     return;
   }
   currentPage = page;
-  currentMode = requestedMode || lastMode.get(page.id) || 'look';
-  lastMode.set(page.id, currentMode);
+  // Always the same entry screen as after an import: Frame first
+  // (an explicit mode param still wins, e.g. the import flow).
+  currentMode = requestedMode === 'look' ? 'look' : 'frame';
   applyStaticTexts();
   updatePager();
   syncModeButtons();

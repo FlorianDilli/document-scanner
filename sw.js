@@ -12,7 +12,7 @@
 //   * The cache name is versioned; old caches are
 //     deleted on activate.
 
-const CACHE = 'scanner-v10';
+const CACHE = 'scanner-v11';
 
 // App shell + small vendor files (precached at install).
 const PRECACHE = [
@@ -78,7 +78,11 @@ self.addEventListener('install', (event) => {
           console.warn('[sw] precache failed:', url, err);
         }
       }
-    }).then(() => self.skipWaiting())
+    })
+    // Deliberately NO auto-skipWaiting here: a new version takes
+    // over only when the user accepts the update banner, so an
+    // update can never reload the app while they are mid-flow
+    // (e.g. during an import).
   );
 });
 
