@@ -25,6 +25,9 @@ function navigate(view, params = {}) {
   currentParams = params;
   document.querySelectorAll('.view').forEach((v) => v.classList.add('hidden'));
   document.getElementById('view-' + view).classList.remove('hidden');
+  // Editor is a focused full-screen task: the app header is hidden
+  // there and the editor toolbar becomes the top row.
+  document.body.classList.toggle('editor-open', view === 'editor');
   window.scrollTo(0, 0);
   views[view].show(params);
 }

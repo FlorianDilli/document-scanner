@@ -21,7 +21,6 @@ import * as storage from '../storage.js';
 import { CornerEditor, isConvexQuad } from '../cornerEditor.js';
 import { detectPageCorners, renderPreview } from '../pipeline.js';
 import { mountIcons } from '../icons.js';
-import { deletePageWithUndo } from '../pageOps.js';
 import { t } from '../i18n.js';
 
 const FILTERS = [
@@ -280,7 +279,6 @@ function applyStaticTexts() {
     ['btn-editor-back', 'back'],
     ['btn-page-prev', 'prevPage'],
     ['btn-page-next', 'nextPage'],
-    ['btn-editor-delete', 'deletePage'],
     ['btn-redetect', 'redetect'],
     ['btn-reset-crop', 'resetCrop'],
   ]) {
@@ -323,14 +321,6 @@ export function init(context) {
   });
   document.getElementById('btn-page-prev').addEventListener('click', () => goPage(-1));
   document.getElementById('btn-page-next').addEventListener('click', () => goPage(1));
-  document.getElementById('btn-editor-delete').addEventListener('click', async () => {
-    if (!currentPage) return;
-    const id = currentPage.id;
-    currentPage = null;
-    bitmapPageId = null;
-    deletePageWithUndo(ctx, id);
-    ctx.navigate('home');
-  });
 
   document.getElementById('btn-rotate-left').addEventListener('click', () => {
     if (!currentPage) return;

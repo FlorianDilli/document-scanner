@@ -510,17 +510,29 @@ body {
 
 /* ---------- page editor ---------- */
 
+/* The editor is a focused full-screen task: the app header is
+   hidden (toggled from main.js) and the editor toolbar becomes
+   the top row, so the photo stage reclaims all of the head
+   space. */
+body.editor-open #app-header { display: none; }
+body.editor-open #app-main {
+  padding-top: calc(10px + var(--safe-top));
+  padding-bottom: calc(16px + var(--safe-bottom));
+}
+
 /* Look mode: the view keeps its natural content height, so the
-   app shell scrolls normally and nothing (rotate buttons, pager,
-   delete) is ever cut off at the bottom. */
+   app shell scrolls normally and nothing (rotate buttons, pager)
+   is ever cut off at the bottom. */
 #view-editor { min-width: 0; }
 
 /* Frame mode (class toggled from pageEditor.js): bound to the
    visible viewport so the corner editor letterboxes the photo in
-   the leftover space without scrolling. */
+   the leftover space without scrolling. Tighter gaps hand the
+   reclaimed room to the stage. */
 #view-editor.in-frame {
   flex: 1 1 0%;
   min-height: 0;
+  gap: 10px;
 }
 
 .pane {
@@ -532,6 +544,7 @@ body {
 #view-editor.in-frame #frame-pane {
   flex: 1 1 0%;
   min-height: 0;
+  gap: 10px;
 }
 
 /* Frame / Look mode switch (segmented control) */
@@ -565,12 +578,15 @@ body {
   color: var(--on-accent);
 }
 
-/* page pager (‹ 3 / 12 ›) + delete */
+/* page pager (‹ 3 / 12 ›): the very bottom of the editor; in
+   frame mode margin-top: auto sinks it below the stage. */
 .editor-footer {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   flex-wrap: wrap;
+  margin-top: auto;
 }
 .page-position {
   font-weight: 700;
@@ -578,7 +594,6 @@ body {
   padding: 0 6px;
   white-space: nowrap;
 }
-#btn-editor-delete { margin-left: auto; }
 
 /* ---------- crop stage ---------- */
 
