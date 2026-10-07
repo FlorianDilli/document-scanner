@@ -202,13 +202,15 @@ body {
 }
 .btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--hard); }
 .btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--hard); }
-.btn:disabled, .btn[disabled] {
+
+/* disabled state for action buttons (including icon-only variants) */
+.btn:disabled,
+.icon-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
   filter: grayscale(0.35);
   transform: none;
-  box-shadow: none;
 }
 
 .btn-primary { background: var(--accent); color: var(--on-accent); }
@@ -243,13 +245,6 @@ body {
 /* wrapper around an injected SVG so it centers and never in
    the text flow */
 .icon-slot { display: inline-grid; place-items: center; }
-
-.btn:disabled,
-.icon-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-  transform: none;
-}
 
 .icon-btn {
   min-width: 44px;
