@@ -209,7 +209,15 @@ function syncFrameHint() {
   const hint = document.getElementById('frame-hint');
   hint.classList.toggle('hidden', !failed || frameHintDismissed);
   hint.textContent = ctx.t('detectFallback');
-  document.getElementById('btn-redetect').classList.toggle('hidden', failed);
+  const btn = document.getElementById('btn-redetect');
+  btn.disabled = failed;
+  btn.classList.toggle('hidden', false);
+  const label = btn.querySelector('span[data-i18n]');
+  if (label) {
+    label.setAttribute('data-i18n', failed ? 'redetectDisabled' : 'redetect');
+    label.textContent = ctx.t(failed ? 'redetectDisabled' : 'redetect');
+  }
+  btn.title = ctx.t(failed ? 'redetectDisabled' : 'redetect');
   if (editor.image) editor.setGuess(failed && !frameHintDismissed);
 }
 
@@ -319,7 +327,6 @@ function applyStaticTexts() {
     ['btn-editor-back', 'back'],
     ['btn-page-prev', 'prevPage'],
     ['btn-page-next', 'nextPage'],
-    ['btn-redetect', 'redetect'],
     ['btn-reset-crop', 'resetCrop'],
   ]) {
     document.getElementById(id).title = ctx.t(key);
