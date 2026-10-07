@@ -81,8 +81,7 @@ cropped document. Corners can still be dragged outward.
 **Missed detection:** detection runs exactly once per page (on import) and
 is deterministic on the photo — a retry cannot produce a different result.
 When no page edges are found — or the page fills the whole photo — the
-frame falls back to the full photo (dashed outline, persistent hint in the
-editor, "check frame" badge on the page card for hard failures) and the
+frame falls back to the full photo (dashed outline, "check frame" badge on the page card for hard failures) and the
 "Detect again" button is greyed out as "No edges detected": there are no
 exact page edges to re-find. Committing a manually changed frame clears
 the flag.

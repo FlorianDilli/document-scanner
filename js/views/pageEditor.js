@@ -211,9 +211,6 @@ async function runDetection() {
 function syncFrameHint() {
   const failed = Boolean(currentPage)
     && (currentPage.detected === false || currentPage.fullFrame === true);
-  const hint = document.getElementById('frame-hint');
-  hint.classList.toggle('hidden', !failed || frameHintDismissed);
-  hint.textContent = ctx.t('detectFallback');
   const btn = document.getElementById('btn-redetect');
   btn.disabled = failed;
   const label = btn.querySelector('span[data-i18n]');

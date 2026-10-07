@@ -511,21 +511,6 @@ body {
 }
 .crop-actions { flex-wrap: wrap; justify-content: center; }
 
-/* Persistent hint under the frame tools: auto-detection failed, the
-   frame is the full photo (dashed outline) and the recovery is
-   dragging the corners or "Full image" – a retry cannot change the
-   result, so it is not offered. */
-.frame-hint {
-  align-self: center;
-  max-width: 560px;
-  padding: 8px 14px;
-  border: 2px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--danger-soft);
-  color: var(--text);
-  text-align: center;
-}
-
 /* ---------- page editor ---------- */
 
 /* The editor is a focused full-screen task: the app header is
