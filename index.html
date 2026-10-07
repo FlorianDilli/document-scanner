@@ -203,6 +203,17 @@
     <p id="busy-text"></p>
   </div>
 
+  <!-- In-app camera capture: opens the camera directly (no file-picker menu) -->
+  <div id="camera-view" class="camera-view hidden" aria-hidden="true">
+    <video id="camera-video" autoplay playsinline muted></video>
+    <div class="camera-actions">
+      <button id="btn-camera-cancel" class="icon-btn" type="button">
+        <span class="icon-slot" data-icon="close"></span>
+      </button>
+      <button id="btn-camera-shutter" class="btn-camera-shutter" type="button" disabled></button>
+    </div>
+  </div>
+
   <!-- Vendor libraries (classic scripts, self-hosted, pinned versions) -->
   <script src="./vendor/pdf-lib/pdf-lib.min.js"></script>
   <script src="./vendor/pdf-lib/fontkit.umd.min.js"></script>

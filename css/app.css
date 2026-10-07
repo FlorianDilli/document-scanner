@@ -926,6 +926,70 @@ input[type="range"]::-moz-range-thumb {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ---------- in-app camera capture (mobile) ---------- */
+
+/* Full-screen live capture: the camera opens directly here
+   (getUserMedia) instead of behind a file-picker choice menu. */
+.camera-view {
+  position: fixed;
+  inset: 0;
+  /* Above busy overlay (60), toasts (50) and banners (40). */
+  z-index: 70;
+  display: flex;
+  background: #12100b;
+}
+#camera-video {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  /* letterbox instead of cover: the preview must show exactly the
+     frame that the shutter will capture */
+  object-fit: contain;
+}
+.camera-actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(20px + var(--safe-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#btn-camera-cancel {
+  position: absolute;
+  left: 20px;
+  /* keep it legible on the dark stage in both themes */
+  color: #f1eee6;
+  border-color: #f1eee6;
+  background: transparent;
+  box-shadow: none;
+}
+.btn-camera-shutter {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 3px solid #f1eee6;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.06s ease;
+}
+.btn-camera-shutter::before {
+  content: "";
+  width: 52px;
+  height: 52px;
+  border: 2px solid #f1eee6;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.btn-camera-shutter:hover { transform: scale(1.04); }
+.btn-camera-shutter:active { transform: scale(0.92); }
+.btn-camera-shutter:disabled { opacity: 0.5; cursor: default; transform: none; }
+
 /* ---------- desktop refinements ---------- */
 
 @media (min-width: 700px) {

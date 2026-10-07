@@ -1,5 +1,6 @@
-// camera.js – image import: native camera input, gallery multi-select,
-// EXIF-correct decoding and safe downscaling.
+// camera.js – image import: in-app live camera capture (mobile),
+// capture-attribute file input (desktop / fallback), gallery
+// multi-select, EXIF-correct decoding and safe downscaling.
 //
 // Phone photos are 12–50 MP and often stored rotated (EXIF). We:
 //   1. decode with createImageBitmap(file, { imageOrientation: 'from-image' })
@@ -9,6 +10,9 @@
 //      is unsupported or fails (e.g. HEIC on some browsers);
 //   3. downscale so the long edge is at most MAX_EDGE px (iOS Safari limits
 //      canvas size to ~16.7 Mpx and total canvas memory).
+
+import { t } from './i18n.js';
+import { mountIcons } from './icons.js';
 
 const MAX_EDGE = 4000;
 
@@ -20,24 +24,65 @@ const MAX_EDGE = 4000;
 // silently lost – the classic "photo taken but not imported" bug.
 let pendingPick = null;
 
+// The pending in-app camera session, if any: { finish }.
+let pendingCapture = null;
+
 export function pickFromCamera() {
-  return pickFiles({ capture: 'environment', multiple: false });
+  const fallback = () => pickFiles({ capture: 'environment', multiple: false });
+  // A capture-attribute file input NEVER opens the camera directly on
+  // mobile: systems always present a choice menu first (iOS action
+  // sheet with Photo Library / Take Photo / Choose File, choosing
+  // intent on Android). getUserMedia streams straight into the page,
+  // so on touch-first devices it is the preferred path. Desktop
+  // browsers, unsupported browsers and denied permissions keep the
+  // capture file input (falls back to plain file choosing).
+  if (
+    navigator.mediaDevices &&
+    typeof navigator.mediaDevices.getUserMedia === 'function' &&
+    isTouchFirstDevice()
+  ) {
+    return openLiveCapture().catch(fallback);
+  }
+  return fallback();
 }
 
 export function pickFromGallery() {
+  // Plain image input, no capture: on modern Android Chrome this
+  // opens the system photo picker directly (no camera/menu choice),
+  // on iOS the system action sheet is unavoidable and offers the
+  // photo library as its first option.
   return pickFiles({ capture: false, multiple: true });
+}
+
+// Phones/tablets have a coarse primary pointer (touch first);
+// touch-laptops keep their fine (mouse) primary pointer and are
+// treated as desktops.
+function isTouchFirstDevice() {
+  return window.matchMedia
+    ? window.matchMedia('(pointer: coarse)').matches
+    : navigator.maxTouchPoints > 0;
+}
+
+// Settle a previous picker/session that never resolved (user
+// cancelled on a browser that fires no 'cancel' event) so a new
+// import always starts from a clean state.
+function settlePending() {
+  if (pendingCapture) {
+    const prevCapture = pendingCapture;
+    pendingCapture = null;
+    prevCapture.finish([]);
+  }
+  if (pendingPick) {
+    const prev = pendingPick;
+    pendingPick = null;
+    prev.input.remove();
+    prev.resolve([]);
+  }
 }
 
 function pickFiles({ capture, multiple }) {
   return new Promise((resolve) => {
-    // Settle a previous picker that never resolved (user cancelled
-    // on a browser that fires no 'cancel' event).
-    if (pendingPick) {
-      const prev = pendingPick;
-      pendingPick = null;
-      prev.input.remove();
-      prev.resolve([]);
-    }
+    settlePending();
 
     const input = document.createElement('input');
     input.type = 'file';
@@ -69,6 +114,127 @@ function pickFiles({ capture, multiple }) {
 
     input.click();
   });
+}
+
+// In-app camera: full-screen live preview with a shutter button,
+// resolved as File[] (same contract as pickFiles). Cancelling
+// resolves []; getUserMedia failures reject so the caller can fall
+// back to the capture file input.
+function openLiveCapture() {
+  return new Promise((resolve, reject) => {
+    settlePending();
+
+    const overlay = document.getElementById('camera-view');
+    const video = document.getElementById('camera-video');
+    const btnCancel = document.getElementById('btn-camera-cancel');
+    const btnShutter = document.getElementById('btn-camera-shutter');
+    if (!overlay || !video || !btnCancel || !btnShutter) {
+      reject(new Error('camera overlay missing'));
+      return;
+    }
+    mountIcons(overlay); // idempotent (replaceChildren)
+
+    let session = null;
+    let stream = null;
+    let settled = false;
+
+    const cleanup = () => {
+      if (session && pendingCapture === session) pendingCapture = null;
+      if (stream) {
+        for (const track of stream.getTracks()) track.stop();
+        stream = null;
+      }
+      video.srcObject = null;
+      overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.removeEventListener('keydown', onKeydown);
+      btnCancel.removeEventListener('click', onCancel);
+      btnShutter.removeEventListener('click', onShutter);
+    };
+
+    const finish = (files) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(files);
+    };
+
+    session = { finish };
+    pendingCapture = session;
+
+    btnCancel.setAttribute('aria-label', t('cancel'));
+    btnCancel.title = t('cancel');
+    btnShutter.setAttribute('aria-label', t('takePhoto'));
+
+    const onCancel = () => finish([]);
+    const onShutter = async () => {
+      try {
+        btnShutter.disabled = true;
+        finish([await captureVideoFrame(video)]);
+      } catch (err) {
+        settled = true;
+        cleanup();
+        reject(err);
+      }
+    };
+    const onKeydown = (e) => {
+      if (e.key === 'Escape') finish([]);
+    };
+
+    btnCancel.addEventListener('click', onCancel);
+    btnShutter.addEventListener('click', onShutter);
+    document.addEventListener('keydown', onKeydown);
+
+    // Called within the originating click, so browsers treat the
+    // camera permission prompt as user-initiated (a hard requirement
+    // on iOS Safari).
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 4096 },
+          height: { ideal: 2160 },
+        },
+      })
+      .then((s) => {
+        if (settled) {
+          for (const track of s.getTracks()) track.stop();
+          return;
+        }
+        stream = s;
+        btnShutter.disabled = true;
+        video.addEventListener('loadeddata', () => {
+          btnShutter.disabled = false;
+          btnShutter.focus({ preventScroll: true });
+        }, { once: true });
+        video.srcObject = s;
+        overlay.classList.remove('hidden');
+        overlay.setAttribute('aria-hidden', 'false');
+        video.play().catch(() => {});
+      })
+      .catch((err) => {
+        cleanup();
+        reject(err);
+      });
+  });
+}
+
+// Current video frame -> canvas -> JPEG File (no EXIF, upright).
+async function captureVideoFrame(video) {
+  const w = video.videoWidth;
+  const h = video.videoHeight;
+  if (!w || !h) throw new Error('camera frame not ready');
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, w, h);
+  const blob = await new Promise((res, rej) => {
+    canvas.toBlob((b) => (b ? res(b) : rej(new Error('toBlob failed'))), 'image/jpeg', 0.92);
+  });
+  releaseCanvas(canvas);
+  return new File([blob], 'camera.jpg', { type: 'image/jpeg' });
 }
 
 // Decode a File into an upright ImageBitmap, respecting EXIF orientation.

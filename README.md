@@ -51,7 +51,7 @@ js/i18n.js            all UI strings (de/en)
 js/ui.js              toast / busy / confirm helpers
 js/icons.js           inline SVG icon set (no external assets)
 js/pageOps.js         page actions shared by views (delete + undo)
-js/camera.js          file inputs, EXIF-correct decode, downscaling
+js/camera.js          live camera capture, EXIF decode, downscaling
 js/pipeline.js        original → warp → rotate → filter (with caches)
 js/cv-worker.js       OpenCV worker: detect, warp, filter, rotate
 js/cvClient.js        promise wrapper around the worker (transferables)
