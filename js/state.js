@@ -10,6 +10,10 @@
 //   filter    'original' | 'document'
 //   params    { brightness, contrast, sharpen }  (-100..100, 0..100)
 //   ocr       cached { words: [...], lang } or null (invalidated on change)
+//   detected  true after a successful auto-detection; false when the
+//             frame is the full-image fallback ("check frame" badge on
+//             the card, hint in the editor – cleared when a changed
+//             frame is committed); undefined on legacy pages
 //
 // Runtime-only caches (never persisted, prefixed with _):
 //   _warped    { blob, width, height, key }   key = JSON of corners

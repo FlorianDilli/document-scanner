@@ -43,6 +43,11 @@ let currentMode = 'frame';
 let bitmap = null;
 let bitmapPageId = null;
 
+// Set by the first corner drag after a failed auto-detection: the
+// user took manual control, so the hint banner and the dashed
+// "guess" outline stand down (until the page is left / re-entered).
+let frameHintDismissed = false;
+
 // Preview rendering is serialized: rapid slider moves
 // queue up instead of piling up concurrent CV jobs.
 let rendering = false;
@@ -165,19 +170,47 @@ async function ensureFrameEditor() {
   bitmapPageId = currentPage.id;
 }
 
+// Re-run auto-detection ("Detect again"). Detection is deterministic
+// on the original photo – the button can only ever reproduce the
+// import result, which is why it is hidden for pages whose detection
+// failed (see syncFrameHint). It remains useful as "restore the
+// auto-detected frame" after manual fiddling.
 async function runDetection() {
   if (!currentPage) return;
   ctx.showBusy(ctx.t('busyDetect'));
   try {
     const { corners, detected } = await detectPageCorners(currentPage);
     editor.setCorners(corners);
-    if (!detected) ctx.toast(ctx.t('detectFallback'));
+    // Persist the honest flag; corners stay editor-local until the
+    // frame is committed.
+    if (detected !== currentPage.detected) {
+      state.updatePage(currentPage.id, { detected });
+      persistNow();
+    }
+    frameHintDismissed = false;
+    syncFrameHint();
   } catch (err) {
     console.error(err);
     ctx.toast(ctx.t('errGeneric'));
   } finally {
     ctx.hideBusy();
   }
+}
+
+// Failed auto-detection state (page.detected === false): the frame in
+// the editor is an unverified guess (the full photo). Communicate it
+// with a persistent hint INSTEAD of a transient toast – it explains
+// what the frame is and that the recovery is moving the corners (or
+// "Full image") – and hide "Detect again", whose result could not
+// differ from what is already on screen. The outline switches to
+// dashed to mark the selection as a guess.
+function syncFrameHint() {
+  const failed = Boolean(currentPage) && currentPage.detected === false;
+  const hint = document.getElementById('frame-hint');
+  hint.classList.toggle('hidden', !failed || frameHintDismissed);
+  hint.textContent = ctx.t('detectFallback');
+  document.getElementById('btn-redetect').classList.toggle('hidden', failed);
+  if (editor.image) editor.setGuess(failed && !frameHintDismissed);
 }
 
 // Commit the frame being edited (only when leaving Frame mode or
@@ -191,7 +224,9 @@ function commitFrame() {
     return false;
   }
   if (JSON.stringify(corners) !== JSON.stringify(currentPage.corners)) {
-    state.updatePage(currentPage.id, { corners });
+    // Committing a changed frame is the manual confirmation a failed
+    // auto-detection cannot provide: clear the "check frame" state.
+    state.updatePage(currentPage.id, { corners, detected: true });
     persistNow();
   }
   return true;
@@ -230,7 +265,11 @@ async function enterPane() {
   try {
     if (currentMode === 'frame') {
       await ensureFrameEditor();
-      if (!currentPage.detected) await runDetection();
+      // Detection runs exactly once per page, at import; on entering
+      // the frame pane it is only DISPLAYED. Re-running it cannot
+      // produce a different result (deterministic on the original
+      // photo). A failed detection is communicated by the hint.
+      syncFrameHint();
     } else {
       buildFilterChips();
       syncSliders();
@@ -267,6 +306,7 @@ async function goPage(delta) {
   if (bitmap) bitmap.close();
   bitmap = null;
   bitmapPageId = null;
+  frameHintDismissed = false;
   updatePager();
   syncModeButtons();
   await enterPane();
@@ -307,7 +347,15 @@ export function init(context) {
   mountIcons(document.getElementById('view-editor'));
 
   editor = new CornerEditor(document.getElementById('crop-canvas'), {
-    onChange: () => {},
+    onChange: () => {
+      // The first corner drag after a failed auto-detection is the
+      // manual confirmation the detection could not deliver: dashed
+      // outline and hint banner end for this visit.
+      if (frameHintDismissed) return;
+      frameHintDismissed = true;
+      editor.setGuess(false);
+      syncFrameHint();
+    },
   });
 
   document.getElementById('btn-editor-back').addEventListener('click', goBack);
@@ -362,6 +410,7 @@ export async function show({ pageId, mode: requestedMode } = {}) {
   // Always the same entry screen as after an import: Frame first
   // (an explicit mode param still wins, e.g. the import flow).
   currentMode = requestedMode === 'look' ? 'look' : 'frame';
+  frameHintDismissed = false;
   applyStaticTexts();
   updatePager();
   syncModeButtons();

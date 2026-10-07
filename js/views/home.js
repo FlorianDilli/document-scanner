@@ -466,14 +466,17 @@ async function importFiles(files) {
   }
 
   // Detect the document on the first page, then open the page
-  // editor in Frame mode (the detection is fresh there). Remaining
-  // pages are detected in a queue.
+  // editor in Frame mode. Detection runs exactly once per page (here
+  // and in the queue below) – on these photos it is deterministic,
+  // so re-running it in the editor could not change the result. When
+  // it fails, the page keeps the full image as frame and flagged
+  // (detected:false): the card gets the "check frame" badge and the
+  // editor shows the persistent hint.
   try {
     const first = newPages[0];
     const { corners, detected } = await detectPageCorners(first);
-    state.updatePage(first.id, { corners, detected: true });
+    state.updatePage(first.id, { corners, detected });
     await storage.savePage(first);
-    if (!detected) ctx.toast(ctx.t('detectFallback'));
   } catch (err) {
     console.error(err);
     ctx.toast(ctx.t('errGeneric'));
@@ -486,7 +489,7 @@ async function importFiles(files) {
     const page = newPages[i];
     try {
       const { corners, detected } = await detectPageCorners(page);
-      state.updatePage(page.id, { corners, detected: true });
+      state.updatePage(page.id, { corners, detected });
       await storage.savePage(page);
     } catch (err) {
       console.warn('background detect failed', err);

@@ -129,51 +129,99 @@ function orderCorners(pts) {
   return [tl, tr, br, bl];
 }
 
+// Approximate one contour to a convex quadrilateral, trying the
+// epsilons in order. Returns ordered corners (TL, TR, BR, BL)
+// or null. The contour itself is left untouched.
+function tryQuad(contour, epsilons) {
+  const peri = cv.arcLength(contour, true);
+  for (const eps of epsilons) {
+    const approx = new cv.Mat();
+    cv.approxPolyDP(contour, approx, eps * peri, true);
+    let quad = null;
+    if (approx.rows === 4 && cv.isContourConvex(approx)) {
+      const pts = [];
+      for (let j = 0; j < 4; j++) {
+        const ptr = approx.intPtr(j);
+        pts.push({ x: ptr[0], y: ptr[1] });
+      }
+      quad = orderCorners(pts);
+    }
+    approx.delete();
+    if (quad) return quad;
+  }
+  return null;
+}
+
+// Area of the largest DIRECT child contour (a hole) of contour
+// `idx` in a RETR_LIST hierarchy (rows: [next, prev, firstChild,
+// parent]); 0 when there is none or no hierarchy was passed.
+// intPtr takes (row, col): the hierarchy is a single row.
+function largestChildHole(hierarchy, contours, idx) {
+  if (!hierarchy) return 0;
+  let best = 0;
+  for (
+    let child = hierarchy.intPtr(0, idx)[2];
+    child !== -1;
+    child = hierarchy.intPtr(0, child)[0]
+  ) {
+    const c = contours.get(child);
+    const area = cv.contourArea(c);
+    c.delete();
+    if (area > best) best = area;
+  }
+  return best;
+}
+
+function fullFrameCorners(width, height) {
+  return [
+    { x: 0, y: 0 },
+    { x: width, y: 0 },
+    { x: width, y: height },
+    { x: 0, y: height },
+  ];
+}
+
 // Search contours for the best page-like quadrilateral.
-// Returns ordered corners or null. `epsilons` are the
-// approxPolyDP epsilon factors tried per contour (as a
-// fraction of the contour perimeter).
-function findQuad(contours, width, height, epsilons) {
+// Returns { quad, fullFrame } (fullFrame: the page is the whole
+// photo) or null. `epsilons` are the approxPolyDP epsilon factors
+// tried per contour (as a fraction of the contour perimeter).
+//
+// The near-full-frame rule depends on the source of the contours:
+// an edge response along the photo border (Canny) carries no
+// document information and is skipped, but a foreground blob from
+// a THRESHOLD that fills the photo is meaningful – when it has no
+// hole worth mentioning (>= 5% of the photo), the bright page
+// fills the bright surroundings (or is blown out) and the full
+// photo IS the document; a big hole means the blob is the
+// background around a page on it, and the normal candidates
+// decide as usual.
+function findQuad(contours, width, height, epsilons, hierarchy = null, thresholdMode = false) {
   const imgArea = width * height;
   const candidates = [];
   for (let i = 0; i < contours.size(); i++) {
     const c = contours.get(i);
-    candidates.push({ c, area: cv.contourArea(c) });
+    candidates.push({ c, idx: i, area: cv.contourArea(c) });
   }
   candidates.sort((a, b) => b.area - a.area);
-  for (const { c, area } of candidates.slice(0, 10)) {
-    if (area < 0.2 * imgArea) break; // sorted desc: nothing bigger will come
-    if (area > 0.98 * imgArea) continue; // the full-image frame itself
-    const peri = cv.arcLength(c, true);
-    let quad = null;
-    for (const eps of epsilons) {
-      const approx = new cv.Mat();
-      cv.approxPolyDP(c, approx, eps * peri, true);
-      if (approx.rows === 4 && cv.isContourConvex(approx)) {
-        const pts = [];
-        for (let j = 0; j < 4; j++) {
-          const ptr = approx.intPtr(j);
-          pts.push({ x: ptr[0], y: ptr[1] });
+  try {
+    for (const { c, idx, area } of candidates.slice(0, 10)) {
+      if (area < 0.2 * imgArea) break; // sorted desc: nothing bigger will come
+      if (area > 0.98 * imgArea) {
+        if (!thresholdMode || largestChildHole(hierarchy, contours, idx) >= 0.05 * imgArea) {
+          continue; // the full-image frame itself (or background around a page)
         }
-        quad = orderCorners(pts);
+        return { quad: fullFrameCorners(width, height), fullFrame: true };
       }
-      approx.delete();
-      if (quad) break;
+      const quad = tryQuad(c, epsilons);
+      if (quad) return { quad, fullFrame: false };
     }
-    c.delete();
-    if (quad) {
-      // Free the remaining candidates.
-      for (const { c: cc } of candidates) {
-        try { cc.delete(); } catch (e) { /* already deleted */ }
-      }
-      return quad;
+    return null;
+  } finally {
+    // Free every borrowed contour Mat (also on early return).
+    for (const { c } of candidates) {
+      try { c.delete(); } catch (e) { /* already deleted */ }
     }
   }
-  // cleanup remaining candidates
-  for (const { c } of candidates) {
-    try { c.delete(); } catch (e) { /* already deleted */ }
-  }
-  return null;
 }
 
 // Search for the best page-like quadrilateral.
@@ -188,7 +236,10 @@ function findQuad(contours, width, height, epsilons) {
 // For each strategy, contours are sorted by area and the
 // top ~10 are checked for a convex 4-point polygon whose
 // area is 20-98% of the image. Several approxPolyDP
-// epsilons are tried per contour.
+// epsilons are tried per contour. The threshold strategies
+// additionally allow the page-fills-the-photo result (full
+// frame, see findQuad).
+// Returns { quad, fullFrame } or null.
 function contourSearch(grayBlurred, width, height) {
   const t = track();
   try {
@@ -205,8 +256,8 @@ function contourSearch(grayBlurred, width, height) {
       const contours = t.add(new cv.MatVector());
       const hierarchy = t.add(new cv.Mat());
       cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-      const quad = findQuad(contours, width, height, epsilons);
-      if (quad) return quad;
+      const found = findQuad(contours, width, height, epsilons);
+      if (found) return found;
     }
 
     // Strategies 2 & 3: Otsu threshold, both polarities.
@@ -217,8 +268,8 @@ function contourSearch(grayBlurred, width, height) {
       const contours = t.add(new cv.MatVector());
       const hierarchy = t.add(new cv.Mat());
       cv.findContours(thresh, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-      const quad = findQuad(contours, width, height, epsilons);
-      if (quad) return quad;
+      const found = findQuad(contours, width, height, epsilons, hierarchy, true);
+      if (found) return found;
     }
 
     return null;
@@ -244,21 +295,25 @@ function handleDetect(msg) {
     let corners = contourSearch(blurred, width, height);
     let detected = true;
     if (!corners) {
-      // Fallback: rectangle inset ~5% from the borders. The UI shows a
-      // hint that the document was not detected automatically.
+      // Fallback: the full photo. An inset rectangle would crop away
+      // document content in the most common failure (the paper fills
+      // most of the frame); the full image loses nothing, and
+      // detected:false marks the result as a guess – the editor shows
+      // a persistent hint and a dashed frame, the home list a
+      // "check frame" badge. Corollary: re-running detection on the
+      // same photo CANNOT produce a different result, so the UI never
+      // offers a retry for this state.
       detected = false;
-      const mx = Math.round(width * 0.05);
-      const my = Math.round(height * 0.05);
-      corners = [
-        { x: mx, y: my },
-        { x: width - mx, y: my },
-        { x: width - mx, y: height - my },
-        { x: mx, y: height - my },
-      ];
-    } else {
+      corners = fullFrameCorners(width, height);
+    } else if (!corners.fullFrame) {
       // Safety inset so no background artifacts remain
       // at the edges of the cropped document.
-      corners = shrinkQuad(corners, DETECT_INSET);
+      corners = shrinkQuad(corners.quad, DETECT_INSET);
+    } else {
+      // The page fills the photo: the full image IS the document.
+      // Like the fallback there is no exact edge position, so no
+      // inset shrink either – but it counts as detected.
+      corners = corners.quad;
     }
     return { type: 'detect-done', id: msg.id, corners, detected };
   } finally {

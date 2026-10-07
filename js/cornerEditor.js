@@ -42,6 +42,7 @@ export class CornerEditor {
     this.imageWidth = 0;
     this.imageHeight = 0;
     this.corners = null;     // [{x,y} TL, TR, BR, BL] in image coords
+    this.guess = false;      // dashed outline while the frame is an unverified auto-detection
     this.dragIndex = -1;
     this.pointerPos = null;  // display coords of the active pointer
     this.dpr = window.devicePixelRatio || 1;
@@ -81,6 +82,16 @@ export class CornerEditor {
 
   setCorners(corners) {
     this.corners = corners.map((c) => ({ ...c }));
+    this.draw();
+  }
+
+  // Marks the current frame as an unverified guess (failed
+  // auto-detection): the outline switches to dashed until the first
+  // corner drag settles it. The page model commits either way.
+  setGuess(guess) {
+    const next = Boolean(guess);
+    if (next === this.guess) return;
+    this.guess = next;
     this.draw();
   }
 
@@ -199,7 +210,7 @@ export class CornerEditor {
     ctx.fill('evenodd');
     ctx.restore();
 
-    // Quad outline.
+    // Quad outline (dashed while it is an unverified guess).
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(tl.x, tl.y);
@@ -209,6 +220,7 @@ export class CornerEditor {
     ctx.closePath();
     ctx.strokeStyle = '#1a73e8';
     ctx.lineWidth = 2;
+    if (this.guess) ctx.setLineDash([7, 6]);
     ctx.stroke();
     ctx.restore();
 

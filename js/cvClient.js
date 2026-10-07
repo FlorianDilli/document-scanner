@@ -74,7 +74,9 @@ function send(msg, transfer) {
 // Detect the document in an ImageData. Returns
 // { corners: [{x,y} TL, TR, BR, BL], detected: boolean }
 // in the same pixel coordinates. `detected` is false when
-// the fallback inset rectangle was used.
+// nothing was found and the full image was returned as a
+// guess (the UI shows a persistent hint and a dashed frame;
+// a retry could not produce a different result).
 export function detectDocument(imageData) {
   const data = new Uint8ClampedArray(imageData.data);
   return send(

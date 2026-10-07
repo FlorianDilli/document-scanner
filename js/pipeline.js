@@ -48,8 +48,8 @@ function downscaleImageData(imageData, scale) {
 // Run document detection on a page. Detection runs on a downscaled
 // copy (long edge ~1000 px) and the found corners are scaled back
 // up to working-image coordinates.
-// Returns { corners, detected } – detected is false when the
-// fallback inset rectangle was used.
+// Returns { corners, detected } – detected is false when nothing
+// was found and the full image was returned as a guess.
 export async function detectPageCorners(page) {
   const imageData = await blobToImageData(page.blob);
   const longEdge = Math.max(imageData.width, imageData.height);
