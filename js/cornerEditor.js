@@ -218,7 +218,7 @@ export class CornerEditor {
     ctx.lineTo(br.x, br.y);
     ctx.lineTo(bl.x, bl.y);
     ctx.closePath();
-    ctx.strokeStyle = '#1a73e8';
+    ctx.strokeStyle = '#ff6b4a';
     ctx.lineWidth = 2;
     if (this.guess) ctx.setLineDash([7, 6]);
     ctx.stroke();
@@ -230,10 +230,10 @@ export class CornerEditor {
       ctx.save();
       ctx.beginPath();
       ctx.arc(d.x, d.y, HANDLE_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = i === this.dragIndex ? 'rgba(26, 115, 232, 0.9)' : 'rgba(255, 255, 255, 0.9)';
+      ctx.fillStyle = i === this.dragIndex ? 'rgba(255, 107, 74, 0.9)' : 'rgba(255, 255, 255, 0.9)';
       ctx.fill();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#1a73e8';
+      ctx.strokeStyle = '#ff6b4a';
       ctx.stroke();
       ctx.restore();
     });
@@ -286,7 +286,7 @@ export class CornerEditor {
     ctx.moveTo(cx, cy - 12);
     ctx.lineTo(cx, cy + 12);
     ctx.lineWidth = 1.5;
-    ctx.strokeStyle = '#1a73e8';
+    ctx.strokeStyle = '#ff6b4a';
     ctx.stroke();
     ctx.restore();
   }
