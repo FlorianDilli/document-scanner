@@ -85,7 +85,7 @@ export function detectDocument(imageData) {
 
 // Warp the quadrilateral into an upright rectangle.
 // Returns { data, width, height } (new ImageData-compatible).
-export function warpPerspective(imageData, corners, snapA4) {
+export function warpPerspective(imageData, corners) {
   const data = new Uint8ClampedArray(imageData.data);
   return send(
     {
@@ -94,7 +94,6 @@ export function warpPerspective(imageData, corners, snapA4) {
       width: imageData.width,
       height: imageData.height,
       corners,
-      snapA4,
     },
     [data.buffer]
   ).then((r) => ({ data: r.data, width: r.width, height: r.height }));

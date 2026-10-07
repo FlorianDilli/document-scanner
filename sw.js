@@ -12,7 +12,7 @@
 //   * The cache name is versioned; old caches are
 //     deleted on activate.
 
-const CACHE = 'scanner-v9';
+const CACHE = 'scanner-v10';
 
 // App shell + small vendor files (precached at install).
 const PRECACHE = [
@@ -22,6 +22,8 @@ const PRECACHE = [
   './js/main.js',
   './js/state.js',
   './js/storage.js',
+  './js/pageOps.js',
+  './js/icons.js',
   './js/i18n.js',
   './js/ui.js',
   './js/camera.js',
@@ -32,8 +34,7 @@ const PRECACHE = [
   './js/ocr.js',
   './js/pdf.js',
   './js/views/home.js',
-  './js/views/crop.js',
-  './js/views/edit.js',
+  './js/views/pageEditor.js',
   './js/views/export.js',
   './manifest.webmanifest',
   './icons/icon-192.png',

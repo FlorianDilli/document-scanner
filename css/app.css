@@ -99,7 +99,7 @@ body {
 
 ::selection { background: var(--accent); color: var(--on-accent); }
 
-:is(.btn, .icon-btn, .chip, select, input[type="text"], input[type="checkbox"], [tabindex], .page-card):focus-visible {
+:is(.btn, .icon-btn, .chip, .mode-btn, select, input[type="text"], input[type="checkbox"], [tabindex], .page-card):focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
@@ -223,7 +223,21 @@ body {
 
 .btn-big { font-size: 1.1rem; padding: 14px 24px; }
 
-.btn.toggle[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+/* inline SVG icons inside buttons */
+.btn .icon,
+.icon-btn .icon {
+  flex: none;
+  display: block;
+}
+.btn .icon { width: 18px; height: 18px; }
+.icon-btn .icon { width: 18px; height: 18px; }
+
+.btn:disabled,
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
 
 .icon-btn {
   min-width: 44px;
@@ -378,11 +392,55 @@ body {
   cursor: pointer;
   box-shadow: var(--shadow-mini);
   padding: 0;
+  font: inherit;
 }
 .page-card .page-tools button:active { transform: translate(1px, 1px); box-shadow: none; }
+.page-card .page-tools .icon { width: 16px; height: 16px; }
 
-.page-card.dragging { opacity: 0.4; }
-.page-card.drag-over { outline: 3px dashed var(--accent); outline-offset: -4px; }
+/* delete affordance: only turns red on interaction, so the grid
+   stays calm but the destructive weight is visible */
+.page-card .page-tools .btn-danger {
+  color: var(--text);
+  box-shadow: var(--shadow-mini);
+}
+.page-card .page-tools .btn-danger:active,
+.page-card .page-tools .btn-danger:focus-visible { color: var(--danger); }
+
+/* drag & drop reorder: grip handle (pointer events, touch-first) */
+.page-card .grab-handle {
+  touch-action: none;
+  cursor: grab;
+}
+.page-card .grab-handle:active { cursor: grabbing; }
+
+/* lifted while dragging; inline transform moves it under the finger */
+.page-card.drag-lift {
+  transition: none;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.95;
+  box-shadow: 8px 8px 0 var(--hard);
+}
+
+/* hint that auto-detection failed for this page */
+.page-card .page-badge {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 2px solid var(--line);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+.page-card .page-badge .icon { width: 12px; height: 12px; }
 
 .home-footer {
   display: flex;
@@ -446,16 +504,73 @@ body {
 }
 .crop-actions { flex-wrap: wrap; justify-content: center; }
 
-/* ---------- crop view ---------- */
+/* ---------- page editor ---------- */
 
-/* Bound the crop view to the visible viewport so the
-   toolbar, canvas and action buttons all fit on screen
-   without scrolling; the stage flexes to the leftover
-   space and the editor letterboxes the image inside. */
-#view-crop {
+/* Bound the editor to the visible viewport: the Frame pane then
+   flexes to the leftover space (fit-to-viewport corner editor,
+   no scrolling), the Look pane simply overflows into the normal
+   document scroll of the app shell. */
+#view-editor {
   flex: 1 1 0%;
   min-height: 0;
 }
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+#frame-pane {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+/* Frame / Look mode switch (segmented control) */
+.mode-switch {
+  align-self: center;
+  display: inline-flex;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  box-shadow: var(--shadow-mini);
+  overflow: hidden;
+}
+.mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 20px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.mode-btn + .mode-btn { border-left: 2px solid var(--line); }
+.mode-btn[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* page pager (‹ 3 / 12 ›) + delete */
+.editor-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.page-position {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+#btn-editor-delete { margin-left: auto; }
 
 /* ---------- crop stage ---------- */
 
@@ -473,7 +588,7 @@ body {
 }
 #crop-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-/* ---------- edit view ---------- */
+/* ---------- look mode ---------- */
 
 .edit-preview-wrap {
   position: relative;

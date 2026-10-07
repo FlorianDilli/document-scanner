@@ -5,7 +5,7 @@
 // Message protocol (ArrayBuffers are transferred, not copied):
 //   {type:'init'}                              -> {type:'ready'}
 //   {type:'detect',  id, data, width, height}  -> {type:'detect-done',  id, corners}
-//   {type:'warp',    id, data, width, height, corners, snapA4}
+//   {type:'warp',    id, data, width, height, corners}
 //                                            -> {type:'warp-done',    id, data, width, height}
 //   {type:'filter',  id, data, width, height, filter, params}
 //                                            -> {type:'filter-done',  id, data, width, height}
@@ -266,24 +266,12 @@ function handleDetect(msg) {
   }
 }
 
-// Output size from the quadrilateral, optional A4 snap, long-edge cap.
-function computeOutputSize(corners, snapA4) {
+// Output size from the quadrilateral, long-edge cap.
+function computeOutputSize(corners) {
   const [tl, tr, br, bl] = corners;
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   let w = Math.max(dist(tl, tr), dist(bl, br));
   let h = Math.max(dist(tl, bl), dist(tr, br));
-  if (snapA4) {
-    const ratio = w / h;
-    const A4 = 1.41421356;
-    // Within ~6% of A4 ratio (portrait or landscape)? Force exact.
-    if (Math.abs(ratio - A4) / A4 < 0.06) {
-      const scale = w / A4;
-      w = A4 * scale; h = scale;
-    } else if (Math.abs(ratio - 1 / A4) / (1 / A4) < 0.06) {
-      const scale = h / A4;
-      w = scale; h = A4 * scale;
-    }
-  }
   // Cap the long edge to 3508 px (A4 at 300 DPI).
   const longEdge = Math.max(w, h);
   if (longEdge > 3508) {
@@ -296,12 +284,12 @@ function computeOutputSize(corners, snapA4) {
 function handleWarp(msg) {
   const t = track();
   try {
-    const { width, height, corners, snapA4 } = msg;
+    const { width, height, corners } = msg;
     const src = t.add(new cv.Mat(height, width, cv.CV_8UC4));
     // The Mat constructor's 4th arg is a fill Scalar, not raw
     // data – copy the pixels into the wasm heap explicitly.
     src.data.set(msg.data);
-    const out = computeOutputSize(corners, snapA4);
+    const out = computeOutputSize(corners);
     const srcTri = t.add(cv.matFromArray(4, 1, cv.CV_32FC2, [
       corners[0].x, corners[0].y,
       corners[1].x, corners[1].y,

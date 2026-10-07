@@ -92,17 +92,15 @@ export function newId() {
 // The pipeline is always: original -> warp(corners) -> rotate -> filter(params).
 // We cache the warped result (fast filter switching) and the filtered result
 // (fast preview redraws). Both are dropped when their inputs change.
-// The warp cache key includes the A4-snap setting because it
-// changes the warp output size.
 
-export function getWarpedCache(page, snapA4) {
-  const key = JSON.stringify([page.corners, snapA4]);
+export function getWarpedCache(page) {
+  const key = JSON.stringify([page.corners]);
   if (page._warped && page._warped.key === key) return page._warped;
   return null;
 }
 
-export function setWarpedCache(page, blob, width, height, snapA4) {
-  const key = JSON.stringify([page.corners, snapA4]);
+export function setWarpedCache(page, blob, width, height) {
+  const key = JSON.stringify([page.corners]);
   page._warped = { blob, width, height, key };
 }
 

@@ -8,14 +8,12 @@ import { applyI18n, getLang, setLang, t } from './i18n.js';
 import { pickFromCamera, pickFromGallery } from './camera.js';
 import { toast, toastAction, showBusy, hideBusy, confirmAction } from './ui.js';
 import * as home from './views/home.js';
-import * as crop from './views/crop.js';
-import * as edit from './views/edit.js';
+import * as editor from './views/pageEditor.js';
 import * as exportView from './views/export.js';
 
 const views = {
   home,
-  crop,
-  edit,
+  editor,
   export: exportView,
 };
 
@@ -147,8 +145,7 @@ async function init() {
 
   // Wire views.
   home.init(ctx);
-  crop.init(ctx);
-  edit.init(ctx);
+  editor.init(ctx);
   exportView.init(ctx);
 
   setupPwa();

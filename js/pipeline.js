@@ -43,17 +43,6 @@ function downscaleImageData(imageData, scale) {
   return result;
 }
 
-// ---------- A4 snap setting (persisted, small preference) ----------
-const SNAP_KEY = 'scanner-snap-a4';
-
-export function getSnapA4() {
-  return localStorage.getItem(SNAP_KEY) === '1';
-}
-
-export function setSnapA4(v) {
-  localStorage.setItem(SNAP_KEY, v ? '1' : '0');
-}
-
 // ---------- Detection ----------
 
 // Run document detection on a page. Detection runs on a downscaled
@@ -75,14 +64,13 @@ export async function detectPageCorners(page) {
 
 // Get the warped image for a page as { blob, width, height } (cached).
 export async function getWarped(page) {
-  const snap = getSnapA4();
-  const cached = state.getWarpedCache(page, snap);
+  const cached = state.getWarpedCache(page);
   if (cached) return cached;
   const imageData = await blobToImageData(page.blob);
-  const result = await cv.warpPerspective(imageData, page.corners, snap);
+  const result = await cv.warpPerspective(imageData, page.corners);
   const blob = await cv.imageDataToBlob(result);
-  state.setWarpedCache(page, blob, result.width, result.height, snap);
-  return state.getWarpedCache(page, snap);
+  state.setWarpedCache(page, blob, result.width, result.height);
+  return state.getWarpedCache(page);
 }
 
 // Get the fully processed image (warp -> rotate -> filter) as
@@ -124,7 +112,7 @@ export async function renderPreview(page, canvas, maxEdge = 800) {
   const scale = Math.min(1, maxEdge / longEdge);
   let data = scale < 1 ? downscaleImageData(origData, scale) : origData;
   const corners = page.corners.map((c) => ({ x: c.x * scale, y: c.y * scale }));
-  let result = await cv.warpPerspective(data, corners, getSnapA4());
+  let result = await cv.warpPerspective(data, corners);
   if (page.rotation) {
     result = await cv.rotate(result, page.rotation);
   }

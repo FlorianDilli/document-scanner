@@ -58,56 +58,92 @@
       </div>
     </section>
 
-    <!-- ============ CROP: corner editor ============ -->
-    <section id="view-crop" class="view hidden">
+    <!-- ============ PAGE EDITOR: frame + look ============ -->
+    <section id="view-editor" class="view hidden">
       <div class="view-toolbar">
-        <button id="btn-crop-back" class="btn" type="button" data-i18n="back">Zurück</button>
-        <span class="toolbar-title" data-i18n="cropTitle">Zuschneiden</span>
-        <button id="btn-crop-done" class="btn btn-success" type="button" data-i18n="apply">Übernehmen</button>
+        <button id="btn-editor-back" class="btn" type="button">
+          <span class="icon-slot" data-icon="back"></span>
+          <span data-i18n="back">Zurück</span>
+        </button>
+        <span class="toolbar-title" data-i18n="editorTitle">Seite bearbeiten</span>
+        <button id="btn-editor-done" class="btn btn-success" type="button" data-i18n="done">Fertig</button>
       </div>
-      <div id="crop-stage" class="crop-stage">
-        <canvas id="crop-canvas"></canvas>
-      </div>
-      <div class="view-toolbar crop-actions">
-        <button id="btn-redetect" class="btn" type="button" data-i18n="redetect">Erneut erkennen</button>
-        <button id="btn-reset-crop" class="btn" type="button" data-i18n="resetCrop">Auf ganzes Bild</button>
-        <button id="btn-a4-snap" class="btn toggle" type="button" aria-pressed="false" data-i18n="snapA4">A4-Verhältnis</button>
-      </div>
-      <p id="crop-hint" class="hint" data-i18n="cropHint">Ziehe die Ecken, um den Rahmen anzupassen.</p>
-    </section>
 
-    <!-- ============ EDIT: filters ============ -->
-    <section id="view-edit" class="view hidden">
-      <div class="view-toolbar">
-        <button id="btn-edit-back" class="btn" type="button" data-i18n="backToCrop">Zurück zum Zuschneiden</button>
-        <span class="toolbar-title" data-i18n="editTitle">Bearbeiten</span>
-        <button id="btn-edit-done" class="btn btn-success" type="button" data-i18n="done">Fertig</button>
+      <div class="mode-switch" role="tablist">
+        <button id="mode-frame" class="mode-btn" role="tab" aria-selected="true" type="button">
+          <span class="icon-slot" data-icon="crop"></span>
+          <span data-i18n="modeFrame">Rahmen</span>
+        </button>
+        <button id="mode-look" class="mode-btn" role="tab" aria-selected="false" type="button">
+          <span class="icon-slot" data-icon="sliders"></span>
+          <span data-i18n="modeLook">Optik</span>
+        </button>
       </div>
-      <div id="edit-preview-wrap" class="edit-preview-wrap">
-        <canvas id="edit-preview"></canvas>
-        <div id="edit-spinner" class="spinner hidden"></div>
+
+      <div id="frame-pane" class="pane">
+        <div id="frame-stage" class="crop-stage">
+          <canvas id="crop-canvas"></canvas>
+        </div>
+        <div class="view-toolbar crop-actions">
+          <button id="btn-redetect" class="btn" type="button">
+            <span class="icon-slot" data-icon="wand"></span>
+            <span data-i18n="redetect">Erneut erkennen</span>
+          </button>
+          <button id="btn-reset-crop" class="btn" type="button">
+            <span class="icon-slot" data-icon="expand"></span>
+            <span data-i18n="resetCrop">Auf ganzes Bild</span>
+          </button>
+        </div>
+        <p id="crop-hint" class="hint" data-i18n="cropHint">Ziehe die Ecken, um den Rahmen anzupassen.</p>
       </div>
-      <div id="filter-chips" class="chip-row"></div>
-      <div class="card sliders-card">
-        <div class="slider-row">
-          <label for="slider-brightness" data-i18n="brightness">Helligkeit</label>
-          <input type="range" id="slider-brightness" min="-100" max="100" value="0">
-          <span id="val-brightness" class="slider-val">0</span>
+
+      <div id="look-pane" class="pane hidden">
+        <div id="edit-preview-wrap" class="edit-preview-wrap">
+          <canvas id="edit-preview"></canvas>
+          <div id="edit-spinner" class="spinner hidden"></div>
         </div>
-        <div class="slider-row">
-          <label for="slider-contrast" data-i18n="contrast">Kontrast</label>
-          <input type="range" id="slider-contrast" min="-100" max="100" value="0">
-          <span id="val-contrast" class="slider-val">0</span>
+        <div id="filter-chips" class="chip-row"></div>
+        <div class="card sliders-card">
+          <div class="slider-row">
+            <label for="slider-brightness" data-i18n="brightness">Helligkeit</label>
+            <input type="range" id="slider-brightness" min="-100" max="100" value="0">
+            <span id="val-brightness" class="slider-val">0</span>
+          </div>
+          <div class="slider-row">
+            <label for="slider-contrast" data-i18n="contrast">Kontrast</label>
+            <input type="range" id="slider-contrast" min="-100" max="100" value="0">
+            <span id="val-contrast" class="slider-val">0</span>
+          </div>
+          <div class="slider-row">
+            <label for="slider-sharpen" data-i18n="sharpen">Schärfe</label>
+            <input type="range" id="slider-sharpen" min="0" max="100" value="0">
+            <span id="val-sharpen" class="slider-val">0</span>
+          </div>
         </div>
-        <div class="slider-row">
-          <label for="slider-sharpen" data-i18n="sharpen">Schärfe</label>
-          <input type="range" id="slider-sharpen" min="0" max="100" value="0">
-          <span id="val-sharpen" class="slider-val">0</span>
+        <div class="edit-actions">
+          <button id="btn-rotate-left" class="btn" type="button">
+            <span class="icon-slot" data-icon="rotateL"></span>
+            <span data-i18n="rotateLeft">Links</span>
+          </button>
+          <button id="btn-rotate-right" class="btn" type="button">
+            <span class="icon-slot" data-icon="rotateR"></span>
+            <span data-i18n="rotateRight">Rechts</span>
+          </button>
         </div>
       </div>
-      <div class="edit-actions">
-        <button id="btn-rotate-left" class="btn" type="button" data-i18n="rotateLeft">↶ Links</button>
-        <button id="btn-rotate-right" class="btn" type="button" data-i18n="rotateRight">↷ Rechts</button>
+
+      <div class="editor-footer">
+        <button id="btn-page-prev" class="icon-btn" type="button">
+          <span class="icon-slot" data-icon="chevronL"></span>
+        </button>
+        <span id="page-position" class="page-position">–</span>
+        <button id="btn-page-next" class="icon-btn" type="button">
+          <span class="icon-slot" data-icon="chevronR"></span>
+        </button>
+        <button id="btn-editor-delete" class="btn btn-danger" type="button">
+          <span class="icon-slot" data-icon="trash"></span>
+          <span data-i18n="deletePage">Seite löschen</span>
+        </button>
       </div>
     </section>
 

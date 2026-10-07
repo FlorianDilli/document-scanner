@@ -49,6 +49,8 @@ js/state.js           page list model + pub/sub (only global state)
 js/storage.js         IndexedDB persistence (blobs + metadata)
 js/i18n.js            all UI strings (de/en)
 js/ui.js              toast / busy / confirm helpers
+js/icons.js           inline SVG icon set (no external assets)
+js/pageOps.js         page actions shared by views (delete + undo)
 js/camera.js          file inputs, EXIF-correct decode, downscaling
 js/pipeline.js        original → warp → rotate → filter (with caches)
 js/cv-worker.js       OpenCV worker: detect, warp, filter, rotate
@@ -56,7 +58,9 @@ js/cvClient.js        promise wrapper around the worker (transferables)
 js/cornerEditor.js    draggable corners + loupe (Pointer Events)
 js/ocr.js             Tesseract.js wrapper (one reused worker)
 js/pdf.js             A4 PDF with invisible text layer (pdf-lib + fontkit)
-js/views/*.js         home / crop / edit / export views
+js/views/home.js      page grid, import, drag-&-drop reorder, delete w/ undo
+js/views/pageEditor.js  single page editor: Frame (crop) + Look (filters/rotate)
+js/views/export.js    export view
 vendor/               all third-party code (see vendor/README.md)
 icons/                PWA icons (192 / 512 / maskable)
 sw.js                 service worker (precache + cache-first for vendor/)
