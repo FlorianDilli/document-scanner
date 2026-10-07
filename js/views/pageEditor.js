@@ -179,12 +179,15 @@ async function runDetection() {
   if (!currentPage) return;
   ctx.showBusy(ctx.t('busyDetect'));
   try {
-    const { corners, detected } = await detectPageCorners(currentPage);
+    const { corners, detected, fullFrame } = await detectPageCorners(currentPage);
     editor.setCorners(corners);
-    // Persist the honest flag; corners stay editor-local until the
+    // Persist the honest flags; corners stay editor-local until the
     // frame is committed.
-    if (detected !== currentPage.detected) {
-      state.updatePage(currentPage.id, { detected });
+    if (
+      detected !== currentPage.detected ||
+      fullFrame !== currentPage.fullFrame
+    ) {
+      state.updatePage(currentPage.id, { detected, fullFrame });
       persistNow();
     }
     frameHintDismissed = false;
@@ -197,21 +200,22 @@ async function runDetection() {
   }
 }
 
-// Failed auto-detection state (page.detected === false): the frame in
-// the editor is an unverified guess (the full photo). Communicate it
-// with a persistent hint INSTEAD of a transient toast – it explains
-// what the frame is and that the recovery is moving the corners (or
-// "Full image") – and hide "Detect again", whose result could not
-// differ from what is already on screen. The outline switches to
-// dashed to mark the selection as a guess.
+// Needs-check state: either the auto-detection failed outright
+// (page.detected === false) or it returned the whole photo as the
+// document (page.fullFrame === true) – both carry no exact page
+// edges. The editor communicates it with a persistent hint INSTEAD
+// of a transient toast, a dashed "guess" outline, and the "Detect
+// again" button greyed out as "No edges detected": its result could
+// not differ from what is already on screen (detection is
+// deterministic on the original photo).
 function syncFrameHint() {
-  const failed = Boolean(currentPage) && currentPage.detected === false;
+  const failed = Boolean(currentPage)
+    && (currentPage.detected === false || currentPage.fullFrame === true);
   const hint = document.getElementById('frame-hint');
   hint.classList.toggle('hidden', !failed || frameHintDismissed);
   hint.textContent = ctx.t('detectFallback');
   const btn = document.getElementById('btn-redetect');
   btn.disabled = failed;
-  btn.classList.toggle('hidden', false);
   const label = btn.querySelector('span[data-i18n]');
   if (label) {
     label.setAttribute('data-i18n', failed ? 'redetectDisabled' : 'redetect');
@@ -234,7 +238,7 @@ function commitFrame() {
   if (JSON.stringify(corners) !== JSON.stringify(currentPage.corners)) {
     // Committing a changed frame is the manual confirmation a failed
     // auto-detection cannot provide: clear the "check frame" state.
-    state.updatePage(currentPage.id, { corners, detected: true });
+    state.updatePage(currentPage.id, { corners, detected: true, fullFrame: false });
     persistNow();
   }
   return true;

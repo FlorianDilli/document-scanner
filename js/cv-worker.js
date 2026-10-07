@@ -292,9 +292,11 @@ function handleDetect(msg) {
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
     const blurred = t.add(new cv.Mat());
     cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-    let corners = contourSearch(blurred, width, height);
-    let detected = true;
-    if (!corners) {
+    const found = contourSearch(blurred, width, height);
+    let corners;
+    let detected;
+    let fullFrame = false;
+    if (!found) {
       // Fallback: the full photo. An inset rectangle would crop away
       // document content in the most common failure (the paper fills
       // most of the frame); the full image loses nothing, and
@@ -305,17 +307,21 @@ function handleDetect(msg) {
       // offers a retry for this state.
       detected = false;
       corners = fullFrameCorners(width, height);
-    } else if (!corners.fullFrame) {
+    } else if (!found.fullFrame) {
       // Safety inset so no background artifacts remain
       // at the edges of the cropped document.
-      corners = shrinkQuad(corners.quad, DETECT_INSET);
+      detected = true;
+      corners = shrinkQuad(found.quad, DETECT_INSET);
     } else {
       // The page fills the photo: the full image IS the document.
       // Like the fallback there is no exact edge position, so no
-      // inset shrink either – but it counts as detected.
-      corners = corners.quad;
+      // inset shrink either – fullFrame tells the UI that this
+      // detection carries no exact page edges either (retry disabled).
+      detected = true;
+      fullFrame = true;
+      corners = found.quad;
     }
-    return { type: 'detect-done', id: msg.id, corners, detected };
+    return { type: 'detect-done', id: msg.id, corners, detected, fullFrame };
   } finally {
     t.cleanup();
   }

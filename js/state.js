@@ -12,8 +12,10 @@
 //   ocr       cached { words: [...], lang } or null (invalidated on change)
 //   detected  true after a successful auto-detection; false when the
 //             frame is the full-image fallback ("check frame" badge on
-//             the card, hint in the editor – cleared when a changed
-//             frame is committed); undefined on legacy pages
+//             the card, hint in the editor); undefined on legacy pages
+//   fullFrame true when the auto-detected document is the whole photo
+//             (no exact page edges – retry button disabled); cleared
+//             when a changed frame is committed
 //
 // Runtime-only caches (never persisted, prefixed with _):
 //   _warped    { blob, width, height, key }   key = JSON of corners

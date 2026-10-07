@@ -48,17 +48,19 @@ function downscaleImageData(imageData, scale) {
 // Run document detection on a page. Detection runs on a downscaled
 // copy (long edge ~1000 px) and the found corners are scaled back
 // up to working-image coordinates.
-// Returns { corners, detected } – detected is false when nothing
-// was found and the full image was returned as a guess.
+// Returns { corners, detected, fullFrame } – detected is false when
+// nothing was found, fullFrame true when the whole photo is the
+// document (no exact page edges in either case).
 export async function detectPageCorners(page) {
   const imageData = await blobToImageData(page.blob);
   const longEdge = Math.max(imageData.width, imageData.height);
   const scale = Math.min(1, 1000 / longEdge);
   const detectData = scale < 1 ? downscaleImageData(imageData, scale) : imageData;
-  const { corners, detected } = await cv.detectDocument(detectData);
+  const { corners, detected, fullFrame } = await cv.detectDocument(detectData);
   return {
     corners: corners.map((p) => ({ x: p.x / scale, y: p.y / scale })),
     detected,
+    fullFrame,
   };
 }
 

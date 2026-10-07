@@ -31,7 +31,11 @@ function tx(db, mode, fn) {
   });
 }
 
-// Persist a page: { id, blob, width, height, corners, rotation, filter, params, ocr }
+// Persist a page: { id, blob, width, height, corners, rotation, filter,
+// params, ocr, detected, fullFrame }. `detected`/`fullFrame` carry the
+// auto-detection state of the frame (see state.js); without persisting
+// them a reload would silently reset pages into the "detection pending"
+// state (undefined), grey-out and badge included.
 export async function savePage(page) {
   const db = await openDb();
   const record = {
@@ -45,6 +49,8 @@ export async function savePage(page) {
     params: page.params,
     ocr: page.ocr,
   };
+  if (page.detected !== undefined) record.detected = page.detected;
+  if (page.fullFrame !== undefined) record.fullFrame = page.fullFrame;
   await tx(db, 'readwrite', (store) => store.put(record));
   db.close();
 }

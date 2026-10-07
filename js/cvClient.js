@@ -72,17 +72,17 @@ function send(msg, transfer) {
 }
 
 // Detect the document in an ImageData. Returns
-// { corners: [{x,y} TL, TR, BR, BL], detected: boolean }
-// in the same pixel coordinates. `detected` is false when
-// nothing was found and the full image was returned as a
-// guess (the UI shows a persistent hint and a dashed frame;
-// a retry could not produce a different result).
+// { corners: [{x,y} TL, TR, BR, BL], detected: boolean, fullFrame: boolean }
+// in the same pixel coordinates. `detected` is false when nothing
+// was found; `fullFrame` is true when the whole photo was returned as
+// the document (no exact page edges – the UI disables the retry in
+// both cases and shows the persistent hint / dashed frame).
 export function detectDocument(imageData) {
   const data = new Uint8ClampedArray(imageData.data);
   return send(
     { type: 'detect', data, width: imageData.width, height: imageData.height },
     [data.buffer]
-  ).then((r) => ({ corners: r.corners, detected: r.detected }));
+  ).then((r) => ({ corners: r.corners, detected: r.detected, fullFrame: r.fullFrame }));
 }
 
 // Warp the quadrilateral into an upright rectangle.

@@ -451,6 +451,7 @@ async function importFiles(files) {
         params: { brightness: 0, contrast: 0, sharpen: 0 },
         ocr: null,
         detected: false,
+        fullFrame: false,
       };
       state.addPage(page);
       await storage.savePage(page);
@@ -474,8 +475,8 @@ async function importFiles(files) {
   // editor shows the persistent hint.
   try {
     const first = newPages[0];
-    const { corners, detected } = await detectPageCorners(first);
-    state.updatePage(first.id, { corners, detected });
+    const { corners, detected, fullFrame } = await detectPageCorners(first);
+    state.updatePage(first.id, { corners, detected, fullFrame });
     await storage.savePage(first);
   } catch (err) {
     console.error(err);
@@ -488,8 +489,8 @@ async function importFiles(files) {
   for (let i = 1; i < newPages.length; i++) {
     const page = newPages[i];
     try {
-      const { corners, detected } = await detectPageCorners(page);
-      state.updatePage(page.id, { corners, detected });
+      const { corners, detected, fullFrame } = await detectPageCorners(page);
+      state.updatePage(page.id, { corners, detected, fullFrame });
       await storage.savePage(page);
     } catch (err) {
       console.warn('background detect failed', err);
