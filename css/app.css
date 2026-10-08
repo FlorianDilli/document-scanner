@@ -99,7 +99,7 @@ body {
 
 ::selection { background: var(--accent); color: var(--on-accent); }
 
-:is(.btn, .icon-btn, .chip, .mode-btn, select, input[type="text"], input[type="checkbox"], [tabindex], .page-card):focus-visible {
+:is(.btn, .icon-btn, .chip, .mode-btn, .strip-thumb, select, input[type="text"], input[type="checkbox"], [tabindex], .page-card):focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
@@ -133,8 +133,8 @@ body {
 /* brand logo */
 #app-logo {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
 }
 
 #app-main {
@@ -346,6 +346,10 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
+  /* Portrait and landscape pages get their exact proportions, so
+     neighboring cards differ in height: start-aligned cards hug
+     their image instead of stretching to the row's tallest one. */
+  align-items: start;
 }
 
 .page-card {
@@ -361,7 +365,19 @@ body {
 .page-card:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--hard); }
 .page-card:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--hard); }
 
-.page-card img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+/* The frame ratio is the page's exact proportion (set inline per
+   page from its warp geometry + rotation); the 3:4 fallback only
+   covers a missing page model. `contain` guarantees the whole
+   processed page stays visible – e.g. while a stale thumbnail is
+   being regenerated inside the new frame. The sunken well doubles
+   as the placeholder. */
+.page-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  background: var(--sunken);
+}
 
 .page-card .page-num {
   position: absolute;
@@ -550,9 +566,11 @@ body.editor-open #app-main {
   gap: 10px;
 }
 
-/* Frame / Look mode switch (segmented control) */
+/* Frame / Look mode switch (segmented control); lives in the top
+   toolbar between Back and Done. Auto margins center it whenever
+   the row wraps and the switch lands on its own line. */
 .mode-switch {
-  align-self: center;
+  margin-inline: auto;
   display: inline-flex;
   border: 2px solid var(--line);
   border-radius: var(--radius-pill);
@@ -581,21 +599,143 @@ body.editor-open #app-main {
   color: var(--on-accent);
 }
 
-/* page pager (‹ 3 / 12 ›): the very bottom of the editor; in
-   frame mode margin-top: auto sinks it below the stage. */
-.editor-footer {
+/* ---------- filmstrip page switcher ---------- */
+
+/* Small page previews to jump straight to any page. Mobile: a
+   compact sticky horizontal rail at the bottom of the editor (small
+   thumbs so it never crowds the buttons above it). Desktop: the
+   same rail morphs into a fixed vertical strip on the left edge of
+   the screen with much larger thumbs (see the media queries below).
+   In frame mode margin-top: auto sinks it below the stage; the
+   sticky bottom offset matches the editor's bottom padding so the
+   rail never jumps when the scroll ends. */
+.page-filmstrip {
+  position: sticky;
+  bottom: calc(16px + var(--safe-bottom));
+  z-index: 5;
   display: flex;
+  /* Mixed portrait/landscape thumbs are centered on the rail axis,
+     and centered as a group while they don't fill the rail. With
+     `safe` the centering falls back to flex-start while the thumbs
+     overflow, so every thumb stays reachable by scrolling. */
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  justify-content: safe center;
+  gap: 6px;
   margin-top: auto;
+  padding: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-mini);
 }
-.page-position {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  padding: 0 6px;
-  white-space: nowrap;
+
+/* The frame ratio is a generic DIN A slot (portrait 1:√2 or
+   landscape √2:1, set inline per page by its orientation) so all
+   previews share one of two uniform shapes; the 3:4 fallback only
+   covers a missing page model. The page itself is letterboxed in
+   with `contain` on the sunken well. */
+.strip-thumb {
+  position: relative;
+  flex: none;
+  width: 66px;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  background: var(--sunken);
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.06s ease, box-shadow 0.06s ease, opacity 0.15s ease;
+  opacity: 0.72;
+}
+/* Landscape pages: a wide frame whose long edge matches the
+   portrait thumb's (width = 66 × √2), so both orientations occupy
+   a similar slot in the rail. */
+.strip-thumb.landscape { width: 93px; }
+.strip-thumb:hover { transform: translateY(-2px); opacity: 1; }
+.strip-thumb:active { transform: translateY(1px); }
+.strip-thumb.current {
+  opacity: 1;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.strip-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* page number pill, mirroring the home grid badge */
+.strip-num {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 1;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1.5px solid var(--line);
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1.4;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+}
+
+/* Narrow phones: icon-only mode buttons keep the toolbar on one
+   row (the labels stay available to assistive tech via aria-label). */
+@media (max-width: 479px) {
+  .view-toolbar .mode-btn { padding: 8px 14px; }
+  .view-toolbar .mode-btn span[data-i18n] { display: none; }
+}
+
+/* Phones: in frame mode the crop stage must not stretch all the way
+   down into the filmstrip zone. Capping its height ends the frame
+   selection higher up; the buttons below it keep clear air. On
+   short viewports the cap never binds (flex shrinking dominates). */
+@media (max-width: 699px) {
+  #view-editor.in-frame #frame-stage { max-height: 62vh; }
+}
+
+/* Desktop: vertical filmstrip pinned to the left edge of the
+   screen, vertically centered, with much larger previews; scrolls
+   when there are many pages. */
+@media (min-width: 700px) {
+  .page-filmstrip {
+    position: fixed;
+    bottom: auto;
+    left: calc(12px + env(safe-area-inset-left, 0px));
+    top: 50%;
+    transform: translateY(-50%);
+    margin-top: 0;
+    flex-direction: column;
+    align-items: center;
+    width: max-content;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: 10px;
+    gap: 10px;
+  }
+  .strip-thumb { width: 132px; border-radius: 12px; }
+  .strip-thumb.landscape { width: 187px; }
+  .strip-num { top: 5px; left: 5px; font-size: 0.66rem; padding: 0 6px; }
+}
+
+/* Keep the (centered) editor column clear of the fixed rail on
+   widths where it would otherwise reach the left screen edge
+   (rail: 12px offset + ~211px with the DIN A landscape thumbs;
+   above ~1490px the centered 1020px column clears it on its own). */
+@media (min-width: 700px) and (max-width: 1489px) {
+  body.editor-open #app-main { padding-left: 250px; }
 }
 
 /* ---------- crop stage ---------- */

@@ -64,6 +64,32 @@ export async function detectPageCorners(page) {
   };
 }
 
+// Aspect ratio (width / height) of a page's PROCESSED result,
+// computed without rendering anything: the geometry mirrors the
+// warp output size (edge lengths of the frame quadrilateral; the
+// uniform long-edge cap in the worker cancels out) plus the
+// rotation. Values > 1 are landscape, < 1 portrait – previews use
+// this to display each page in its exact proportions on screen.
+export function pageAspect(page) {
+  const c = page && page.corners;
+  if (!Array.isArray(c) || c.length !== 4) return 3 / 4;
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  let w = Math.max(dist(c[0], c[1]), dist(c[3], c[2]));
+  let h = Math.max(dist(c[0], c[3]), dist(c[1], c[2]));
+  if (page.rotation === 90 || page.rotation === 270) [w, h] = [h, w];
+  if (w < 1e-6 || h < 1e-6) return 3 / 4;
+  return w / h;
+}
+
+// Generic preview frame ratio: every page is framed in one of two
+// DIN A slots – portrait (1:√2) or landscape (√2:1) – picked by its
+// real orientation. Preview rails use it for a uniform look (the
+// page itself is letterboxed inside); the home grid instead uses
+// pageAspect() to show the page in its true proportions.
+export function pageFrameAspect(page) {
+  return pageAspect(page) > 1 ? Math.SQRT2 : Math.SQRT1_2;
+}
+
 // Get the warped image for a page as { blob, width, height } (cached).
 export async function getWarped(page) {
   const cached = state.getWarpedCache(page);

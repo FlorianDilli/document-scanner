@@ -21,7 +21,7 @@
 <body>
   <header id="app-header">
     <h1 id="app-title">
-      <img id="app-logo" src="./icons/logo.svg" alt="" width="30" height="30">
+      <img id="app-logo" src="./icons/logo.svg" alt="" width="40" height="40">
       <span data-i18n="appTitle">Dokumenten-Scanner</span>
     </h1>
     <div id="header-actions">
@@ -65,19 +65,17 @@
           <span class="icon-slot" data-icon="back"></span>
           <span data-i18n="back">Zurück</span>
         </button>
-        <span class="toolbar-title" data-i18n="editorTitle">Seite bearbeiten</span>
+        <div class="mode-switch" role="tablist">
+          <button id="mode-frame" class="mode-btn" role="tab" aria-selected="true" type="button">
+            <span class="icon-slot" data-icon="crop"></span>
+            <span data-i18n="modeFrame">Rahmen</span>
+          </button>
+          <button id="mode-look" class="mode-btn" role="tab" aria-selected="false" type="button">
+            <span class="icon-slot" data-icon="sliders"></span>
+            <span data-i18n="modeLook">Optik</span>
+          </button>
+        </div>
         <button id="btn-editor-done" class="btn btn-success" type="button" data-i18n="done">Fertig</button>
-      </div>
-
-      <div class="mode-switch" role="tablist">
-        <button id="mode-frame" class="mode-btn" role="tab" aria-selected="true" type="button">
-          <span class="icon-slot" data-icon="crop"></span>
-          <span data-i18n="modeFrame">Rahmen</span>
-        </button>
-        <button id="mode-look" class="mode-btn" role="tab" aria-selected="false" type="button">
-          <span class="icon-slot" data-icon="sliders"></span>
-          <span data-i18n="modeLook">Optik</span>
-        </button>
       </div>
 
       <div id="frame-pane" class="pane">
@@ -131,15 +129,10 @@
         </div>
       </div>
 
-      <div class="editor-footer">
-        <button id="btn-page-prev" class="icon-btn" type="button">
-          <span class="icon-slot" data-icon="chevronL"></span>
-        </button>
-        <span id="page-position" class="page-position">–</span>
-        <button id="btn-page-next" class="icon-btn" type="button">
-          <span class="icon-slot" data-icon="chevronR"></span>
-        </button>
-      </div>
+      <!-- Filmstrip page switcher: previews of all pages, tap to jump.
+           Mobile: sticky rail at the bottom; desktop: fixed rail on
+           the left edge of the screen. Built by views/pageEditor.js. -->
+      <nav id="page-filmstrip" class="page-filmstrip" aria-label="Seiten"></nav>
     </section>
 
     <!-- ============ EXPORT ============ -->

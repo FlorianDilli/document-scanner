@@ -4,7 +4,7 @@
 import * as state from '../state.js';
 import * as storage from '../storage.js';
 import { importFile } from '../camera.js';
-import { detectPageCorners, getThumbnail } from '../pipeline.js';
+import { detectPageCorners, getThumbnail, pageAspect } from '../pipeline.js';
 import { newId } from '../state.js';
 import { ic } from '../icons.js';
 import { deletePage } from '../pageOps.js';
@@ -72,6 +72,7 @@ const DRAG_THRESHOLD = 6; // px of movement before a touch becomes a drag
 const DRAG_SCROLL_AREA = 70; // px band at the viewport edge that auto-scrolls
 const DRAG_SCROLL_STEP = 14; // px per pointermove inside the band
 const GRID_GAP = 16; // must match the .page-grid gap
+const DRAG_ROW_TOL = 8; // px: card tops closer than this share a row
 
 let drag = null;
 // { grid, card, id, fromIndex, curIndex, moved, grabOffsetX, grabOffsetY,
@@ -87,15 +88,45 @@ const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // The grid slot the finger is over, as a flat index in reading
-// order. All cards share one cell size, so the slot lattice is
+// order. All cards share one column width, so the columns are
 // derived from the grid box itself – card rects shift around while
-// the pages make way and must not be used as anchors.
+// the pages make way and must not be used as anchors. Rows are
+// clustered from the cards' layout offsets instead of assuming one
+// uniform cell height: portrait and landscape cards differ in
+// height, so rows resize when the orientations mix (and offsetTop
+// is unaffected by the transforms the FLIP animation puts on the
+// cards).
 function desiredIndex(grid, x, y) {
   const g = grid.getBoundingClientRect();
   const cell = grid.firstElementChild.getBoundingClientRect();
   const cols = Math.max(1, Math.round((g.width + GRID_GAP) / (cell.width + GRID_GAP)));
   const col = Math.floor((x - g.left + GRID_GAP / 2) / (cell.width + GRID_GAP));
-  const row = Math.floor((y - g.top + GRID_GAP / 2) / (cell.height + GRID_GAP));
+
+  // Row bands in grid coordinates (layout offsets, transform-free).
+  const rows = []; // { top, bottom }
+  for (const child of grid.children) {
+    const top = child.offsetTop - grid.offsetTop;
+    const bottom = top + child.offsetHeight;
+    const last = rows[rows.length - 1];
+    if (last && top - last.top < DRAG_ROW_TOL) {
+      last.bottom = Math.max(last.bottom, bottom);
+    } else {
+      rows.push({ top, bottom });
+    }
+  }
+
+  // The finger's row: the band whose boundaries (mid-gap between
+  // adjacent rows) enclose it, clipped to the existing rows.
+  const yRel = y - g.top;
+  let row = Math.max(0, rows.length - 1);
+  for (let i = 0; i < rows.length; i++) {
+    const upper = i === 0 ? -Infinity : (rows[i - 1].bottom + rows[i].top) / 2;
+    if (yRel < upper) {
+      row = Math.max(0, i - 1);
+      break;
+    }
+    row = i;
+  }
   return Math.min(
     grid.children.length - 1,
     Math.max(0, row) * cols + Math.min(cols - 1, Math.max(0, col))
@@ -310,7 +341,16 @@ function render(pages) {
     card.dataset.id = page.id;
     card.tabIndex = 0;
     card.setAttribute('role', 'button');
-    card.setAttribute('aria-label', ctx.t('openPage', { i: index + 1 }));
+    // Exact page proportions: the card frame (and thumbnail) adopt
+    // the page's real orientation – portrait pages render tall,
+    // landscape pages wide. The orientation travels with the label.
+    const aspect = pageAspect(page);
+    card.setAttribute(
+      'aria-label',
+      `${ctx.t('openPage', { i: index + 1 })} – ${
+        aspect > 1 ? ctx.t('orientationLandscape') : ctx.t('orientationPortrait')
+      }`
+    );
 
     const num = document.createElement('span');
     num.className = 'page-num';
@@ -324,6 +364,7 @@ function render(pages) {
 
     const img = document.createElement('img');
     img.alt = '';
+    img.style.aspectRatio = String(Math.round(aspect * 1000) / 1000);
     card.appendChild(img);
 
     // Thumbnail: reuse the cached object URL while the page's

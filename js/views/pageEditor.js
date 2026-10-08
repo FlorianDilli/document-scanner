@@ -11,7 +11,9 @@
 //   * the editor ALWAYS opens in Frame mode first – the same screen
 //     as after an import (the user confirms/adjusts the frame, then
 //     switches to Look via the tabs);
-//   * Prev / Next steps through all pages while keeping the mode.
+//   * the filmstrip of small page previews (bottom rail on mobile,
+//     left rail on desktop) jumps straight to any page while
+//     keeping the mode.
 //
 // All edits stay non-destructive (original -> warp -> rotate ->
 // filter, caches in state.js).
@@ -19,7 +21,13 @@
 import * as state from '../state.js';
 import * as storage from '../storage.js';
 import { CornerEditor, isConvexQuad } from '../cornerEditor.js';
-import { detectPageCorners, renderPreview } from '../pipeline.js';
+import {
+  detectPageCorners,
+  renderPreview,
+  getThumbnail,
+  pageAspect,
+  pageFrameAspect,
+} from '../pipeline.js';
 import { mountIcons } from '../icons.js';
 import { t } from '../i18n.js';
 
@@ -237,6 +245,9 @@ function commitFrame() {
     // auto-detection cannot provide: clear the "check frame" state.
     state.updatePage(currentPage.id, { corners, detected: true, fullFrame: false });
     persistNow();
+    // The page's pipeline inputs changed, so its filmstrip preview
+    // is outdated – rebuild it (the cache generates a fresh one).
+    refreshFilmstrip();
   }
   return true;
 }
@@ -257,17 +268,127 @@ function syncModeButtons() {
     .classList.toggle('in-frame', currentMode === 'frame');
 }
 
-function updatePager() {
+// ---------- filmstrip page switcher ----------
+
+// Persistent thumbnail cache: pageId -> { url, key }. key captures
+// the current pipeline inputs (corners, rotation, filter, params),
+// exactly like the home grid – unchanged pages reuse their object
+// URL across rebuilds, while an edited page gets a fresh preview.
+const filmstripThumbnails = new Map();
+
+function filmstripKey(page) {
+  return JSON.stringify([
+    page.corners,
+    page.rotation,
+    page.filter,
+    page.params,
+  ]);
+}
+
+// Rebuild the filmstrip. With fewer than two pages there is nothing
+// to switch to, so the rail hides itself.
+function refreshFilmstrip() {
+  const strip = document.getElementById('page-filmstrip');
   const pages = state.getPages();
-  const idx = pages.findIndex((p) => p.id === currentPage.id);
-  document.getElementById('page-position').textContent = ctx.t('pagePosition', {
-    i: idx + 1,
-    n: pages.length,
+  strip.classList.toggle('hidden', !currentPage || pages.length < 2);
+  strip.textContent = '';
+
+  // Drop thumbnails of removed pages; keep the rest.
+  const ids = new Set(pages.map((p) => p.id));
+  for (const [id, entry] of filmstripThumbnails) {
+    if (!ids.has(id)) {
+      URL.revokeObjectURL(entry.url);
+      filmstripThumbnails.delete(id);
+    }
+  }
+
+  pages.forEach((page, index) => {
+    const current = page.id === currentPage.id;
+    const thumb = document.createElement('button');
+    thumb.type = 'button';
+    thumb.className = 'strip-thumb';
+    // Generic DIN A frames – one portrait (1:√2) and one landscape
+    // (√2:1) slot, picked by the page's real orientation: all
+    // portrait pages share the tall frame, all landscape pages the
+    // wide one, so the rail looks uniform (the page is letterboxed
+    // inside; the home grid, in contrast, frames each page in its
+    // real proportions). The orientation also travels with the
+    // tooltip / label.
+    const aspect = pageAspect(page);
+    thumb.style.aspectRatio = String(Math.round(pageFrameAspect(page) * 1000) / 1000);
+    if (aspect > 1) thumb.classList.add('landscape');
+    if (current) {
+      thumb.classList.add('current');
+      thumb.setAttribute('aria-current', 'true');
+    }
+    const label = `${ctx.t('goToPage', { i: index + 1 })} – ${
+      aspect > 1 ? t('orientationLandscape') : t('orientationPortrait')
+    }`;
+    thumb.title = label;
+    thumb.setAttribute('aria-label', label);
+
+    const num = document.createElement('span');
+    num.className = 'strip-num';
+    num.textContent = String(index + 1);
+    thumb.appendChild(num);
+
+    const img = document.createElement('img');
+    img.alt = '';
+    img.draggable = false;
+    thumb.appendChild(img);
+
+    if (!current) thumb.addEventListener('click', () => gotoPage(page.id));
+    strip.appendChild(thumb);
+
+    // Thumbnail: reuse the cached object URL while the page's
+    // pipeline state is unchanged; otherwise regenerate (async)
+    // from the corrected document.
+    const key = filmstripKey(page);
+    const cached = filmstripThumbnails.get(page.id);
+    if (cached && cached.key === key) {
+      img.src = cached.url;
+      return;
+    }
+    if (cached) {
+      URL.revokeObjectURL(cached.url);
+      filmstripThumbnails.delete(page.id);
+    }
+    getThumbnail(page, 240)
+      .then((blob) => {
+        // Discard a stale result if the page changed in the meantime.
+        if (state.getPage(page.id) !== page || filmstripKey(page) !== key) return;
+        const url = URL.createObjectURL(blob);
+        filmstripThumbnails.set(page.id, { url, key });
+        img.src = url;
+      })
+      .catch((err) => console.warn('thumbnail failed', err));
   });
-  document.getElementById('btn-page-prev').disabled = idx <= 0;
-  document.getElementById('btn-page-next').disabled = idx >= pages.length - 1;
-  document.getElementById('btn-page-prev').title = ctx.t('prevPage');
-  document.getElementById('btn-page-next').title = ctx.t('nextPage');
+
+  // Keep the highlighted page in view (horizontal on mobile,
+  // vertical on desktop) without scrolling the document itself.
+  const active = strip.querySelector('.strip-thumb.current');
+  if (active) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+// Jump to a page from the filmstrip. The working mode is kept so
+// several shots can be fixed in a row.
+async function gotoPage(pageId) {
+  if (!currentPage || pageId === currentPage.id) return;
+  if (!commitFrame()) return;
+  await persistNow();
+  const target = state.getPage(pageId);
+  if (!target) {
+    refreshFilmstrip();
+    return;
+  }
+  currentPage = target;
+  if (bitmap) bitmap.close();
+  bitmap = null;
+  bitmapPageId = null;
+  frameHintDismissed = false;
+  refreshFilmstrip();
+  syncModeButtons();
+  await enterPane();
 }
 
 async function enterPane() {
@@ -301,37 +422,22 @@ async function setMode(next) {
   await enterPane();
 }
 
-// Step to the adjacent page (Pager ‹ ›). The working mode is kept
-// so several shots can be fixed in a row.
-async function goPage(delta) {
-  if (!currentPage) return;
-  if (!commitFrame()) return;
-  await persistNow();
-  const pages = state.getPages();
-  const idx = pages.findIndex((p) => p.id === currentPage.id);
-  const target = pages[idx + delta];
-  if (!target) return;
-  currentPage = target;
-  if (bitmap) bitmap.close();
-  bitmap = null;
-  bitmapPageId = null;
-  frameHintDismissed = false;
-  updatePager();
-  syncModeButtons();
-  await enterPane();
-}
-
 // Static tooltips (also re-applied on language switch, because the
 // router re-enters show() with the same params).
 function applyStaticTexts() {
   for (const [id, key] of [
     ['btn-editor-back', 'back'],
-    ['btn-page-prev', 'prevPage'],
-    ['btn-page-next', 'nextPage'],
     ['btn-reset-crop', 'resetCrop'],
+    ['mode-frame', 'modeFrame'],
+    ['mode-look', 'modeLook'],
   ]) {
-    document.getElementById(id).title = ctx.t(key);
+    const el = document.getElementById(id);
+    el.title = ctx.t(key);
+    el.setAttribute('aria-label', ctx.t(key));
   }
+  document
+    .getElementById('page-filmstrip')
+    .setAttribute('aria-label', ctx.t('filmstripLabel'));
 }
 
 function goBack() {
@@ -375,8 +481,6 @@ export function init(context) {
     if (!currentPage) return;
     editor.setCorners(fullImageCorners());
   });
-  document.getElementById('btn-page-prev').addEventListener('click', () => goPage(-1));
-  document.getElementById('btn-page-next').addEventListener('click', () => goPage(1));
 
   document.getElementById('btn-rotate-left').addEventListener('click', () => {
     if (!currentPage) return;
@@ -385,6 +489,10 @@ export function init(context) {
     });
     requestPreview();
     persistSoon();
+    // The thumb's proportions are orientation-bound: rebuilding the
+    // strip (cheap, thumbnails are keyed) turns the rotated preview
+    // upright immediately.
+    refreshFilmstrip();
   });
   document.getElementById('btn-rotate-right').addEventListener('click', () => {
     if (!currentPage) return;
@@ -393,6 +501,7 @@ export function init(context) {
     });
     requestPreview();
     persistSoon();
+    refreshFilmstrip();
   });
 
   wireSlider('slider-brightness', 'val-brightness', 'brightness');
@@ -420,7 +529,7 @@ export async function show({ pageId, mode: requestedMode } = {}) {
   currentMode = requestedMode === 'look' ? 'look' : 'frame';
   frameHintDismissed = false;
   applyStaticTexts();
-  updatePager();
+  refreshFilmstrip();
   syncModeButtons();
   await enterPane();
 }
