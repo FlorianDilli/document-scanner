@@ -413,6 +413,8 @@ body {
   color: #141414;
 }
 #import-buttons .btn-tile:hover { background: #f2f2f2; }
+/* Larger icons on the two import tiles (beats the generic .btn .icon). */
+#import-buttons .btn-tile .icon { width: 34px; height: 34px; }
 
 .hint { color: var(--text-dim); font-size: 0.88rem; line-height: 1.5; margin: 0; }
 
@@ -700,11 +702,7 @@ body.editor-open #app-main {
 #view-editor.in-frame .crop-actions { flex: none; }
 /* In frame mode the filmstrip is a normal flow item below the action
    row, never a sticky overlay on top of the buttons. */
-#view-editor.in-frame .page-filmstrip {
-  position: relative;
-  bottom: auto;
-  flex: none;
-}
+#view-editor.in-frame .page-filmstrip { flex: none; }
 
 /* Frame / Look mode switch: a segmented control on a grey track,
    the selected segment is the solid ink pill. Lives in the top
@@ -759,7 +757,7 @@ body.editor-open #app-main {
    (WebKit bug 298709 family), which smeared a ghost haze over the
    editor toolbar. */
 .page-filmstrip {
-  position: sticky;
+  position: relative;
   bottom: min(calc(16px + var(--safe-bottom)), 34px);
   z-index: 5;
   display: flex;
