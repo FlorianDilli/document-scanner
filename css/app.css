@@ -181,10 +181,12 @@ body {
      clipped by the fixed-height body (iOS Safari safe-area quirks
      can also shrink the visible viewport). Hide x-overflow so a
      stray too-wide element can never make content pan sideways
-     or look cut off at the screen edge on phones. */
+     or look cut off at the screen edge on phones.
+     Deliberately NO -webkit-overflow-scrolling: touch: the legacy
+     momentum-scroll path is a known iOS compositing-artifact source
+     (ghost blur torn out of place, exactly what we spent days on). */
   overflow-x: hidden;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .view {
