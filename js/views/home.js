@@ -559,15 +559,6 @@ export function init(context) {
   document.getElementById('btn-export').addEventListener('click', () => {
     ctx.navigate('export');
   });
-  document.getElementById('btn-delete-all').addEventListener('click', async () => {
-    if (!(await ctx.confirmAction(ctx.t('confirmDeleteAll')))) return;
-    state.replaceAll([]);
-    try {
-      await storage.clearAllPages();
-    } catch (err) {
-      console.warn('clear failed', err);
-    }
-  });
 
   state.subscribe(render);
   render(state.getPages());

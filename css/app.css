@@ -272,6 +272,7 @@ body {
   gap: 10px;
   min-height: 104px;
   padding: 16px 12px;
+  border-radius: var(--radius);
   background: var(--sunken);
   font-size: 0.98rem;
   font-weight: 700;
@@ -535,35 +536,27 @@ body {
 }
 .page-card .page-badge .icon { width: 12px; height: 12px; }
 
-/* Bottom action bar. Phones: sticky to the bottom of the scroll
-   area, so the primary export button stays in thumb reach on long
-   documents. Desktop: static, right-aligned after the page list. */
+/* Floating export bar: hovers in the bottom-right corner on every
+   width, so the primary action is always visible and reachable
+   (thumb zone on phones). The page list gets matching bottom room
+   below so the last cards are never hidden behind it. */
+#view-home { padding-bottom: 88px; }
 .home-footer {
+  position: fixed;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + var(--safe-bottom));
+  z-index: 8;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 8px;
+  gap: 14px;
+  padding: 8px 8px 8px 20px;
+  background: var(--card);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-float);
 }
-.home-footer-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; }
-.home-footer-actions .btn-success { flex: 1 1 auto; }
-.page-counter { color: var(--text-dim); font-weight: 600; font-size: 0.95rem; }
-
-@media (max-width: 699px) {
-  .home-footer {
-    position: sticky;
-    bottom: calc(12px + var(--safe-bottom));
-    z-index: 4;
-    padding: 10px;
-    border-radius: var(--radius);
-    background: var(--card);
-    box-shadow: var(--shadow-float);
-  }
-  .home-footer .page-counter { padding-left: 6px; }
-  .home-footer-actions { width: 100%; margin-left: 0; flex-wrap: nowrap; }
-  .home-footer-actions .btn { min-height: 52px; }
-}
+.page-counter { color: var(--text-dim); font-weight: 600; font-size: 0.95rem; white-space: nowrap; }
+.home-footer-actions { display: flex; }
+.home-footer .btn-success { min-height: 48px; }
 
 .empty-state {
   margin: 8px auto 0;
