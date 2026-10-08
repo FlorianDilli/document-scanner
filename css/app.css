@@ -44,8 +44,15 @@
 
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231b1810' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Safe-area insets get a hard cap: iOS 26 standalone PWAs (home
+     screen web apps) report a bottom inset that still reserves room
+     for browser controls which are not rendered in standalone mode
+     (WebKit bug 301172), so earlier versions docked the filmstrip
+     and floating UI dozens of points above the bottom edge. 59px
+     (top) and 34px (bottom) are the largest real insets on current
+     iOS hardware; anything larger is the phantom-controls bug. */
+  --safe-top: min(env(safe-area-inset-top, 0px), 59px);
+  --safe-bottom: min(env(safe-area-inset-bottom, 0px), 34px);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -114,11 +121,14 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: calc(12px + var(--safe-top)) clamp(16px, 4vw, 28px) 12px;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: var(--bg);
   border-bottom: 2px solid var(--line);
 }
+/* No frosted-glass translucency here on purpose: iOS 26 keeps
+   rendering an element's backdrop-filter layer after its box is
+   display:none'd (WebKit bug 298709 family), so the editor – which
+   hides this header – ended up with a ghost blur smearing its top
+   toolbar. The flat paper look needs no translucent backing. */
 
 #app-title {
   display: flex;
@@ -536,7 +546,12 @@ body {
 body.editor-open #app-header { display: none; }
 body.editor-open #app-main {
   padding-top: calc(10px + var(--safe-top));
-  padding-bottom: calc(16px + var(--safe-bottom));
+  /* Same tail as the filmstrip's sticky bottom offset (see the
+     filmstrip rule), so the rail never jumps when the scroll ends;
+     capped at the real home-indicator inset because iOS 26
+     standalone PWAs inflate env(safe-area-inset-bottom) with
+     phantom browser controls. */
+  padding-bottom: min(calc(16px + var(--safe-bottom)), 34px);
 }
 
 /* Look mode: the view keeps its natural content height, so the
@@ -608,10 +623,17 @@ body.editor-open #app-main {
    the screen with much larger thumbs (see the media queries below).
    In frame mode margin-top: auto sinks it below the stage; the
    sticky bottom offset matches the editor's bottom padding so the
-   rail never jumps when the scroll ends. */
+   rail never jumps when the scroll ends. It is capped at the real
+   home-indicator inset: iOS 26 standalone PWAs inflate env() by
+   phantom browser controls (see the :root comment), which used to
+   moor the rail ~40px higher than any screen edge justifies.
+   Opaque paper background, no backdrop-filter: iOS 26 misplaces
+   the blur layer of sticky elements at the top of the scroll
+   container (WebKit bug 298709 family), which smeared a ghost
+   haze over the editor toolbar. */
 .page-filmstrip {
   position: sticky;
-  bottom: calc(16px + var(--safe-bottom));
+  bottom: min(calc(16px + var(--safe-bottom)), 34px);
   z-index: 5;
   display: flex;
   /* Mixed portrait/landscape thumbs are centered on the rail axis,
@@ -627,9 +649,7 @@ body.editor-open #app-main {
   overflow-y: hidden;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: var(--bg);
   border: 2px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-mini);
@@ -1050,9 +1070,11 @@ input[type="range"]::-moz-range-thumb {
   align-items: center;
   justify-content: center;
   gap: 18px;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
+  /* Dim only, no backdrop-filter: iOS 26 can keep painting a
+     backdrop-filter layer after the element hides, smearing a ghost
+     blur over whatever view comes next (WebKit bug 298709 family).
+     A near-opaque dim does the same job without the ghost risk. */
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
 }
 .busy-overlay p { margin: 0; font-weight: 700; }
 
