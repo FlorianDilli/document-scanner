@@ -689,10 +689,21 @@ body.editor-open #app-main {
   gap: 14px;
   min-width: 0;
 }
+/* The pane may shrink only the stage; the action row keeps its full
+   height (min-height auto = content size) so nothing is squeezed
+   underneath the filmstrip. */
 #view-editor.in-frame #frame-pane {
   flex: 1 1 0%;
-  min-height: 0;
+  min-height: auto;
   gap: 10px;
+}
+#view-editor.in-frame .crop-actions { flex: none; }
+/* In frame mode the filmstrip is a normal flow item below the action
+   row, never a sticky overlay on top of the buttons. */
+#view-editor.in-frame .page-filmstrip {
+  position: relative;
+  bottom: auto;
+  flex: none;
 }
 
 /* Frame / Look mode switch: a segmented control on a grey track,

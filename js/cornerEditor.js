@@ -9,6 +9,10 @@
 //     scaled by dpr so all drawing happens in CSS px)
 //   * the image is drawn "contain"-fitted, so a fit transform
 //     (scale + offset) maps between the two spaces.
+//   * the photo can be shown rotated (0 | 90 | 270 | 180, clockwise,
+//     same as the page rotation). Corners are PUBLIC in original
+//     image coords; internally they are kept in the rotated image
+//     space, so drawing, dragging and the loupe all stay simple.
 
 const HANDLE_RADIUS = 22; // 44 px hit area (touch target)
 const LOUPE_RADIUS = 70;  // loupe circle radius (CSS px)
@@ -33,15 +37,51 @@ export function isConvexQuad(corners) {
   return sign !== 0;
 }
 
+// Maps an original-image point into the rotated image space (the
+// rotation is clockwise, as in the page pipeline). `w`/`h` are the
+// ORIGINAL image dimensions.
+function toRotatedSpace(p, rotation, w, h) {
+  switch (rotation) {
+    case 90: return { x: h - p.y, y: p.x };
+    case 180: return { x: w - p.x, y: h - p.y };
+    case 270: return { x: p.y, y: w - p.x };
+    default: return { x: p.x, y: p.y };
+  }
+}
+
+// Inverse of toRotatedSpace.
+function toOriginalSpace(q, rotation, w, h) {
+  switch (rotation) {
+    case 90: return { x: q.y, y: h - q.x };
+    case 180: return { x: w - q.x, y: h - q.y };
+    case 270: return { x: w - q.y, y: q.x };
+    default: return { x: q.x, y: q.y };
+  }
+}
+
+// Canvas transform that draws the original image in the rotated
+// image space (origin at the top-left of the rotated image).
+function applyRotationTransform(ctx, rotation, w, h) {
+  switch (rotation) {
+    case 90: ctx.translate(h, 0); ctx.rotate(Math.PI / 2); break;
+    case 180: ctx.translate(w, h); ctx.rotate(Math.PI); break;
+    case 270: ctx.translate(0, w); ctx.rotate(-Math.PI / 2); break;
+    default: break;
+  }
+}
+
 export class CornerEditor {
   constructor(canvas, { onChange } = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.onChange = onChange || (() => {});
-    this.image = null;       // ImageBitmap
-    this.imageWidth = 0;
+    this.image = null;       // ImageBitmap (original orientation)
+    this.imageWidth = 0;     // displayed (rotated) size
     this.imageHeight = 0;
-    this.corners = null;     // [{x,y} TL, TR, BR, BL] in image coords
+    this.origWidth = 0;      // original bitmap size
+    this.origHeight = 0;
+    this.rotation = 0;       // 0 | 90 | 180 | 270, clockwise
+    this.corners = null;     // [{x,y} TL, TR, BR, BL] in rotated image coords
     this.guess = false;      // dashed outline while the frame is an unverified auto-detection
     this.dragIndex = -1;
     this.pointerPos = null;  // display coords of the active pointer
@@ -72,16 +112,40 @@ export class CornerEditor {
     this.draw();
   }
 
-  async setImage(bitmap) {
+  async setImage(bitmap, rotation = 0) {
     if (this.image) this.image.close();
     this.image = bitmap;
-    this.imageWidth = bitmap.width;
-    this.imageHeight = bitmap.height;
+    this.origWidth = bitmap.width;
+    this.origHeight = bitmap.height;
+    this.rotation = rotation;
+    this.updateDisplaySize();
     this.resize();
   }
 
+  updateDisplaySize() {
+    const swap = this.rotation === 90 || this.rotation === 270;
+    this.imageWidth = swap ? this.origHeight : this.origWidth;
+    this.imageHeight = swap ? this.origWidth : this.origHeight;
+  }
+
+  // Changes the displayed rotation. The current corners (edited or
+  // not) are kept on the same physical photo points.
+  setRotation(rotation) {
+    if (rotation === this.rotation || !this.image) {
+      this.rotation = rotation;
+      return;
+    }
+    const orig = this.getCorners();
+    this.rotation = rotation;
+    this.updateDisplaySize();
+    if (orig) this.setCorners(orig);
+    else this.draw();
+  }
+
+  // `corners` are in ORIGINAL image coords.
   setCorners(corners) {
-    this.corners = corners.map((c) => ({ ...c }));
+    this.corners = corners.map((c) =>
+      toRotatedSpace(c, this.rotation, this.origWidth, this.origHeight));
     this.draw();
   }
 
@@ -95,8 +159,11 @@ export class CornerEditor {
     this.draw();
   }
 
+  // Returns the corners in ORIGINAL image coords (the page model space).
   getCorners() {
-    return this.corners ? this.corners.map((c) => ({ ...c })) : null;
+    if (!this.corners) return null;
+    return this.corners.map((c) =>
+      toOriginalSpace(c, this.rotation, this.origWidth, this.origHeight));
   }
 
   // Fit transform: image drawn "contain" inside the canvas.
@@ -189,10 +256,11 @@ export class CornerEditor {
 
     const f = this.computeFit();
 
-    // Image.
+    // Image (rotated to the displayed orientation).
     ctx.save();
     ctx.translate(f.offsetX, f.offsetY);
     ctx.scale(f.scale, f.scale);
+    applyRotationTransform(ctx, this.rotation, this.origWidth, this.origHeight);
     ctx.drawImage(this.image, 0, 0);
     ctx.restore();
 
@@ -271,6 +339,7 @@ export class CornerEditor {
     // image edges (no source-rect clamping, so no dead zones).
     ctx.translate(cx - corner.x * f.scale * LOUPE_ZOOM, cy - corner.y * f.scale * LOUPE_ZOOM);
     ctx.scale(f.scale * LOUPE_ZOOM, f.scale * LOUPE_ZOOM);
+    applyRotationTransform(ctx, this.rotation, this.origWidth, this.origHeight);
     ctx.drawImage(this.image, 0, 0);
     ctx.restore();
 

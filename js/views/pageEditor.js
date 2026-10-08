@@ -165,10 +165,13 @@ function fullImageCorners() {
 }
 
 async function ensureFrameEditor() {
-  if (bitmapPageId === currentPage.id && editor.image) return;
+  if (bitmapPageId === currentPage.id && editor.image) {
+    editor.setRotation(currentPage.rotation);
+    return;
+  }
   if (bitmap) bitmap.close();
   bitmap = await createImageBitmap(currentPage.blob);
-  await editor.setImage(bitmap);
+  await editor.setImage(bitmap, currentPage.rotation);
   editor.setCorners(currentPage.corners);
   bitmapPageId = currentPage.id;
 }
@@ -389,6 +392,7 @@ export function init(context) {
     state.updatePage(currentPage.id, {
       rotation: (currentPage.rotation + 270) % 360,
     });
+    editor.setRotation(currentPage.rotation);
     requestPreview();
     persistSoon();
     // The thumb's proportions are orientation-bound: rebuilding the
@@ -401,6 +405,7 @@ export function init(context) {
     state.updatePage(currentPage.id, {
       rotation: (currentPage.rotation + 90) % 360,
     });
+    editor.setRotation(currentPage.rotation);
     requestPreview();
     persistSoon();
     refreshFilmstrip();
