@@ -891,8 +891,8 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 1.5px 1.5px 0 var(--line);
 }
 
-.edit-actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.edit-actions .btn { flex: 1 1 auto; min-width: 44px; }
+/* square icon-only action button (rotate) */
+.btn.btn-icon { padding: 10px; min-width: 46px; }
 
 /* ---------- export ---------- */
 
