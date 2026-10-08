@@ -130,8 +130,12 @@ body {
 /* ---------- header ---------- */
 
 #app-header {
-  position: sticky;
-  top: 0;
+  /* Not sticky: the body is a fixed-height flex column and only
+     #app-main scrolls, so the header never moves anyway. A sticky
+     element pinned at the top edge is what iOS 26/27 standalone
+     treats as a scroll-edge (Liquid Glass) blur under the status
+     bar; a static header avoids that material entirely. */
+  position: relative;
   z-index: 10;
   display: flex;
   align-items: center;
