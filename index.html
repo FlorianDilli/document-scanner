@@ -51,11 +51,11 @@
           <span id="privacy-tag" class="tag-pill" data-i18n="privacyTag">100 % lokal</span>
         </div>
         <div id="import-buttons">
-          <button id="btn-camera" class="btn btn-primary" type="button">
+          <button id="btn-camera" class="btn btn-tile" type="button">
             <span class="icon-slot" data-icon="camera"></span>
             <span data-i18n="takePhoto">Foto aufnehmen</span>
           </button>
-          <button id="btn-gallery" class="btn" type="button">
+          <button id="btn-gallery" class="btn btn-tile" type="button">
             <span class="icon-slot" data-icon="image"></span>
             <span data-i18n="fromGallery">Aus Galerie wählen</span>
           </button>
@@ -90,7 +90,10 @@
             <span data-i18n="modeLook">Optik</span>
           </button>
         </div>
-        <button id="btn-editor-done" class="btn btn-success" type="button" data-i18n="done">Fertig</button>
+        <button id="btn-editor-done" class="btn btn-success btn-done" type="button">
+          <span class="icon-slot" data-icon="check"></span>
+          <span class="sr-only" data-i18n="done">Fertig</span>
+        </button>
       </div>
 
       <div id="frame-pane" class="pane">
@@ -106,12 +109,14 @@
             <span class="icon-slot" data-icon="expand"></span>
             <span data-i18n="resetCrop">Auf ganzes Bild</span>
           </button>
-          <button id="btn-rotate-left" class="btn btn-icon" type="button" title="Links" aria-label="Links">
-            <span class="icon-slot" data-icon="rotateL"></span>
-          </button>
-          <button id="btn-rotate-right" class="btn btn-icon" type="button" title="Rechts" aria-label="Rechts">
-            <span class="icon-slot" data-icon="rotateR"></span>
-          </button>
+          <div class="rotate-group">
+            <button id="btn-rotate-left" class="btn btn-icon" type="button" title="Links" aria-label="Links">
+              <span class="icon-slot" data-icon="rotateL"></span>
+            </button>
+            <button id="btn-rotate-right" class="btn btn-icon" type="button" title="Rechts" aria-label="Rechts">
+              <span class="icon-slot" data-icon="rotateR"></span>
+            </button>
+          </div>
         </div>
       </div>
 
