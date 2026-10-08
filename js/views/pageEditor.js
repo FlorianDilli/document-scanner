@@ -21,15 +21,10 @@
 import * as state from '../state.js';
 import * as storage from '../storage.js';
 import { CornerEditor, isConvexQuad } from '../cornerEditor.js';
-import {
-  detectPageCorners,
-  renderPreview,
-  getThumbnail,
-  pageAspect,
-  pageFrameAspect,
-} from '../pipeline.js';
+import { detectPageCorners, renderPreview } from '../pipeline.js';
 import { mountIcons } from '../icons.js';
 import { t } from '../i18n.js';
+import { renderPageList, setSidebarCurrent } from './sidebar.js';
 
 const FILTERS = [
   { id: 'original', key: 'filterPhoto' },
@@ -268,111 +263,18 @@ function syncModeButtons() {
     .classList.toggle('in-frame', currentMode === 'frame');
 }
 
-// ---------- filmstrip page switcher ----------
-
-// Persistent thumbnail cache: pageId -> { url, key }. key captures
-// the current pipeline inputs (corners, rotation, filter, params),
-// exactly like the home grid – unchanged pages reuse their object
-// URL across rebuilds, while an edited page gets a fresh preview.
-const filmstripThumbnails = new Map();
-
-function filmstripKey(page) {
-  return JSON.stringify([
-    page.corners,
-    page.rotation,
-    page.filter,
-    page.params,
-  ]);
-}
-
-// Rebuild the filmstrip. With fewer than two pages there is nothing
-// to switch to, so the rail hides itself.
+// Mobile filmstrip + desktop sidebar highlight. With fewer than two
+// pages the mobile strip hides itself.
 function refreshFilmstrip() {
   const strip = document.getElementById('page-filmstrip');
-  const pages = state.getPages();
-  strip.classList.toggle('hidden', !currentPage || pages.length < 2);
-  strip.textContent = '';
-
-  // Drop thumbnails of removed pages; keep the rest.
-  const ids = new Set(pages.map((p) => p.id));
-  for (const [id, entry] of filmstripThumbnails) {
-    if (!ids.has(id)) {
-      URL.revokeObjectURL(entry.url);
-      filmstripThumbnails.delete(id);
-    }
-  }
-
-  pages.forEach((page, index) => {
-    const current = page.id === currentPage.id;
-    const thumb = document.createElement('button');
-    thumb.type = 'button';
-    thumb.className = 'strip-thumb';
-    // Generic DIN A frames – one portrait (1:√2) and one landscape
-    // (√2:1) slot, picked by the page's real orientation: all
-    // portrait pages share the tall frame, all landscape pages the
-    // wide one, so the rail looks uniform (the page is letterboxed
-    // inside; the home grid, in contrast, frames each page in its
-    // real proportions). The orientation also travels with the
-    // tooltip / label.
-    const aspect = pageAspect(page);
-    thumb.style.aspectRatio = String(Math.round(pageFrameAspect(page) * 1000) / 1000);
-    if (aspect > 1) thumb.classList.add('landscape');
-    if (current) {
-      thumb.classList.add('current');
-      thumb.setAttribute('aria-current', 'true');
-    }
-    const label = `${ctx.t('goToPage', { i: index + 1 })} – ${
-      aspect > 1 ? t('orientationLandscape') : t('orientationPortrait')
-    }`;
-    thumb.title = label;
-    thumb.setAttribute('aria-label', label);
-
-    const num = document.createElement('span');
-    num.className = 'strip-num';
-    num.textContent = String(index + 1);
-    thumb.appendChild(num);
-
-    const img = document.createElement('img');
-    img.alt = '';
-    img.draggable = false;
-    thumb.appendChild(img);
-
-    if (!current) thumb.addEventListener('click', () => gotoPage(page.id));
-    strip.appendChild(thumb);
-
-    // Thumbnail: reuse the cached object URL while the page's
-    // pipeline state is unchanged; otherwise regenerate (async)
-    // from the corrected document.
-    const key = filmstripKey(page);
-    const cached = filmstripThumbnails.get(page.id);
-    if (cached && cached.key === key) {
-      img.src = cached.url;
-      return;
-    }
-    if (cached) {
-      URL.revokeObjectURL(cached.url);
-      filmstripThumbnails.delete(page.id);
-    }
-    getThumbnail(page, 240)
-      .then((blob) => {
-        // Discard a stale result if the page changed in the meantime.
-        if (state.getPage(page.id) !== page || filmstripKey(page) !== key) return;
-        const url = URL.createObjectURL(blob);
-        filmstripThumbnails.set(page.id, { url, key });
-        img.src = url;
-      })
-      .catch((err) => console.warn('thumbnail failed', err));
-  });
-
-  // Keep the highlighted page in view (horizontal on mobile,
-  // vertical on desktop) without scrolling the document itself.
-  const active = strip.querySelector('.strip-thumb.current');
-  if (active) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  strip.classList.toggle('hidden', !currentPage || state.getPages().length < 2);
+  setSidebarCurrent(currentPage ? currentPage.id : null);
+  renderPageList(strip, { currentId: currentPage ? currentPage.id : null, onSelect: gotoPage });
 }
 
-// Jump to a page from the filmstrip. The working mode is kept so
-// several shots can be fixed in a row.
-async function gotoPage(pageId) {
+// Jump to a page from the filmstrip or sidebar. The working mode is
+// kept so several shots can be fixed in a row.
+export async function gotoPage(pageId) {
   if (!currentPage || pageId === currentPage.id) return;
   if (!commitFrame()) return;
   await persistNow();

@@ -11,6 +11,7 @@ import { toast, toastAction, showBusy, hideBusy, confirmAction } from './ui.js';
 import * as home from './views/home.js';
 import * as editor from './views/pageEditor.js';
 import * as exportView from './views/export.js';
+import { initSidebar, setSidebarCurrent } from './views/sidebar.js';
 
 const views = {
   home,
@@ -26,11 +27,22 @@ function navigate(view, params = {}) {
   currentParams = params;
   document.querySelectorAll('.view').forEach((v) => v.classList.add('hidden'));
   document.getElementById('view-' + view).classList.remove('hidden');
+  if (view !== 'editor') setSidebarCurrent(null);
   // Editor is a focused full-screen task: the app header is hidden
   // there and the editor toolbar becomes the top row.
   document.body.classList.toggle('editor-open', view === 'editor');
   window.scrollTo(0, 0);
   views[view].show(params);
+}
+
+// Sidebar selection: switch pages inside the editor (keeps the
+// frame/look mode and commits pending edits), otherwise open the page.
+function selectPage(pageId) {
+  if (currentView === 'editor') {
+    editor.gotoPage(pageId);
+    return;
+  }
+  navigate('editor', { pageId, mode: 'frame' });
 }
 
 // Shared context handed to every view.
@@ -199,6 +211,10 @@ async function init() {
   home.init(ctx);
   editor.init(ctx);
   exportView.init(ctx);
+
+  const sidebar = document.getElementById('page-sidebar');
+  sidebar.setAttribute('aria-label', t('filmstripLabel'));
+  initSidebar(sidebar, selectPage);
 
   setupStandaloneViewport();
   setupPwa();
