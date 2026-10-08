@@ -218,7 +218,7 @@ export class CornerEditor {
     ctx.lineTo(br.x, br.y);
     ctx.lineTo(bl.x, bl.y);
     ctx.closePath();
-    ctx.strokeStyle = '#ff6b4a';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
     if (this.guess) ctx.setLineDash([7, 6]);
     ctx.stroke();
@@ -230,10 +230,11 @@ export class CornerEditor {
       ctx.save();
       ctx.beginPath();
       ctx.arc(d.x, d.y, HANDLE_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = i === this.dragIndex ? 'rgba(255, 107, 74, 0.9)' : 'rgba(255, 255, 255, 0.9)';
+      // Active corner inverts to ink so it reads as "selected".
+      ctx.fillStyle = i === this.dragIndex ? 'rgba(20, 20, 20, 0.92)' : 'rgba(255, 255, 255, 0.95)';
       ctx.fill();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#ff6b4a';
+      ctx.strokeStyle = '#ffffff';
       ctx.stroke();
       ctx.restore();
     });
@@ -263,7 +264,7 @@ export class CornerEditor {
     ctx.arc(cx, cy, LOUPE_RADIUS, 0, Math.PI * 2);
     ctx.clip();
     // Backdrop for areas beyond the image edges.
-    ctx.fillStyle = '#12100b';
+    ctx.fillStyle = '#161616';
     ctx.fillRect(cx - LOUPE_RADIUS, cy - LOUPE_RADIUS, 2 * LOUPE_RADIUS, 2 * LOUPE_RADIUS);
     // Draw the image transformed so the corner always maps exactly
     // to the crosshair at the loupe center – even right at the
@@ -286,7 +287,7 @@ export class CornerEditor {
     ctx.moveTo(cx, cy - 12);
     ctx.lineTo(cx, cy + 12);
     ctx.lineWidth = 1.5;
-    ctx.strokeStyle = '#ff6b4a';
+    ctx.strokeStyle = '#141414';
     ctx.stroke();
     ctx.restore();
   }

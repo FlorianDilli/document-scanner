@@ -1,48 +1,48 @@
 /* ==========================================================================
-   Document Scanner – "paper & ink" design
-   Inspired by soft neo-brutalism: beige paper background, warm ink lines,
-   hard offset shadows and orange as the single accent color.
-   Mobile-first, with a matching warm dark theme.
+   Document Scanner – monochrome "soft tile" design
+   Light neutral canvas, off-white rounded tiles, ink (near-black) as the
+   only emphasis color. The primary action of every view is the single
+   solid black element; secondary actions are quiet grey tiles and
+   destructive actions are muted red text. No hard offset shadows and no
+   heavy outlines – hierarchy comes from fill contrast and size.
+   Mobile-first, with a matching inverted dark theme.
    ========================================================================== */
 
 :root {
   color-scheme: light dark;
 
-  /* paper & ink */
-  --bg: #f1eee6;
-  --card: #fbf9f3;
-  --sunken: #e8e4d7;
-  --text: #1b1810;
-  --text-dim: #6e6959;
+  /* surfaces */
+  --bg: #ebebe9;
+  --card: #f8f8f7;
+  --sunken: #e2e2df;
+  --text: #141414;
+  --text-dim: #8a8a88;
 
-  /* lines & hard shadows */
-  --line: #1b1810;
-  --hard: #1b1810;
-  --hairline: 1.5px solid var(--line);
-  --shadow-card: 4px 4px 0 var(--hard);
-  --shadow-pop: 3px 3px 0 var(--hard);
-  --shadow-mini: 2px 2px 0 var(--hard);
+  /* dividers (hairlines are soft, never heavy outlines) */
+  --line: #141414;
+  --hairline: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
 
-  /* inverted (ink) buttons */
-  --solid: #1b1810;
-  --on-solid: #fbf9f3;
+  /* elevation: only floating UI (banners, toasts, drag lift) gets a shadow */
+  --shadow-float: 0 10px 30px rgba(0, 0, 0, 0.14);
+  --shadow-drag: 0 14px 36px rgba(0, 0, 0, 0.2);
 
-  /* the one interesting color */
-  --accent: #ff6b4a;
-  --accent-strong: #ef5433;
-  --on-accent: #1b1810;
+  /* primary / solid actions */
+  --solid: #141414;
+  --on-solid: #ffffff;
+  --accent: #141414;
+  --on-accent: #ffffff;
 
   /* status */
-  --danger: #b92718;
-  --danger-soft: #f8e0d6;
+  --danger: #d2402e;
+  --danger-soft: #f6dcd7;
   --success-text: #1d6f45;
 
   /* shapes */
-  --radius: 18px;
-  --radius-sm: 12px;
+  --radius: 24px;
+  --radius-sm: 14px;
   --radius-pill: 999px;
 
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231b1810' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23141414' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
   /* Safe-area insets get a hard cap: iOS 26 standalone PWAs (home
      screen web apps) report a bottom inset that still reserves room
@@ -63,27 +63,27 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #17150f;
-    --card: #211e15;
-    --sunken: #2c281d;
-    --text: #f1eee6;
-    --text-dim: #a59f8c;
+    --bg: #111111;
+    --card: #1d1d1d;
+    --sunken: #2a2a2a;
+    --text: #f2f2f2;
+    --text-dim: #9a9a98;
 
-    --line: #efece1;
-    --hard: #efece1;
+    --line: #f2f2f2;
 
-    --solid: #f1eee6;
-    --on-solid: #17150f;
+    --shadow-float: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --shadow-drag: 0 14px 36px rgba(0, 0, 0, 0.6);
 
-    --accent: #ff6b4a;
-    --accent-strong: #ff5a38;
-    --on-accent: #1b1810;
+    --solid: #f2f2f2;
+    --on-solid: #111111;
+    --accent: #f2f2f2;
+    --on-accent: #111111;
 
-    --danger: #f0795f;
-    --danger-soft: #3a2419;
+    --danger: #ff7a6b;
+    --danger-soft: #3a2420;
     --success-text: #7fd6a4;
 
-    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23f1eee6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23f2f2f2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 }
 
@@ -140,9 +140,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(12px + var(--safe-top)) clamp(16px, 4vw, 28px) 12px;
+  padding: calc(16px + var(--safe-top)) clamp(16px, 4vw, 28px) 12px;
   background: var(--bg);
-  border-bottom: 2px solid var(--line);
 }
 /* No frosted-glass translucency here on purpose: iOS 26 keeps
    rendering an element's backdrop-filter layer after its box is
@@ -155,7 +154,7 @@ body {
   align-items: center;
   gap: 10px;
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
@@ -210,60 +209,61 @@ body {
 
 .hidden { display: none !important; }
 
-/* ---------- buttons ---------- */
+/* ---------- buttons ----------
+   Hierarchy: .btn-primary / .btn-success = the one solid black action
+   of a view; .btn = grey secondary tile; .btn-danger = text-weight
+   destructive action that stays calm until pressed. */
 
 .btn {
-  min-height: 46px;
+  min-height: 48px;
   min-width: 44px;
-  padding: 10px 18px;
+  padding: 12px 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 2px solid var(--line);
+  border: 0;
   border-radius: var(--radius-pill);
   background: var(--card);
   color: var(--text);
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
   cursor: pointer;
   touch-action: manipulation;
-  box-shadow: var(--shadow-pop);
-  transition: transform 0.06s ease, box-shadow 0.06s ease, background-color 0.15s ease;
+  transition: transform 0.08s ease, background-color 0.15s ease, opacity 0.15s ease;
 }
-.btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--hard); }
-.btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--hard); }
+.btn:hover { background: color-mix(in srgb, var(--card) 88%, var(--text)); }
+.btn:active { transform: scale(0.98); }
 
 /* disabled state for action buttons (including icon-only variants) */
 .btn:disabled,
 .icon-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
-  filter: grayscale(0.35);
   transform: none;
 }
 
-.btn-primary { background: var(--accent); color: var(--on-accent); }
-.btn-primary:hover { background: var(--accent-strong); }
+.btn-primary { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.btn-primary:hover { background: var(--accent); opacity: 0.86; }
 
-/* the solid "finish" action: ink pill with an orange drop shadow */
+/* the solid "finish" action: ink pill, same weight as the primary */
 .btn-success {
   background: var(--solid);
   color: var(--on-solid);
-  box-shadow: 3px 3px 0 var(--accent);
+  font-weight: 700;
 }
-.btn-success:hover { box-shadow: 4px 4px 0 var(--accent); }
+.btn-success:hover { background: var(--solid); opacity: 0.86; }
 
 .btn-danger {
-  background: var(--card);
+  background: transparent;
   color: var(--danger);
-  box-shadow: 3px 3px 0 var(--danger);
+  font-weight: 600;
 }
-.btn-danger:hover { box-shadow: 4px 4px 0 var(--danger); }
+.btn-danger:hover { background: var(--danger-soft); }
 
-.btn-big { font-size: 1.1rem; padding: 14px 24px; }
+.btn-big { font-size: 1.1rem; padding: 16px 28px; min-height: 56px; }
 
 /* inline SVG icons inside buttons */
 .btn .icon,
@@ -282,26 +282,24 @@ body {
   min-width: 44px;
   min-height: 44px;
   padding: 8px 16px;
-  border: 2px solid var(--line);
+  border: 0;
   border-radius: var(--radius-pill);
   background: var(--card);
   color: var(--text);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-mini);
-  transition: transform 0.06s ease, box-shadow 0.06s ease;
+  transition: transform 0.08s ease, background-color 0.15s ease;
 }
-.icon-btn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--hard); }
-.icon-btn:active { transform: translate(1px, 1px); box-shadow: 0 0 0 var(--hard); }
+.icon-btn:hover { background: color-mix(in srgb, var(--card) 88%, var(--text)); }
+.icon-btn:active { transform: scale(0.96); }
 
-/* ---------- cards ---------- */
+/* ---------- cards (grey-on-grey tiles, no outlines) ---------- */
 
 .card {
   background: var(--card);
-  border: 2px solid var(--line);
+  border: 0;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
 }
 
 .card-head {
@@ -322,12 +320,12 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 4px 12px;
-  border: 1.5px solid var(--line);
+  padding: 5px 12px;
+  border: 0;
   border-radius: var(--radius-pill);
-  background: var(--bg);
+  background: var(--sunken);
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.01em;
 }
 .tag-pill::before {
@@ -335,7 +333,7 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--text);
 }
 
 /* ---------- home: hero + import ---------- */
@@ -387,15 +385,14 @@ body {
 .page-card {
   position: relative;
   background: var(--card);
-  border: 2px solid var(--line);
-  border-radius: 14px;
+  border: 0;
+  border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: var(--shadow-pop);
   cursor: pointer;
-  transition: transform 0.06s ease, box-shadow 0.06s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.page-card:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--hard); }
-.page-card:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--hard); }
+.page-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-float); }
+.page-card:active { transform: scale(0.99); }
 
 /* The frame ratio is the page's exact proportion (set inline per
    page from its warp geometry + rotation); the 3:4 fallback only
@@ -409,54 +406,56 @@ body {
   aspect-ratio: 3 / 4;
   object-fit: contain;
   background: var(--sunken);
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 .page-card .page-num {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 12px;
+  left: 12px;
   z-index: 1;
   background: var(--accent);
   color: var(--on-accent);
-  border: 2px solid var(--line);
+  border: 0;
   font-size: 0.75rem;
   font-weight: 800;
-  padding: 1px 9px;
+  padding: 2px 10px;
   border-radius: var(--radius-pill);
 }
 
 .page-card .page-tools {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 8px;
+  right: 8px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 .page-card .page-tools button {
   min-width: 34px;
   min-height: 34px;
   display: grid;
   place-items: center;
-  border: 2px solid var(--line);
+  border: 0;
   border-radius: 50%;
   background: var(--card);
   color: var(--text);
   font-size: 0.9rem;
   line-height: 1;
   cursor: pointer;
-  box-shadow: var(--shadow-mini);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   padding: 0;
   font: inherit;
 }
-.page-card .page-tools button:active { transform: translate(1px, 1px); box-shadow: none; }
+.page-card .page-tools button:active { transform: scale(0.94); }
 .page-card .page-tools .icon { width: 16px; height: 16px; }
 
 /* delete affordance: only turns red on interaction, so the grid
    stays calm but the destructive weight is visible */
 .page-card .page-tools .btn-danger {
   color: var(--text);
-  box-shadow: var(--shadow-mini);
+  background: var(--card);
 }
 .page-card .page-tools .btn-danger:active,
 .page-card .page-tools .btn-danger:focus-visible { color: var(--danger); }
@@ -474,42 +473,58 @@ body {
   pointer-events: none;
   z-index: 5;
   opacity: 0.95;
-  box-shadow: 8px 8px 0 var(--hard);
+  box-shadow: var(--shadow-drag);
 }
 
 /* hint that auto-detection failed for this page */
 .page-card .page-badge {
   position: absolute;
-  left: 8px;
-  bottom: 8px;
+  left: 12px;
+  bottom: 12px;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   background: var(--danger-soft);
   color: var(--danger);
-  border: 2px solid var(--line);
+  border: 0;
   font-size: 0.72rem;
-  font-weight: 800;
-  padding: 2px 8px;
+  font-weight: 700;
+  padding: 3px 9px;
   border-radius: var(--radius-pill);
   pointer-events: none;
 }
 .page-card .page-badge .icon { width: 12px; height: 12px; }
 
+/* Bottom action bar. Phones: sticky to the bottom of the scroll
+   area, so the primary export button stays in thumb reach on long
+   documents. Desktop: static, right-aligned after the page list. */
 .home-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  border-top: 2px solid var(--line);
-  padding-top: 16px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
-.home-footer-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-left: auto; }
+.home-footer-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; }
 .home-footer-actions .btn-success { flex: 1 1 auto; }
-.page-counter { color: var(--text); font-weight: 700; }
+.page-counter { color: var(--text-dim); font-weight: 600; font-size: 0.95rem; }
+
+@media (max-width: 699px) {
+  .home-footer {
+    position: sticky;
+    bottom: calc(12px + var(--safe-bottom));
+    z-index: 4;
+    padding: 10px;
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: var(--shadow-float);
+  }
+  .home-footer .page-counter { padding-left: 6px; }
+  .home-footer-actions { width: 100%; margin-left: 0; flex-wrap: nowrap; }
+  .home-footer-actions .btn { min-height: 52px; }
+}
 
 .empty-state {
   margin: 8px auto 0;
@@ -519,7 +534,7 @@ body {
   font-size: 0.95rem;
   line-height: 1.55;
   padding: 44px 24px;
-  border: 2px dashed color-mix(in srgb, var(--line) 55%, transparent);
+  background: var(--sunken);
   border-radius: var(--radius);
 }
 /* little tilted document illustration */
@@ -529,15 +544,13 @@ body {
   width: 44px;
   height: 56px;
   margin: 0 auto 16px;
-  border: 2px solid var(--line);
   border-radius: 8px;
   transform: rotate(-4deg);
   background:
-    linear-gradient(var(--sunken), var(--sunken)) 9px 14px / 20px 3px no-repeat,
-    linear-gradient(var(--sunken), var(--sunken)) 9px 23px / 26px 3px no-repeat,
-    linear-gradient(var(--sunken), var(--sunken)) 9px 32px / 15px 3px no-repeat,
+    linear-gradient(var(--text-dim), var(--text-dim)) 9px 14px / 20px 3px no-repeat,
+    linear-gradient(var(--text-dim), var(--text-dim)) 9px 23px / 26px 3px no-repeat,
+    linear-gradient(var(--text-dim), var(--text-dim)) 9px 32px / 15px 3px no-repeat,
     var(--card);
-  box-shadow: 3px 3px 0 var(--hard);
 }
 
 /* ---------- toolbars ---------- */
@@ -603,37 +616,39 @@ body.editor-open #app-main {
   gap: 10px;
 }
 
-/* Frame / Look mode switch (segmented control); lives in the top
+/* Frame / Look mode switch: a segmented control on a grey track,
+   the selected segment is the solid ink pill. Lives in the top
    toolbar between Back and Done. Auto margins center it whenever
    the row wraps and the switch lands on its own line. */
 .mode-switch {
   margin-inline: auto;
   display: inline-flex;
-  border: 2px solid var(--line);
+  padding: 4px;
+  gap: 4px;
   border-radius: var(--radius-pill);
-  background: var(--card);
-  box-shadow: var(--shadow-mini);
+  background: var(--sunken);
   overflow: hidden;
 }
 .mode-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
-  padding: 8px 20px;
+  min-height: 40px;
+  padding: 8px 18px;
   border: 0;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
   cursor: pointer;
   touch-action: manipulation;
 }
-.mode-btn + .mode-btn { border-left: 2px solid var(--line); }
 .mode-btn[aria-selected="true"] {
   background: var(--accent);
   color: var(--on-accent);
+  font-weight: 700;
 }
 
 /* ---------- filmstrip page switcher ---------- */
@@ -649,10 +664,10 @@ body.editor-open #app-main {
    home-indicator inset: iOS 26 standalone PWAs inflate env() by
    phantom browser controls (see the :root comment), which used to
    moor the rail ~40px higher than any screen edge justifies.
-   Opaque paper background, no backdrop-filter: iOS 26 misplaces
-   the blur layer of sticky elements at the top of the scroll
-   container (WebKit bug 298709 family), which smeared a ghost
-   haze over the editor toolbar. */
+   Opaque surface, no backdrop-filter: iOS 26 misplaces the blur
+   layer of sticky elements at the top of the scroll container
+   (WebKit bug 298709 family), which smeared a ghost haze over the
+   editor toolbar. */
 .page-filmstrip {
   position: sticky;
   bottom: min(calc(16px + var(--safe-bottom)), 34px);
@@ -664,17 +679,16 @@ body.editor-open #app-main {
      overflow, so every thumb stays reachable by scrolling. */
   align-items: center;
   justify-content: safe center;
-  gap: 6px;
+  gap: 8px;
   margin-top: auto;
-  padding: 6px;
+  padding: 8px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
-  background: var(--bg);
-  border: 2px solid var(--line);
+  background: var(--card);
+  border: 0;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-mini);
 }
 
 /* The frame ratio is a generic DIN A slot (portrait 1:√2 or
@@ -688,14 +702,14 @@ body.editor-open #app-main {
   width: 66px;
   aspect-ratio: 3 / 4;
   padding: 0;
-  border: 2px solid var(--line);
-  border-radius: 8px;
+  border: 0;
+  border-radius: 10px;
   background: var(--sunken);
   overflow: hidden;
   cursor: pointer;
   touch-action: manipulation;
-  transition: transform 0.06s ease, box-shadow 0.06s ease, opacity 0.15s ease;
-  opacity: 0.72;
+  transition: transform 0.08s ease, opacity 0.15s ease;
+  opacity: 0.6;
 }
 /* Landscape pages: a wide frame whose long edge matches the
    portrait thumb's (width = 66 × √2), so both orientations occupy
@@ -703,16 +717,20 @@ body.editor-open #app-main {
 .strip-thumb.landscape { width: 93px; }
 .strip-thumb:hover { transform: translateY(-2px); opacity: 1; }
 .strip-thumb:active { transform: translateY(1px); }
+/* current page: full opacity + an ink ring drawn as an outline so it
+   never changes the thumb's box */
 .strip-thumb.current {
   opacity: 1;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .strip-thumb img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
+  padding: 4px;
+  box-sizing: border-box;
 }
 /* page number pill, mirroring the home grid badge */
 .strip-num {
@@ -722,11 +740,11 @@ body.editor-open #app-main {
   z-index: 1;
   background: var(--accent);
   color: var(--on-accent);
-  border: 1.5px solid var(--line);
+  border: 0;
   font-size: 0.62rem;
   font-weight: 800;
   line-height: 1.4;
-  padding: 0 5px;
+  padding: 0 6px;
   border-radius: var(--radius-pill);
 }
 
@@ -766,7 +784,7 @@ body.editor-open #app-main {
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-content: start;
-    gap: 10px;
+    gap: 12px;
     position: fixed;
     top: 0;
     bottom: 0;
@@ -778,13 +796,14 @@ body.editor-open #app-main {
     overflow-y: auto;
     scrollbar-width: thin;
     background: var(--bg);
-    border-right: 2px solid var(--line);
+    border-right: var(--hairline);
   }
   .page-sidebar .strip-thumb,
   .page-sidebar .strip-thumb.landscape {
     width: auto;
     opacity: 1;
-    border-radius: 10px;
+    border-radius: 14px;
+    background: var(--card);
   }
   #app-header,
   #app-main {
@@ -805,10 +824,9 @@ body.editor-open #app-main {
   width: 100%;
   flex: 1 1 0%;
   min-height: 0;
-  background: #12100b;
-  border: 2px solid var(--line);
+  background: #161616;
+  border: 0;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
   overflow: hidden;
   touch-action: none;
 }
@@ -821,10 +839,9 @@ body.editor-open #app-main {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #12100b;
-  border: 2px solid var(--line);
+  background: #161616;
+  border: 0;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
   min-height: 200px;
   max-height: 55vh;
   overflow: hidden;
@@ -832,12 +849,12 @@ body.editor-open #app-main {
 #edit-preview { display: block; max-width: 100%; max-height: 55vh; }
 #edit-spinner { position: absolute; }
 
-.chip-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .chip {
   min-height: 44px;
   padding: 10px 18px;
-  border: 2px solid var(--line);
+  border: 0;
   border-radius: var(--radius-pill);
   background: var(--card);
   color: var(--text);
@@ -845,12 +862,11 @@ body.editor-open #app-main {
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
-  box-shadow: var(--shadow-mini);
-  transition: transform 0.06s ease, box-shadow 0.06s ease, background-color 0.15s ease;
+  transition: transform 0.08s ease, background-color 0.15s ease;
 }
-.chip:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--hard); }
-.chip:active { transform: translate(1px, 1px); box-shadow: none; }
-.chip[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.chip:hover { background: color-mix(in srgb, var(--card) 88%, var(--text)); }
+.chip:active { transform: scale(0.97); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
 
 .sliders-card { padding: 8px 20px; }
 
@@ -862,7 +878,7 @@ body.editor-open #app-main {
   padding: 12px 0;
 }
 .slider-row + .slider-row { border-top: var(--hairline); }
-.slider-row label { font-weight: 700; font-size: 0.95rem; }
+.slider-row label { font-weight: 600; font-size: 0.95rem; }
 .slider-row .slider-val {
   text-align: right;
   color: var(--text-dim);
@@ -879,38 +895,35 @@ input[type="range"] {
   background: transparent;
 }
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 8px;
+  height: 6px;
   border-radius: var(--radius-pill);
   background: var(--sunken);
-  border: 2px solid var(--line);
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   margin-top: -9px;
   border-radius: 50%;
   background: var(--accent);
-  border: 2px solid var(--line);
-  box-shadow: 1.5px 1.5px 0 var(--line);
+  border: 3px solid var(--card);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 input[type="range"]::-moz-range-track {
-  height: 8px;
+  height: 6px;
   border-radius: var(--radius-pill);
   background: var(--sunken);
-  border: 2px solid var(--line);
 }
 input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--accent);
-  border: 2px solid var(--line);
-  box-shadow: 1.5px 1.5px 0 var(--line);
+  border: 3px solid var(--card);
 }
 
 /* square icon-only action button (rotate) */
-.btn.btn-icon { padding: 10px; min-width: 46px; }
+.btn.btn-icon { padding: 10px; min-width: 48px; }
 
 /* ---------- export ---------- */
 
@@ -918,6 +931,8 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   flex-direction: column;
   padding: 6px 20px;
+  background: var(--card);
+  border-radius: var(--radius);
 }
 .option-row {
   display: flex;
@@ -931,17 +946,17 @@ input[type="range"]::-moz-range-thumb {
   min-width: 0;
 }
 .option-row + .option-row { border-top: var(--hairline); }
-.option-row:first-child { padding-top: 10px; }
-.option-row:last-child { padding-bottom: 10px; }
-.option-row label { font-weight: 700; min-width: 0; }
+.option-row:first-child { padding-top: 12px; }
+.option-row:last-child { padding-bottom: 12px; }
+.option-row label { font-weight: 600; min-width: 0; }
 
 .option-row select,
 .option-row input[type="text"] {
   min-height: 44px;
   padding: 8px 14px;
-  border: 2px solid var(--line);
+  border: 0;
   border-radius: var(--radius-sm);
-  background: var(--card);
+  background: var(--sunken);
   color: var(--text);
   font: inherit;
   font-weight: 600;
@@ -975,24 +990,23 @@ input[type="range"]::-moz-range-thumb {
   flex: none;
   width: 52px;
   height: 30px;
-  border: 2px solid var(--line);
+  border: 0;
   border-radius: var(--radius-pill);
-  background: var(--card);
+  background: var(--sunken);
   position: relative;
   cursor: pointer;
-  box-shadow: var(--shadow-mini);
   transition: background-color 0.15s ease;
   margin: 0;
 }
 .option-row input[type="checkbox"]::before {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 4px;
+  left: 4px;
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--line);
+  background: var(--text);
   transition: transform 0.15s ease;
 }
 .option-row input[type="checkbox"]:checked { background: var(--accent); }
@@ -1003,10 +1017,9 @@ input[type="range"]::-moz-range-thumb {
 
 .export-progress { display: flex; flex-direction: column; gap: 10px; }
 .progress-bar {
-  height: 18px;
-  border: 2px solid var(--line);
+  height: 10px;
   border-radius: var(--radius-pill);
-  background: var(--card);
+  background: var(--sunken);
   overflow: hidden;
 }
 #export-progress-fill {
@@ -1015,6 +1028,10 @@ input[type="range"]::-moz-range-thumb {
   background: var(--accent);
   transition: width 0.2s;
 }
+
+/* Export: the primary action is the last thing in the view; on phones
+   it is pinned to the bottom like the home footer. */
+#btn-export-start { width: 100%; }
 
 /* ---------- banners, toast, overlays ---------- */
 
@@ -1030,9 +1047,9 @@ input[type="range"]::-moz-range-thumb {
   gap: 12px;
   flex-wrap: wrap;
   background: var(--card);
-  border: 2px solid var(--line);
+  border: 0;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-float);
   padding: 14px 18px;
 }
 .banner > div { display: flex; gap: 10px; }
@@ -1053,10 +1070,10 @@ input[type="range"]::-moz-range-thumb {
   display: block;
   background: var(--solid);
   color: var(--on-solid);
-  border: 2px solid var(--line);
+  border: 0;
   padding: 12px 20px;
   border-radius: var(--radius-pill);
-  box-shadow: 4px 4px 0 var(--accent);
+  box-shadow: var(--shadow-float);
   max-width: calc(100vw - 32px);
   text-align: center;
   overflow-wrap: break-word;
@@ -1084,6 +1101,8 @@ input[type="range"]::-moz-range-thumb {
   margin-left: auto;
   min-height: 38px;
   padding: 6px 16px;
+  background: var(--on-solid);
+  color: var(--solid);
 }
 
 /* Desktop: back to the compact single-row pill. */
@@ -1096,7 +1115,7 @@ input[type="range"]::-moz-range-thumb {
     flex-wrap: nowrap;
     gap: 12px;
     border-radius: var(--radius-pill);
-    padding: 10px 12px 10px 18px;
+    padding: 10px 10px 10px 20px;
     max-width: min(560px, calc(100vw - 32px));
   }
 }
@@ -1121,7 +1140,7 @@ input[type="range"]::-moz-range-thumb {
 .spinner {
   width: 44px;
   height: 44px;
-  border: 4px solid color-mix(in srgb, var(--line) 25%, transparent);
+  border: 4px solid color-mix(in srgb, var(--text) 12%, transparent);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
@@ -1138,7 +1157,7 @@ input[type="range"]::-moz-range-thumb {
   /* Above busy overlay (60), toasts (50) and banners (40). */
   z-index: 70;
   display: flex;
-  background: #12100b;
+  background: #111111;
 }
 #camera-video {
   flex: 1 1 0%;
@@ -1161,32 +1180,29 @@ input[type="range"]::-moz-range-thumb {
 #btn-camera-cancel {
   position: absolute;
   left: 20px;
-  /* keep it legible on the dark stage in both themes */
-  color: #f1eee6;
-  border-color: #f1eee6;
-  background: transparent;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
   box-shadow: none;
 }
 .btn-camera-shutter {
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  height: 76px;
   padding: 0;
   display: grid;
   place-items: center;
-  border: 3px solid #f1eee6;
+  border: 4px solid #ffffff;
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
   touch-action: manipulation;
-  transition: transform 0.06s ease;
+  transition: transform 0.08s ease;
 }
 .btn-camera-shutter::before {
   content: "";
-  width: 52px;
-  height: 52px;
-  border: 2px solid #f1eee6;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: var(--accent);
+  background: #ffffff;
 }
 .btn-camera-shutter:hover { transform: scale(1.04); }
 .btn-camera-shutter:active { transform: scale(0.92); }
