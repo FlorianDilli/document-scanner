@@ -5,6 +5,7 @@
 import * as state from './state.js';
 import * as storage from './storage.js';
 import { applyI18n, getLang, setLang, t } from './i18n.js';
+import { mountIcons } from './icons.js';
 import { pickFromCamera, pickFromGallery } from './camera.js';
 import { toast, toastAction, showBusy, hideBusy, confirmAction } from './ui.js';
 import * as home from './views/home.js';
@@ -180,6 +181,7 @@ function setupLanguage() {
 
 async function init() {
   applyI18n();
+  mountIcons();
   setupLanguage();
 
   // Restore persisted pages.
