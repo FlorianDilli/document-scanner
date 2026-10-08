@@ -15,7 +15,14 @@
   <link rel="icon" href="./icons/icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <!-- black-translucent: the page extends behind the status bar and iOS
+       draws no own (frosted) bar over it. With "default" iOS 26 composites
+       a translucent glass band over the top of the app, which smeared a
+       ghost haze over the editor toolbar. Read at install time: changing
+       this requires re-adding the home screen app. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Must run before the stylesheet paints (see js/viewport.js). -->
+  <script src="./js/viewport.js"></script>
   <link rel="stylesheet" href="./css/app.css">
 </head>
 <body>

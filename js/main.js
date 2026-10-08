@@ -45,10 +45,48 @@ const ctx = {
   pickFromGallery,
 };
 
+// ---------- standalone viewport fix ----------
+
+// iOS standalone web apps mis-report 100dvh on cold start as the
+// screen height minus the status-bar inset (WebKit bug 254868),
+// sinking the shell and leaving a system gap at the bottom. The
+// pre-paint bootstrap (js/viewport.js) already pins --app-height
+// to 100vh; re-assert it whenever the app returns to the foreground
+// in case iOS reset the inline style or the value went stale.
+function setupStandaloneViewport() {
+  const root = document.documentElement;
+  const apply = () => {
+    if (navigator.standalone === true) {
+      root.style.setProperty('--app-height', '100vh');
+    }
+  };
+  apply();
+  window.addEventListener('pageshow', apply);
+  document.addEventListener('visibilitychange', apply);
+  // Standalone quirk: after the keyboard closes, iOS can leave the
+  // visual viewport scrolled up, so the top of the app stays hidden.
+  // The document itself never scrolls (the shell is fixed-height),
+  // so resetting the root scroll is always safe.
+  window.addEventListener('focusout', () => {
+    if (navigator.standalone === true) window.scrollTo(0, 0);
+  });
+}
+
 // ---------- PWA ----------
 
 function setupPwa() {
   if (!('serviceWorker' in navigator)) return;
+
+  // Ask for a service worker update check whenever the app comes to
+  // the foreground: iOS home screen apps otherwise keep running a
+  // stale worker until a navigation the OS feels like checking.
+  const checkForUpdate = () => {
+    if (document.visibilityState !== 'visible') return;
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (reg) reg.update().catch(() => {});
+    });
+  };
+  document.addEventListener('visibilitychange', checkForUpdate);
 
   navigator.serviceWorker
     .register('./sw.js', { scope: './' })
@@ -160,6 +198,7 @@ async function init() {
   editor.init(ctx);
   exportView.init(ctx);
 
+  setupStandaloneViewport();
   setupPwa();
 
   // Debug mode (?debug=1): log timings of pipeline steps.

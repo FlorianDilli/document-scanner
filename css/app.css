@@ -53,6 +53,12 @@
      iOS hardware; anything larger is the phantom-controls bug. */
   --safe-top: min(env(safe-area-inset-top, 0px), 59px);
   --safe-bottom: min(env(safe-area-inset-bottom, 0px), 34px);
+
+  /* Full-height unit for the app shell. 100dvh is correct in Safari
+     (tracks the URL bar); standalone web apps override this to 100vh
+     (js/viewport.js pre-paint, main.js at runtime) because iOS
+     standalone mis-reports 100dvh on cold start (WebKit 254868). */
+  --app-height: 100dvh;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -90,16 +96,26 @@ html, body {
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 16px;
+  /* Keep iOS from inflating fonts in landscape and never shrinking
+     them back. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 /* App shell: body is a definite full-height column so views
    can bound their content to the visible viewport. Longer
-   views simply overflow and scroll the document as before. */
+   views simply overflow and scroll the document as before.
+   --app-height defaults to 100dvh (correct in Safari, tracks
+   the URL bar); in standalone mode js/viewport.js and main.js
+   override it to 100vh, because iOS standalone reports 100dvh
+   as the screen height MINUS the status-bar inset on cold start
+   (WebKit bug 254868), which sank the whole shell and left a
+   system-drawn gap at the bottom. 100vh IS the full screen in
+   standalone (there is no URL bar). */
 body {
-  height: 100vh;
-  height: 100dvh;
+  height: var(--app-height, 100dvh);
   display: flex;
   flex-direction: column;
 }
