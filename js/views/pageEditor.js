@@ -63,12 +63,141 @@ let persistTimer = null;
 
 function previewMaxEdge() {
   const wrap = document.getElementById('edit-preview-wrap');
-  const canvas = document.getElementById('edit-preview');
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const availW = Math.max(1, wrap.clientWidth);
-  const availH = Math.max(1, parseFloat(getComputedStyle(canvas).maxHeight) || 0);
-  const edge = Math.ceil(Math.max(availW, availH) * dpr);
+  const availH = Math.max(1, wrap.clientHeight);
+  // Zoomed-in previews are rendered sharper (the CSS zoom only scales).
+  const edge = Math.ceil(Math.max(availW, availH) * dpr * zoom);
   return Math.max(PREVIEW_MIN_EDGE, Math.min(edge, PREVIEW_MAX_EDGE));
+}
+
+// ---------- look mode: zoom ----------
+// Phones: pinch to zoom, one finger pans when zoomed. Desktop: the
+// zoom buttons in the lower-right corner of the preview. The canvas
+// is scaled with a CSS transform; after the gesture settles the
+// preview is re-rendered at the higher resolution.
+
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 4;
+const ZOOM_STEP = 1.25;
+let zoom = 1;
+let panX = 0;
+let panY = 0;
+let zoomRenderTimer = null;
+// Active pointers on the preview (pointerId -> {x, y}) and the
+// gesture baseline (pinch or pan) they started from.
+const touchPointers = new Map();
+let gesture = null;
+
+function previewWrap() {
+  return document.getElementById('edit-preview-wrap');
+}
+
+function clampPan() {
+  const w = previewWrap();
+  const maxX = (w.clientWidth * (zoom - 1)) / 2;
+  const maxY = (w.clientHeight * (zoom - 1)) / 2;
+  panX = Math.max(-maxX, Math.min(maxX, panX));
+  panY = Math.max(-maxY, Math.min(maxY, panY));
+}
+
+function applyZoom() {
+  zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
+  if (zoom === ZOOM_MIN) {
+    panX = 0;
+    panY = 0;
+  }
+  clampPan();
+  document.getElementById('edit-preview').style.transform =
+    zoom === ZOOM_MIN ? '' : `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  document.getElementById('btn-zoom-in').disabled = zoom >= ZOOM_MAX;
+  document.getElementById('btn-zoom-out').disabled = zoom <= ZOOM_MIN;
+}
+
+function scheduleZoomRender() {
+  clearTimeout(zoomRenderTimer);
+  zoomRenderTimer = setTimeout(() => requestPreview(), 200);
+}
+
+function setZoom(next) {
+  const before = zoom;
+  zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, next));
+  applyZoom();
+  if (zoom !== before) scheduleZoomRender();
+}
+
+function resetZoom() {
+  zoom = ZOOM_MIN;
+  panX = 0;
+  panY = 0;
+  clearTimeout(zoomRenderTimer);
+  applyZoom();
+}
+
+function pointerInWrap(e) {
+  const r = previewWrap().getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+function startGesture() {
+  const pts = [...touchPointers.values()];
+  if (pts.length >= 2) {
+    const [a, b] = pts;
+    gesture = {
+      type: 'pinch',
+      dist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+      zoom,
+      panX,
+      panY,
+      mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+    };
+  } else if (pts.length === 1) {
+    gesture = { type: 'pan', start: pts[0], panX, panY };
+  } else {
+    gesture = null;
+  }
+}
+
+function initZoom() {
+  const wrap = previewWrap();
+  wrap.addEventListener('pointerdown', (e) => {
+    touchPointers.set(e.pointerId, pointerInWrap(e));
+    try { wrap.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    startGesture();
+  });
+  wrap.addEventListener('pointermove', (e) => {
+    if (!touchPointers.has(e.pointerId) || !gesture) return;
+    touchPointers.set(e.pointerId, pointerInWrap(e));
+    if (gesture.type === 'pinch' && touchPointers.size >= 2) {
+      const [a, b] = [...touchPointers.values()];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      zoom = gesture.zoom * (dist / gesture.dist);
+      panX = gesture.panX + ((a.x + b.x) / 2 - gesture.mid.x);
+      panY = gesture.panY + ((a.y + b.y) / 2 - gesture.mid.y);
+      applyZoom();
+    } else if (gesture.type === 'pan' && zoom > ZOOM_MIN) {
+      const pos = touchPointers.get(e.pointerId);
+      panX = gesture.panX + (pos.x - gesture.start.x);
+      panY = gesture.panY + (pos.y - gesture.start.y);
+      applyZoom();
+    }
+  });
+  const end = (e) => {
+    if (!touchPointers.has(e.pointerId)) return;
+    touchPointers.delete(e.pointerId);
+    startGesture();
+    scheduleZoomRender();
+  };
+  wrap.addEventListener('pointerup', end);
+  wrap.addEventListener('pointercancel', end);
+
+  document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(zoom * ZOOM_STEP));
+  document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(zoom / ZOOM_STEP));
+  document.getElementById('btn-zoom-in').setAttribute('aria-label', ctx.t('zoomIn'));
+  document.getElementById('btn-zoom-out').setAttribute('aria-label', ctx.t('zoomOut'));
+  document.getElementById('btn-zoom-in').title = ctx.t('zoomIn');
+  document.getElementById('btn-zoom-out').title = ctx.t('zoomOut');
+  applyZoom();
 }
 
 async function requestPreview() {
@@ -291,6 +420,7 @@ export async function gotoPage(pageId) {
   bitmap = null;
   bitmapPageId = null;
   frameHintDismissed = false;
+  resetZoom();
   refreshFilmstrip();
   syncModeButtons();
   await enterPane();
@@ -411,6 +541,8 @@ export function init(context) {
     refreshFilmstrip();
   });
 
+  initZoom();
+
   wireSlider('slider-brightness', 'val-brightness', 'brightness');
   wireSlider('slider-contrast', 'val-contrast', 'contrast');
   wireSlider('slider-sharpen', 'val-sharpen', 'sharpen');
@@ -419,6 +551,7 @@ export function init(context) {
   let resizeTimer = null;
   window.addEventListener('resize', () => {
     if (!currentPage || currentMode !== 'look') return;
+    applyZoom();
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => requestPreview(), 150);
   });
@@ -435,6 +568,7 @@ export async function show({ pageId, mode: requestedMode } = {}) {
   // (an explicit mode param still wins, e.g. the import flow).
   currentMode = requestedMode === 'look' ? 'look' : 'frame';
   frameHintDismissed = false;
+  resetZoom();
   applyStaticTexts();
   refreshFilmstrip();
   syncModeButtons();
