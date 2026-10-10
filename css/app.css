@@ -776,6 +776,11 @@ body.editor-open #app-main {
   justify-content: safe center;
   gap: 8px;
   margin-top: auto;
+  /* Fixed height (tallest thumb + its padding), so rotating a page
+     swaps the thumb's orientation inside the rail without the rail
+     itself growing or shrinking; landscape thumbs are centered
+     vertically by align-items. */
+  height: calc(93px + 2 * 8px);
   padding: 8px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -786,15 +791,14 @@ body.editor-open #app-main {
   border-radius: var(--radius);
 }
 
-/* The frame ratio is a generic DIN A slot (portrait 1:√2 or
-   landscape √2:1, set per page via --frame-aspect) used by the
-   desktop sidebar; the mobile rail uses a fixed slot instead. The page itself is letterboxed in
-   with `contain` on the sunken well. */
+/* Thumbs keep their page's orientation: portrait slots are 66 × 93,
+   landscape ones 93 × 66 (long edge 93 in both). The per-page DIN A
+   ratio arrives via --frame-aspect; the page itself is letterboxed
+   in with `contain` on the sunken well. */
 .strip-thumb {
   position: relative;
   flex: none;
   width: 66px;
-  /* per-page DIN A ratio, set via --frame-aspect (see sidebar.js) */
   aspect-ratio: var(--frame-aspect, 3 / 4);
   padding: 0;
   border: 0;
@@ -806,15 +810,9 @@ body.editor-open #app-main {
   transition: transform 0.08s ease, opacity 0.15s ease;
   opacity: 0.6;
 }
-/* Mobile rail: every thumb occupies the same fixed slot (portrait
-   DIN A, 66 × 93) whatever the page's orientation, so the rail never
-   changes size when a page is rotated. Landscape pages are letterboxed
-   inside the slot by `contain`. */
-.page-filmstrip .strip-thumb {
-  width: 66px;
-  height: 93px;
-  aspect-ratio: auto;
-}
+/* Landscape pages: a wide frame whose long edge matches the portrait
+   thumb's long edge, so both orientations stay within the rail. */
+.strip-thumb.landscape { width: 93px; }
 .strip-thumb:hover { transform: translateY(-2px); opacity: 1; }
 .strip-thumb:active { transform: translateY(1px); }
 /* current page: full opacity + an ink ring drawn as an outline so it
