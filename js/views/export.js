@@ -1,4 +1,4 @@
-// views/export.js – export view: options (margin, quality,
+// views/export.js – export view: options (quality,
 // OCR, filename), progress per page, cancel, and delivery
 // via the Web Share API (mobile) or a download link.
 
@@ -46,7 +46,6 @@ async function startExport() {
   filenameInput.value = filename;
 
   const options = {
-    margin: Number(document.getElementById('opt-margin').value),
     quality: Number(document.getElementById('opt-quality').value),
     ocr: document.getElementById('opt-ocr').checked,
     filename,

@@ -3,8 +3,8 @@
 // Layout per page:
 //   * A4 = 595.28 x 841.89 pt; portrait or landscape chosen
 //     from the processed image's aspect ratio.
-//   * The image is scaled to FIT inside the page (contain),
-//     centered, with the user's margin.
+//   * The image is scaled to FIT the whole page (contain),
+//     centered, with no margin.
 //   * The image is embedded as JPEG (small files).
 //   * Recognized words are drawn at their bounding-box position
 //     with opacity 0, so the PDF is searchable/selectable but
@@ -44,12 +44,12 @@ function canvasToJpegBlob(canvas, quality) {
 
 // Build the PDF.
 // pages: page objects from state.js
-// options: { margin, quality, ocr, filename }
+// options: { quality, ocr, filename }
 // onProgress(current, total, phase)
 // shouldCancel(): returns true to abort (returns null)
 // onOcrProgress(status, progress): per-page OCR progress
 export async function buildPdf(pages, options, onProgress, shouldCancel, onOcrProgress) {
-  const { margin = 18, quality = 0.85, ocr = true, filename = 'scan.pdf' } = options;
+  const { quality = 0.85, ocr = true, filename = 'scan.pdf' } = options;
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
@@ -94,10 +94,8 @@ export async function buildPdf(pages, options, onProgress, shouldCancel, onOcrPr
       const pageH = landscape ? A4_W : A4_H;
       const pdfPage = pdfDoc.addPage([pageW, pageH]);
 
-      // 4. Fit the image inside the page (contain), centered.
-      const availW = pageW - 2 * margin;
-      const availH = pageH - 2 * margin;
-      const scale = Math.min(availW / imgWidth, availH / imgHeight);
+      // 4. Fit the image to the full page (contain), centered.
+      const scale = Math.min(pageW / imgWidth, pageH / imgHeight);
       const imgW = imgWidth * scale;
       const imgH = imgHeight * scale;
       const imgX = (pageW - imgW) / 2;
