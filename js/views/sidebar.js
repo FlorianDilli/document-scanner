@@ -36,12 +36,11 @@ export function renderPageList(container, { currentId = null, onSelect = null } 
     const thumb = document.createElement('button');
     thumb.type = 'button';
     thumb.className = 'strip-thumb';
-    // Generic DIN A frames: one portrait (1:√2) and one landscape
-    // (√2:1) slot, picked by the page's real orientation. The page is
+    // Generic DIN A frame picked by the page's real orientation (the
+    // mobile rail overrides this with a fixed slot). The page is
     // letterboxed inside with `contain`.
     const aspect = pageAspect(page);
-    thumb.style.aspectRatio = String(Math.round(pageFrameAspect(page) * 1000) / 1000);
-    if (aspect > 1) thumb.classList.add('landscape');
+    thumb.style.setProperty('--frame-aspect', String(Math.round(pageFrameAspect(page) * 1000) / 1000));
     if (current) {
       thumb.classList.add('current');
       thumb.setAttribute('aria-current', 'true');

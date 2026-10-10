@@ -662,12 +662,10 @@ body {
 body.editor-open #app-header { display: none; }
 body.editor-open #app-main {
   padding-top: 0;
-  /* Same tail as the filmstrip's sticky bottom offset (see the
-     filmstrip rule), so the rail never jumps when the scroll ends;
-     capped at the real home-indicator inset because iOS 26
-     standalone PWAs inflate env(safe-area-inset-bottom) with
-     phantom browser controls. */
-  padding-bottom: min(calc(16px + var(--safe-bottom)), 34px);
+  /* Same gutter as the left and right edges (the #app-main side
+     padding), so the filmstrip rail sits as far from the bottom of
+     the screen as from the sides. */
+  padding-bottom: clamp(16px, 4vw, 28px);
 }
 
 /* Both modes fill the viewport: the work area grows and the filmstrip
@@ -758,19 +756,16 @@ body.editor-open #app-main {
    thumbs so it never crowds the buttons above it). Desktop: the
    same rail morphs into a fixed vertical strip on the left edge of
    the screen with much larger thumbs (see the media queries below).
-   In frame mode margin-top: auto sinks it below the stage; the
-   sticky bottom offset matches the editor's bottom padding so the
-   rail never jumps when the scroll ends. It is capped at the real
-   home-indicator inset: iOS 26 standalone PWAs inflate env() by
-   phantom browser controls (see the :root comment), which used to
-   moor the rail ~40px higher than any screen edge justifies.
+    In frame mode margin-top: auto sinks it below the stage; the
+    bottom gap comes from the editor's bottom padding (same gutter as
+    the sides).
+
    Opaque surface, no backdrop-filter: iOS 26 misplaces the blur
    layer of sticky elements at the top of the scroll container
    (WebKit bug 298709 family), which smeared a ghost haze over the
    editor toolbar. */
 .page-filmstrip {
   position: relative;
-  bottom: min(calc(16px + var(--safe-bottom)), 34px);
   z-index: 5;
   display: flex;
   /* Mixed portrait/landscape thumbs are centered on the rail axis,
@@ -792,15 +787,15 @@ body.editor-open #app-main {
 }
 
 /* The frame ratio is a generic DIN A slot (portrait 1:√2 or
-   landscape √2:1, set inline per page by its orientation) so all
-   previews share one of two uniform shapes; the 3:4 fallback only
-   covers a missing page model. The page itself is letterboxed in
+   landscape √2:1, set per page via --frame-aspect) used by the
+   desktop sidebar; the mobile rail uses a fixed slot instead. The page itself is letterboxed in
    with `contain` on the sunken well. */
 .strip-thumb {
   position: relative;
   flex: none;
   width: 66px;
-  aspect-ratio: 3 / 4;
+  /* per-page DIN A ratio, set via --frame-aspect (see sidebar.js) */
+  aspect-ratio: var(--frame-aspect, 3 / 4);
   padding: 0;
   border: 0;
   border-radius: 10px;
@@ -811,10 +806,15 @@ body.editor-open #app-main {
   transition: transform 0.08s ease, opacity 0.15s ease;
   opacity: 0.6;
 }
-/* Landscape pages: a wide frame whose long edge matches the
-   portrait thumb's (width = 66 × √2), so both orientations occupy
-   a similar slot in the rail. */
-.strip-thumb.landscape { width: 93px; }
+/* Mobile rail: every thumb occupies the same fixed slot (portrait
+   DIN A, 66 × 93) whatever the page's orientation, so the rail never
+   changes size when a page is rotated. Landscape pages are letterboxed
+   inside the slot by `contain`. */
+.page-filmstrip .strip-thumb {
+  width: 66px;
+  height: 93px;
+  aspect-ratio: auto;
+}
 .strip-thumb:hover { transform: translateY(-2px); opacity: 1; }
 .strip-thumb:active { transform: translateY(1px); }
 /* current page: full opacity + an ink ring drawn as an outline so it
@@ -898,8 +898,7 @@ body.editor-open #app-main {
     background: var(--bg);
     border-right: var(--hairline);
   }
-  .page-sidebar .strip-thumb,
-  .page-sidebar .strip-thumb.landscape {
+  .page-sidebar .strip-thumb {
     width: auto;
     opacity: 1;
     border-radius: 14px;
