@@ -14,6 +14,8 @@ after the first load. Photos are processed entirely in the browser:
 - **OCR** (German + English) → invisible but **selectable/searchable text**
   layer in the PDF
 - **Multi-page A4 PDF** export (Web Share API on mobile, download fallback)
+- **Save to camera roll**: same pages as JPEG images (share sheet on
+  mobile, one download per image elsewhere)
 - **Offline** after the first visit, installable to the home screen (PWA)
 - UI language: **German by default**, English available (header button)
 
@@ -58,6 +60,8 @@ js/cvClient.js        promise wrapper around the worker (transferables)
 js/cornerEditor.js    draggable corners + loupe (Pointer Events)
 js/ocr.js             Tesseract.js wrapper (one reused worker)
 js/pdf.js             A4 PDF with invisible text layer (pdf-lib + fontkit)
+
+js/images.js          one JPEG per page (camera roll export)
 js/views/home.js      page grid, import, drag-&-drop reorder, delete w/ undo
 js/views/pageEditor.js  single page editor: Frame (crop) + Look (filters/rotate)
 js/views/export.js    export view

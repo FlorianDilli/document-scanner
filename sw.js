@@ -12,7 +12,7 @@
 //   * The cache name is versioned; old caches are
 //     deleted on activate.
 
-const CACHE = 'scanner-v29';
+const CACHE = 'scanner-v30';
 
 // App shell + small vendor files (precached at install).
 const PRECACHE = [
@@ -34,6 +34,7 @@ const PRECACHE = [
   './js/cornerEditor.js',
   './js/ocr.js',
   './js/pdf.js',
+  './js/images.js',
   './js/views/home.js',
   './js/views/pageEditor.js',
   './js/views/export.js',

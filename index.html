@@ -167,6 +167,19 @@
       </div>
       <div class="export-options">
         <div class="option-row">
+          <span class="option-label" data-i18n="format">Format</span>
+          <div class="format-switch" id="opt-format" role="radiogroup">
+            <button class="format-btn" type="button" role="radio" aria-checked="true" data-format="pdf">
+              <span class="icon-slot" data-icon="pdf"></span>
+              <span data-i18n="formatPdf">PDF</span>
+            </button>
+            <button class="format-btn" type="button" role="radio" aria-checked="false" data-format="images">
+              <span class="icon-slot" data-icon="image"></span>
+              <span data-i18n="formatImages">Bilder</span>
+            </button>
+          </div>
+        </div>
+        <div class="option-row">
           <label for="opt-quality" data-i18n="quality">Qualität</label>
           <select id="opt-quality">
             <option value="0.7" data-i18n="qualityLow">Niedrig</option>
@@ -174,7 +187,7 @@
             <option value="0.95" selected data-i18n="qualityHigh">Hoch</option>
           </select>
         </div>
-        <div class="option-row">
+        <div class="option-row" id="row-ocr">
           <label for="opt-ocr" data-i18n="ocrToggle">Text erkennen (OCR)</label>
           <input type="checkbox" id="opt-ocr" checked>
         </div>
@@ -183,6 +196,7 @@
           <input type="text" id="opt-filename" value="scan.pdf">
         </div>
       </div>
+      <p id="format-hint" class="format-hint hidden" data-i18n="formatHintImages"></p>
       <div id="export-progress" class="export-progress hidden">
         <div class="progress-bar"><div id="export-progress-fill"></div></div>
         <p id="export-progress-text"></p>

@@ -122,7 +122,7 @@ body {
 
 ::selection { background: var(--accent); color: var(--on-accent); }
 
-:is(.btn, .icon-btn, .chip, .mode-btn, .strip-thumb, select, input[type="text"], input[type="checkbox"], [tabindex], .page-card):focus-visible {
+:is(.btn, .icon-btn, .chip, .mode-btn, .format-btn, .strip-thumb, select, input[type="text"], input[type="checkbox"], [tabindex], .page-card):focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
@@ -1131,6 +1131,52 @@ input[type="range"]::-moz-range-thumb {
 .option-row input[type="checkbox"]:checked::before {
   transform: translateX(22px);
   background: var(--on-accent);
+}
+
+/* Row labels that are not <label> (e.g. the format switch) */
+.option-row .option-label { font-weight: 600; min-width: 0; }
+
+/* Format choice (PDF / images): segmented control on a sunken
+   track, the selected segment is the solid ink pill – the same
+   language as the editor's frame/look switch. */
+.format-switch {
+  display: inline-flex;
+  flex: none;
+  padding: 4px;
+  gap: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--sunken);
+  overflow: hidden;
+}
+.format-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.format-btn[aria-checked="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+/* Note below the options, shown for the image format only. */
+.format-hint {
+  padding: 0 20px;
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .export-progress { display: flex; flex-direction: column; gap: 10px; }
