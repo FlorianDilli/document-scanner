@@ -1,7 +1,7 @@
 // sidebar.js – page previews. Shared renderer for the desktop left
-// sidebar (visible on every view) and the editor's mobile filmstrip.
-// Thumbnails are cached per page and rebuilt only when the page's
-// pipeline inputs change.
+// sidebar (visible in the editor only) and the editor's mobile
+// filmstrip. Thumbnails are cached per page and rebuilt only when
+// the page's pipeline inputs change.
 
 import * as state from '../state.js';
 import { getThumbnail, pageAspect, pageFrameAspect } from '../pipeline.js';

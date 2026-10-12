@@ -701,12 +701,16 @@ body.editor-open #app-main {
   gap: 14px;
   min-width: 0;
 }
-/* The pane may shrink only the stage; the action row keeps its full
-   height (min-height auto = content size) so nothing is squeezed
-   underneath the filmstrip. */
+/* The pane is bounded by the view, never by its content. min-height
+   must be 0 (not auto): the corner-editor canvas takes its size from
+   #frame-stage, so its intrinsic aspect ratio would otherwise floor
+   the pane at the stage width – on desktop that grows the stage into
+   a square taller than the viewport and pushes the action row off
+   screen. The action row stays at full height via flex: none, so
+   only the stage ever shrinks. */
 #view-editor.in-frame #frame-pane {
   flex: 1 1 0%;
-  min-height: auto;
+  min-height: 0;
   gap: 10px;
 }
 #view-editor.in-frame .crop-actions { flex: none; }
@@ -873,14 +877,18 @@ body.editor-open #app-main {
 /* Phones: no sidebar; the editor keeps its bottom filmstrip. */
 .page-sidebar { display: none; }
 
-/* Desktop: fixed left column with the scanned documents on every
-   view. The header and main area shift right of it and take the
-   full remaining width, so toolbars start at the left edge of the
-   content area instead of floating in a centered column. */
+/* Desktop: fixed left column with the scanned documents, shown in
+   the edit mode ONLY. Home and export run full width again, so the
+   header and main area shift right of the rail just while editing
+   (toolbars start at the left edge of the content area instead of
+   floating in a centered column). The rail is the desktop stand-in
+   for the editor's bottom filmstrip – the phone rail stays. */
 @media (min-width: 700px) {
-  .page-sidebar {
+  body.editor-open .page-sidebar {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* One preview per line: every page gets the full rail width, so
+       mixed orientations stack cleanly instead of pairing up. */
+    grid-template-columns: 1fr;
     align-content: start;
     gap: 12px;
     position: fixed;
@@ -896,17 +904,17 @@ body.editor-open #app-main {
     background: var(--bg);
     border-right: var(--hairline);
   }
-  .page-sidebar .strip-thumb {
+  body.editor-open .page-sidebar .strip-thumb {
     width: auto;
     opacity: 1;
     border-radius: 14px;
     background: var(--card);
   }
-  #app-header,
-  #app-main {
+  body.editor-open #app-header,
+  body.editor-open #app-main {
     margin-left: var(--sidebar-w);
   }
-  #app-main {
+  body.editor-open #app-main {
     width: auto;
     max-width: none;
     margin-right: 0;
