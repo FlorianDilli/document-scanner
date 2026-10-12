@@ -347,13 +347,17 @@ function syncFrameHint() {
   const failed = Boolean(currentPage)
     && (currentPage.detected === false || currentPage.fullFrame === true);
   const btn = document.getElementById('btn-redetect');
+  const key = failed ? 'redetectDisabled' : 'redetect';
   btn.disabled = failed;
   const label = btn.querySelector('span[data-i18n]');
   if (label) {
-    label.setAttribute('data-i18n', failed ? 'redetectDisabled' : 'redetect');
-    label.textContent = ctx.t(failed ? 'redetectDisabled' : 'redetect');
+    label.setAttribute('data-i18n', key);
+    label.textContent = ctx.t(key);
   }
-  btn.title = ctx.t(failed ? 'redetectDisabled' : 'redetect');
+  btn.title = ctx.t(key);
+  // On phones the label is hidden (icon-only row, see app.css), so the
+  // button needs an explicit accessible name instead of its text.
+  btn.setAttribute('aria-label', ctx.t(key));
   if (editor.image) editor.setGuess(failed && !frameHintDismissed);
 }
 

@@ -853,9 +853,20 @@ body.editor-open #app-main {
 /* Phones: in frame mode the crop stage must not stretch all the way
    down into the filmstrip zone. Capping its height ends the frame
    selection higher up; the buttons below it keep clear air. On
-   short viewports the cap never binds (flex shrinking dominates). */
+   short viewports the cap never binds (flex shrinking dominates).
+   The frame actions become icon-only too: their labels ("Erneut
+   erkennen", "Auf ganzes Bild") are long and would wrap to two lines
+   or squeeze the rotate pair, so the wording lives on as title /
+   aria-label only. The row then hugs its four controls instead of
+   stretching two mostly empty pills across the width. */
 @media (max-width: 699px) {
   #view-editor.in-frame #frame-stage { max-height: 62vh; }
+  .crop-actions {
+    grid-template-columns: auto auto auto;
+    justify-content: start;
+  }
+  .crop-actions .btn { min-width: 44px; }
+  .crop-actions .btn span[data-i18n] { display: none; }
 }
 
 /* Desktop: the page sidebar (below) replaces the filmstrip. */
