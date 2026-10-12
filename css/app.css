@@ -127,10 +127,44 @@ body {
   outline-offset: 2px;
 }
 
+/* ---------- header ---------- */
+
+#app-header {
+  /* Not sticky: the body is a fixed-height flex column and only
+     #app-main scrolls, so the header never moves anyway. A sticky
+     element pinned at the top edge is what iOS 26/27 standalone
+     treats as a scroll-edge (Liquid Glass) blur under the status
+     bar; a static header avoids that material entirely. */
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(16px + var(--safe-top)) clamp(16px, 4vw, 28px) 12px;
+  background: var(--bg);
+}
+
+#app-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* brand logo */
+#app-logo {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+
 /* ---------- app shell ---------- */
 
 #app-main {
-  padding: calc(20px + var(--safe-top)) clamp(16px, 4vw, 28px) calc(48px + var(--safe-bottom));
+  padding: 20px clamp(16px, 4vw, 28px) calc(48px + var(--safe-bottom));
   max-width: 1020px;
   /* Definite width. With only `margin: 0 auto` this flex item is
      sized as fit-content, and one child with a wide intrinsic size
@@ -581,9 +615,12 @@ body {
 
 /* ---------- page editor ---------- */
 
-/* The editor is a focused full-screen task: no app header above it,
-   the editor toolbar is the top row, so the photo stage reclaims all
-   of the head space. */
+/* The editor is a focused full-screen task: the app header is
+   hidden (toggled from main.js) and the editor toolbar becomes
+   the top row, so the photo stage reclaims all of the head
+   space. */
+
+body.editor-open #app-header { display: none; }
 
 body.editor-open #app-main {
   padding-top: 0;
@@ -841,6 +878,7 @@ body.editor-open #app-main {
     border-radius: 14px;
     background: var(--card);
   }
+  body.editor-open #app-header,
   body.editor-open #app-main {
     margin-left: var(--sidebar-w);
   }
