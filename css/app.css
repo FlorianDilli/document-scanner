@@ -882,15 +882,17 @@ body.editor-open #app-main {
    header and main area shift right of the rail just while editing
    (toolbars start at the left edge of the content area instead of
    floating in a centered column). The rail is the desktop stand-in
-   for the editor's bottom filmstrip – the phone rail stays. */
+   for the editor's bottom filmstrip – the phone rail stays.
+
+   Block flow, NOT grid: a grid item whose width comes from a 1fr
+   track has no definite width while its auto row is sized, so the
+   thumb's aspect-ratio height is invisible to the row and the
+   previews end up on top of each other. In block flow the thumb's
+   100% width resolves against the rail's definite content box, so
+   every preview takes its real place and keeps its proportions. */
 @media (min-width: 700px) {
   body.editor-open .page-sidebar {
-    display: grid;
-    /* One preview per line: every page gets the full rail width, so
-       mixed orientations stack cleanly instead of pairing up. */
-    grid-template-columns: 1fr;
-    align-content: start;
-    gap: 12px;
+    display: block;
     position: fixed;
     top: 0;
     bottom: 0;
@@ -904,8 +906,12 @@ body.editor-open #app-main {
     background: var(--bg);
     border-right: var(--hairline);
   }
+  /* One preview per line: every page gets the full rail width, so
+     mixed orientations stack cleanly instead of pairing up. */
   body.editor-open .page-sidebar .strip-thumb {
-    width: auto;
+    display: block;
+    width: 100%;
+    margin-bottom: 12px;
     opacity: 1;
     border-radius: 14px;
     background: var(--card);
