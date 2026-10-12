@@ -589,7 +589,7 @@ body {
   gap: 10px;
 }
 .crop-actions .btn {
-  min-height: 56px;
+  min-height: 48px;
   min-width: 0;
   padding: 10px 12px;
   text-align: center;
@@ -605,8 +605,8 @@ body {
   background: var(--sunken);
 }
 .rotate-group .btn-icon {
-  min-width: 48px;
-  min-height: 48px;
+  min-width: 40px;
+  min-height: 40px;
   padding: 0;
   background: transparent;
 }
@@ -696,9 +696,9 @@ body.editor-open #app-main {
 .mode-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 8px 18px;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 14px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
@@ -714,6 +714,22 @@ body.editor-open #app-main {
   color: var(--on-accent);
   font-weight: 700;
 }
+
+/* Editor toolbar controls: 40px pills instead of the generic 48–52px
+   blocks, so Back, the mode switch and Done sit on one calm line that
+   does not tower over the photo. The switch (4px track + 32px
+   segments) matches this height exactly. */
+#view-editor > .view-toolbar:first-child .btn {
+  min-height: 40px;
+  padding: 8px 16px;
+}
+#view-editor > .view-toolbar:first-child .btn.btn-done {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+}
+#view-editor > .view-toolbar:first-child .btn-done .icon { width: 20px; height: 20px; }
 
 /* ---------- filmstrip page switcher ---------- */
 
@@ -740,14 +756,25 @@ body.editor-open #app-main {
      overflow, so every thumb stays reachable by scrolling. */
   align-items: center;
   justify-content: safe center;
-  gap: 8px;
+  gap: 6px;
   margin-top: auto;
-  /* Fixed height (tallest thumb + its padding), so rotating a page
-     swaps the thumb's orientation inside the rail without the rail
-     itself growing or shrinking; landscape thumbs are centered
-     vertically by align-items. */
-  height: calc(93px + 2 * 8px);
-  padding: 8px;
+  /* The rail hugs its thumbs instead of spanning the full width:
+     with few pages it is a narrow pill, and only once the thumbs
+     would outgrow the row does it cap at the viewport and scroll
+     (a fit-content scroll box min-maxes against the available
+     width, never against its own content). */
+  align-self: center;
+  width: fit-content;
+  max-width: 100%;
+  /* Half the previous rail height (109px with 93px thumbs): the
+     thumb long edge plus the rail padding, so the rail keeps a
+     fixed height when a page rotates (the orientation swap stays
+     inside it) while landscape thumbs are centered vertically by
+     align-items. */
+  --strip-long: 48px;
+  --strip-pad: 4px;
+  height: calc(var(--strip-long) + 2 * var(--strip-pad));
+  padding: var(--strip-pad);
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
@@ -757,18 +784,18 @@ body.editor-open #app-main {
   border-radius: var(--radius);
 }
 
-/* Thumbs keep their page's orientation: portrait slots are 66 × 93,
-   landscape ones 93 × 66 (long edge 93 in both). The per-page DIN A
-   ratio arrives via --frame-aspect; the page itself is letterboxed
-   in with `contain` on the sunken well. */
+/* Thumbs keep their page's orientation: portrait slots are long
+   edge / 1.5 tall, landscape ones 48 wide (long edge 48 in both).
+   The per-page DIN A ratio arrives via --frame-aspect; the page
+   itself is letterboxed in with `contain` on the sunken well. */
 .strip-thumb {
   position: relative;
   flex: none;
-  width: 66px;
+  width: calc(var(--strip-long, 48px) * 2 / 3);
   aspect-ratio: var(--frame-aspect, 3 / 4);
   padding: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--sunken);
   overflow: hidden;
   cursor: pointer;
@@ -778,7 +805,7 @@ body.editor-open #app-main {
 }
 /* Landscape pages: a wide frame whose long edge matches the portrait
    thumb's long edge, so both orientations stay within the rail. */
-.strip-thumb.landscape { width: 93px; }
+.strip-thumb.landscape { width: var(--strip-long, 48px); }
 .strip-thumb:hover { transform: translateY(-2px); opacity: 1; }
 .strip-thumb:active { transform: translateY(1px); }
 /* current page: full opacity + an ink ring drawn as an outline so it
@@ -793,29 +820,29 @@ body.editor-open #app-main {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 4px;
+  padding: 3px;
   box-sizing: border-box;
 }
 /* page number pill, mirroring the home grid badge */
 .strip-num {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  top: 2px;
+  left: 2px;
   z-index: 1;
   background: var(--accent);
   color: var(--on-accent);
   border: 0;
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   font-weight: 800;
-  line-height: 1.4;
-  padding: 0 6px;
+  line-height: 1.5;
+  padding: 0 4px;
   border-radius: var(--radius-pill);
 }
 
 /* Narrow phones: icon-only mode buttons keep the toolbar on one
    row (the labels stay available to assistive tech via aria-label). */
 @media (max-width: 479px) {
-  .view-toolbar .mode-btn { padding: 8px 14px; }
+  .view-toolbar .mode-btn { padding: 6px 12px; }
   .view-toolbar .mode-btn span[data-i18n] { display: none; }
 }
 
@@ -946,15 +973,15 @@ body.editor-open #app-main {
 .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .chip {
-  min-height: 44px;
-  padding: 10px 18px;
+  min-height: 36px;
+  padding: 8px 16px;
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--card);
   color: var(--text);
   font: inherit;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: transform 0.08s ease, background-color 0.15s ease;
 }
