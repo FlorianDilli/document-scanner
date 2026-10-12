@@ -589,12 +589,12 @@ body {
   gap: 10px;
 }
 .crop-actions .btn {
-  min-height: 48px;
+  min-height: 40px;
   min-width: 0;
-  padding: 10px 12px;
+  padding: 8px 12px;
   text-align: center;
   line-height: 1.2;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 .rotate-group {
   display: inline-flex;
@@ -605,13 +605,13 @@ body {
   background: var(--sunken);
 }
 .rotate-group .btn-icon {
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 32px;
+  min-height: 32px;
   padding: 0;
   background: transparent;
 }
 .rotate-group .btn-icon:hover { background: var(--card); }
-.rotate-group .btn-icon .icon { width: 20px; height: 20px; }
+.rotate-group .btn-icon .icon { width: 18px; height: 18px; }
 
 /* ---------- page editor ---------- */
 
@@ -772,9 +772,13 @@ body.editor-open #app-main {
      inside it) while landscape thumbs are centered vertically by
      align-items. */
   --strip-long: 48px;
-  --strip-pad: 4px;
-  height: calc(var(--strip-long) + 2 * var(--strip-pad));
-  padding: var(--strip-pad);
+  --strip-gap: 5px;
+  height: calc(var(--strip-long) + 2 * var(--strip-gap));
+  /* Extra room left and right (and above/below): the rail hugs its
+     thumbs, so without it the first and last document would sit
+     flush against the rounded corners with no card border around
+     the pages at all. */
+  padding: var(--strip-gap) 12px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
