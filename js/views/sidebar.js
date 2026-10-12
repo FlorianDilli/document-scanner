@@ -12,6 +12,15 @@ import { t } from '../i18n.js';
 // unchanged pages reuse their object URL across rebuilds.
 const thumbCache = new Map();
 
+// The rail shows its previews BIG: the desktop rail gives every page
+// the full column width (~207 CSS px, ~290 tall for a portrait page),
+// and phones/tablets display that at 2–3 device pixels per CSS pixel.
+// Rendering the thumbnail at only ~240 px therefore upscales it ~3x,
+// which turns the document into unreadable mush. 900 px keeps the
+// page text legible on HiDPI screens and still costs almost nothing
+// (the pipeline renders the preview on a downscaled copy anyway).
+const THUMB_MAX_EDGE = 900;
+
 function thumbKey(page) {
   return JSON.stringify([page.corners, page.rotation, page.filter, page.params]);
 }
@@ -77,7 +86,7 @@ export function renderPageList(container, { currentId = null, onSelect = null } 
       URL.revokeObjectURL(cached.url);
       thumbCache.delete(page.id);
     }
-    getThumbnail(page, 240)
+    getThumbnail(page, THUMB_MAX_EDGE)
       .then((blob) => {
         // Discard a stale result if the page changed in the meantime.
         if (state.getPage(page.id) !== page || thumbKey(page) !== key) return;
