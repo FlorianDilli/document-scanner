@@ -3,10 +3,7 @@
 export const STRINGS = {
   de: {
     appTitle: 'Dokumenten-Scanner',
-    heroTitle: 'Scanne Dokumente. Direkt im Browser.',
-    heroSub: 'Kein Konto, keine Cloud, keine Kosten – nur dein Browser, der seine Sache gut macht.',
     newScan: 'Neu scannen',
-    privacyTag: '100 % lokal',
     takePhoto: 'Foto aufnehmen',
     fromGallery: 'Aus Galerie wählen',
     importHint: 'Fotos werden lokal verarbeitet – nichts verlässt dein Gerät.',
@@ -92,10 +89,7 @@ export const STRINGS = {
   },
   en: {
     appTitle: 'Document Scanner',
-    heroTitle: 'Scan documents. Right in your browser.',
-    heroSub: 'No account, no cloud, no fees – just your browser doing the heavy lifting.',
     newScan: 'New scan',
-    privacyTag: '100% local',
     takePhoto: 'Take photo',
     fromGallery: 'From gallery',
     importHint: 'Photos are processed locally – nothing leaves your device.',

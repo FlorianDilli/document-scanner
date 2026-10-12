@@ -1,10 +1,10 @@
 // main.js – app bootstrap: loads persisted pages, wires the
-// views together, handles navigation, language switching,
-// and PWA installation / updates.
+// views together, handles navigation, and PWA
+// installation / updates.
 
 import * as state from './state.js';
 import * as storage from './storage.js';
-import { applyI18n, getLang, setLang, t } from './i18n.js';
+import { applyI18n, t } from './i18n.js';
 import { mountIcons } from './icons.js';
 import { pickFromCamera, pickFromGallery } from './camera.js';
 import { toast, toastAction, showBusy, hideBusy, confirmAction } from './ui.js';
@@ -28,8 +28,8 @@ function navigate(view, params = {}) {
   document.querySelectorAll('.view').forEach((v) => v.classList.add('hidden'));
   document.getElementById('view-' + view).classList.remove('hidden');
   if (view !== 'editor') setSidebarCurrent(null);
-  // Editor is a focused full-screen task: the app header is hidden
-  // there and the editor toolbar becomes the top row.
+  // Editor is a focused full-screen task: its toolbar is the top
+  // row, so the photo stage reclaims all of the head space.
   document.body.classList.toggle('editor-open', view === 'editor');
   window.scrollTo(0, 0);
   views[view].show(params);
@@ -171,30 +171,11 @@ function setupPwa() {
   });
 }
 
-// ---------- language ----------
-
-function setupLanguage() {
-  const btn = document.getElementById('btn-language');
-  const update = () => {
-    btn.textContent = getLang().toUpperCase();
-  };
-  btn.addEventListener('click', () => {
-    setLang(getLang() === 'de' ? 'en' : 'de');
-    applyI18n();
-    update();
-    // Re-render the current view so dynamic strings
-    // (page counter, filter chips, ...) update too.
-    navigate(currentView, currentParams);
-  });
-  update();
-}
-
 // ---------- boot ----------
 
 async function init() {
   applyI18n();
   mountIcons();
-  setupLanguage();
 
   // Restore persisted pages.
   showBusy(t('busyLoading'));

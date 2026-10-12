@@ -17,7 +17,7 @@ after the first load. Photos are processed entirely in the browser:
 - **Save to camera roll**: same pages as JPEG images (share sheet on
   mobile, one download per image elsewhere)
 - **Offline** after the first visit, installable to the home screen (PWA)
-- UI language: **German by default**, English available (header button)
+- UI language: **German by default**, English when the browser is set to English
 
 ## Run locally
 
