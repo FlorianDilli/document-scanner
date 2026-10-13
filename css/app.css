@@ -600,14 +600,16 @@ body {
 }
 #view-export .view-toolbar > :first-child { justify-self: start; }
 #view-export .view-toolbar > :last-child { justify-self: end; }
-/* Crop actions: one aligned row on every width. Re-detect and reset
-   share the free width equally; rotation is a compact grouped pair
-   at the end. Labels may wrap to two lines, the row height stays put. */
+/* Crop actions: four separate buttons in one centered row on every
+   width. Rotation is not a joined pair – both rotate buttons look
+   exactly like re-detect and reset. The buttons hug their content and
+   the row centers the group. Labels may wrap to two lines, the row
+   height stays put. */
 .crop-actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: repeat(4, minmax(0, auto));
   align-items: stretch;
-  justify-content: stretch;
+  justify-content: center;
   gap: 10px;
 }
 .crop-actions .btn {
@@ -618,22 +620,6 @@ body {
   line-height: 1.2;
   font-size: 0.85rem;
 }
-.rotate-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--radius-pill);
-  background: var(--sunken);
-}
-.rotate-group .btn-icon {
-  min-width: 32px;
-  min-height: 32px;
-  padding: 0;
-  background: transparent;
-}
-.rotate-group .btn-icon:hover { background: var(--card); }
-.rotate-group .btn-icon .icon { width: 18px; height: 18px; }
 
 /* ---------- page editor ---------- */
 
@@ -877,16 +863,11 @@ body.editor-open #app-main {
    selection higher up; the buttons below it keep clear air. On
    short viewports the cap never binds (flex shrinking dominates).
    The frame actions become icon-only too: their labels ("Erneut
-   erkennen", "Auf ganzes Bild") are long and would wrap to two lines
-   or squeeze the rotate pair, so the wording lives on as title /
-   aria-label only. The row then hugs its four controls instead of
-   stretching two mostly empty pills across the width. */
+   erkennen", "Auf ganzes Bild") are long and would wrap to two lines,
+   so the wording lives on in the markup for wider screens only. The
+   four equal buttons then sit centered in the row. */
 @media (max-width: 699px) {
   #view-editor.in-frame #frame-stage { max-height: 62vh; }
-  .crop-actions {
-    grid-template-columns: auto auto auto;
-    justify-content: start;
-  }
   .crop-actions .btn { min-width: 44px; }
   .crop-actions .btn span[data-i18n] { display: none; }
 }
@@ -1080,7 +1061,7 @@ input[type="range"]::-moz-range-thumb {
   border: 3px solid var(--card);
 }
 
-/* square icon-only action button (rotate) */
+/* square icon-only action button (zoom controls) */
 .btn.btn-icon { padding: 10px; min-width: 48px; }
 
 /* ---------- export ---------- */
