@@ -6,17 +6,32 @@
    destructive actions are muted red text. No hard offset shadows and no
    heavy outlines – hierarchy comes from fill contrast and size.
    Mobile-first, with a matching inverted dark theme.
+
+   Elevation ramp (identical semantics in both themes):
+     --bg      page canvas, behind everything
+     --sunken  recessed surface (photo wells, thumb backdrops, segment
+               tracks, field fills, progress rails) – always one step
+               AWAY from --card so a well reads as inset
+     --card    the standard raised tile (cards, toolbars, buttons, rails)
+     --raised  brightest/most prominent fill, for emphasis tiles nested
+               inside a card (import tiles)
+   Photo work uses --stage, a fixed near-black well, in both themes.
    ========================================================================== */
 
 :root {
   color-scheme: light dark;
 
   /* surfaces */
-  --bg: #ebebe9;
-  --card: #f8f8f7;
-  --sunken: #e2e2df;
+  --bg: #e3e3df;
+  --sunken: #d1d1cb;
+  --card: #f4f4f1;
+  --raised: #ffffff;
   --text: #141414;
-  --text-dim: #8a8a88;
+  --text-dim: #6b6b67;
+
+  /* fixed photo well (crop stage, look mode) – intentionally dark in
+     both themes so scanned documents are judged on neutral black */
+  --stage: #161616;
 
   /* dividers (hairlines are soft, never heavy outlines) */
   --line: #141414;
@@ -33,9 +48,9 @@
   --on-accent: #ffffff;
 
   /* status */
-  --danger: #d2402e;
+  --danger: #b23120;
   --danger-soft: #f6dcd7;
-  --success-text: #1d6f45;
+  --success-text: #1a6b41;
 
   /* shapes */
   --radius: 24px;
@@ -63,11 +78,12 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0a0a0a;
-    --card: #232326;
-    --sunken: #3a3a3f;
+    --bg: #0d0d0f;
+    --sunken: #1e1e23;
+    --card: #2a2a30;
+    --raised: #38383f;
     --text: #f5f5f5;
-    --text-dim: #a8a8ab;
+    --text-dim: #a9a9ad;
 
     --line: #f2f2f2;
 
@@ -354,11 +370,15 @@ body {
 
 /* ---------- home: import ---------- */
 
+/* The import section is a recessed panel on the page canvas so the two
+   entry tiles inside it own the brightest fill of the whole app – the
+   clearest possible step between the layers that nest here. */
 .import-card {
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 20px;
+  background: var(--sunken);
 }
 
 /* Camera and gallery sit side by side on every width, as equal tiles. */
@@ -367,12 +387,14 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-/* Camera and gallery are the main entry points: white fill, not grey. */
+/* Camera and gallery are the main entry points: the brightest fill in
+   the app, one step above the section card, so they read as the top
+   layer of the tile stack in dark mode as well. */
 #import-buttons .btn-tile {
-  background: #ffffff;
-  color: #141414;
+  background: var(--raised);
+  color: var(--text);
 }
-#import-buttons .btn-tile:hover { background: #f2f2f2; }
+#import-buttons .btn-tile:hover { background: color-mix(in srgb, var(--raised) 90%, var(--text)); }
 /* Larger icons on the two import tiles (beats the generic .btn .icon). */
 #import-buttons .btn-tile .icon { width: 34px; height: 34px; }
 
@@ -939,7 +961,7 @@ body.editor-open #app-main {
   width: 100%;
   flex: 1 1 0%;
   min-height: 0;
-  background: #161616;
+  background: var(--stage);
   border: 0;
   border-radius: var(--radius);
   overflow: hidden;
@@ -952,7 +974,7 @@ body.editor-open #app-main {
 .edit-preview-wrap {
   position: relative;
   flex: 1 0 auto;
-  background: #161616;
+  background: var(--stage);
   border: 0;
   border-radius: var(--radius);
   min-height: 200px;
