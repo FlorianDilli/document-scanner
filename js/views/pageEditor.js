@@ -29,6 +29,7 @@ import { renderPageList, setSidebarCurrent } from './sidebar.js';
 const FILTERS = [
   { id: 'original', key: 'filterPhoto' },
   { id: 'document', key: 'filterDocument' },
+  { id: 'document-color', key: 'filterDocumentColor' },
 ];
 
 // Preview resolution: render at the size the canvas is actually

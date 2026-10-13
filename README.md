@@ -8,9 +8,12 @@ after the first load. Photos are processed entirely in the browser:
 - **Automatic document detection** (largest page-like quadrilateral) with
   draggable corner fine-tuning (incl. magnifier loupe)
 - **Perspective correction** (warp to a flat, upright rectangle)
-- **Filters**: Photo (untouched) and Document (grayscale, flattened
+- **Filters**: Photo (untouched), Document (grayscale, flattened
   background, sharp text; drive the contrast slider up for a hard
-  black-and-white look) + sharpen, brightness, contrast
+  black-and-white look) and Color document (the same flattened,
+  sharpened look but with the original colors kept – red pen marks,
+  markers and colored graphics survive on white paper) + sharpen,
+  brightness, contrast
 - **OCR** (German + English) → invisible but **selectable/searchable text**
   layer in the PDF
 - **Multi-page A4 PDF** export (Web Share API on mobile, download fallback)

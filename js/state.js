@@ -7,7 +7,7 @@
 //   width, height   dimensions of the working image (long edge <= 4000 px)
 //   corners   [{x,y} TL, TR, BR, BL] in ORIGINAL working-image pixel coords
 //   rotation  0 | 90 | 180 | 270 (applied after warp)
-//   filter    'original' | 'document'
+//   filter    'original' | 'document' | 'document-color'
 //   params    { brightness, contrast, sharpen }  (-100..100, 0..100)
 //   ocr       cached { words: [...], lang } or null (invalidated on change)
 //   detected  true after a successful auto-detection; false when the

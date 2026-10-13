@@ -55,6 +55,7 @@ export const STRINGS = {
   reload: 'Neu laden',
   filterPhoto: 'Foto',
   filterDocument: 'Dokument',
+  filterDocumentColor: 'Dokument Farbe',
   // status / progress
   busyLoading: 'Lade…',
   busyDetect: 'Dokument wird erkannt…',

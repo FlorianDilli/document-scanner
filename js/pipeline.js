@@ -169,12 +169,14 @@ export async function getThumbnail(page, maxEdge = 600) {
 }
 
 // Image used for OCR: the processed image, except for the
-// 'original' (Photo) filter, where a cleaned document copy
-// (background flattened, text darkened) gives much better OCR
-// accuracy while the photo version is still what gets embedded
-// in the PDF.
+// 'original' (Photo) and 'document-color' filters, where a cleaned
+// grayscale document copy (background flattened, text darkened)
+// gives much better OCR accuracy while the photo / color version is
+// still what gets embedded in the PDF.
 export async function getOcrImage(page) {
-  if (page.filter !== 'original') return getProcessed(page);
+  if (page.filter !== 'original' && page.filter !== 'document-color') {
+    return getProcessed(page);
+  }
   const warped = await getWarped(page);
   let result = await blobToImageData(warped.blob);
   if (page.rotation) {

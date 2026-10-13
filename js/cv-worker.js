@@ -181,6 +181,28 @@ function fullFrameCorners(width, height) {
   ];
 }
 
+// Median-blur kernel of the document background estimate: ~4% of
+// the long edge, odd, at least 31 (shared by both document looks).
+function documentKernel(longEdge) {
+  let k = Math.round(longEdge * 0.04);
+  if (k % 2 === 0) k += 1;
+  return Math.max(31, k);
+}
+
+// Fixed document levels as a LUT (black 30 -> 0, white 238 -> 255).
+// Content-independent so the look is identical page to page;
+// exposure variance is already removed by the background flattening,
+// and a histogram-based stretch (vendored calcHist) would be fragile.
+const LEV_LO = 30, LEV_HI = 238;
+function documentLevelsLut(t) {
+  const lut = t.add(new cv.Mat(1, 256, cv.CV_8U));
+  for (let v = 0; v < 256; v++) {
+    const walked = v < LEV_LO ? 0 : Math.round(((v - LEV_LO) / (LEV_HI - LEV_LO)) * 255);
+    lut.data[v] = Math.min(255, walked);
+  }
+  return lut;
+}
+
 // Search contours for the best page-like quadrilateral.
 // Returns { quad, fullFrame } (fullFrame: the page is the whole
 // photo) or null. `epsilons` are the approxPolyDP epsilon factors
@@ -380,24 +402,91 @@ function handleFilter(msg) {
     // data – copy the pixels into the wasm heap explicitly.
     src.data.set(msg.data);
     let work;
-    // Two modes: 'original' (untouched photo) and 'document' – the one
-    // cleanup mode (grayscale, flattened background, sharp text). The
-    // former grayscale/bw looks are reached via the contrast slider:
-    // raising contrast on the flattened image drives it near-binary.
-    // 'gray', 'bw' and 'enhance' are legacy filter ids from before the
-    // unification; persisted pages carrying them render as document
-    // (storage.js additionally maps them on load, so the edit view's
-    // chip selection matches).
+    // Three modes: 'original' (untouched photo), 'document' – the
+    // grayscale cleanup look – and 'document-color', the same cleanup
+    // with the original colors kept. The former grayscale/bw looks are
+    // reached via the contrast slider: raising contrast on the
+    // flattened image drives it near-binary. 'gray', 'bw' and
+    // 'enhance' are legacy filter ids from before the unification;
+    // persisted pages carrying them render as document (storage.js
+    // additionally maps them on load, so the edit view's chip
+    // selection matches).
     switch (filter) {
+      case 'document-color': {
+        // Color clean-up look: the same tuning as 'document'
+        // (flattened background -> pure white, fixed levels, light
+        // unsharp mask), but all three color channels are divided by
+        // ONE shared illumination estimate from the luminance – a
+        // flat-field correction that removes shadows and paper tint
+        // while ink and pen colors keep their hue (a color scan
+        // instead of a grayscale one).
+        //
+        // 1. Background estimate with a MEDIAN blur on the luminance
+        //    (kernel via documentKernel): the median ignores dark ink
+        //    and follows the illumination.
+        // 2. Guarded per-channel divide: c*255/bg for every channel.
+        //    The guard keeps pixels untouched where the estimate is
+        //    dark (bg < 120: inside fat ink or deep shadow) – there
+        //    the division would brighten ink into color fringes.
+        //    Explicit JS loop with hand clamping (see 'document').
+        // 3. The same fixed document levels as 'document'
+        //    (documentLevelsLut).
+        // 4. Mild saturation lift (+15%) to compensate the wash the
+        //    flattening causes on paper tints, computed as
+        //    out = L + (c - L) * 1.15 around the pixel luminance L
+        //    (the vendored build has no RGBA<->HSV conversions).
+        // 5. Light unsharp mask (sigma 1.2, amount 0.5) – identical
+        //    to 'document' – for crisp strokes.
+        const gray = t.add(new cv.Mat());
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+        const bg = t.add(new cv.Mat());
+        cv.medianBlur(gray, bg, documentKernel(Math.max(width, height)));
+        const divided = t.add(new cv.Mat(height, width, cv.CV_8UC4));
+        {
+          const s = src.data, b = bg.data, o = divided.data;
+          for (let p = 0; p < o.length; p += 4) {
+            const bb = b[p >> 2];
+            if (bb < 120) {
+              o[p] = s[p]; o[p + 1] = s[p + 1]; o[p + 2] = s[p + 2];
+            } else {
+              o[p] = Math.min(255, (s[p] * 255 / bb) | 0);
+              o[p + 1] = Math.min(255, (s[p + 1] * 255 / bb) | 0);
+              o[p + 2] = Math.min(255, (s[p + 2] * 255 / bb) | 0);
+            }
+            o[p + 3] = s[p + 3];
+          }
+        }
+        const leveled = t.add(new cv.Mat());
+        cv.LUT(divided, documentLevelsLut(t), leveled);
+        const SAT_BOOST = 1.15;
+        const saturated = t.add(new cv.Mat(height, width, cv.CV_8UC4));
+        {
+          const s = leveled.data, o = saturated.data;
+          for (let p = 0; p < o.length; p += 4) {
+            const l = (s[p] * 299 + s[p + 1] * 587 + s[p + 2] * 114) / 1000;
+            for (let c = p; c < p + 3; c++) {
+              const v = Math.round(l + (s[c] - l) * SAT_BOOST);
+              o[c] = v < 0 ? 0 : v > 255 ? 255 : v;
+            }
+            o[p + 3] = s[p + 3];
+          }
+        }
+        const blurred = t.add(new cv.Mat());
+        cv.GaussianBlur(saturated, blurred, new cv.Size(0, 0), 1.2);
+        work = t.add(new cv.Mat());
+        cv.addWeighted(saturated, 1.5, blurred, -0.5, 0, work);
+        break;
+      }
       case 'document':
       case 'gray':
       case 'bw':
       case 'enhance': {
         // Clean-up look, tuned on real phone photos:
         //
-        // 1. Background estimate with a MEDIAN blur (kernel ~4% of the
-        //    long edge): the median ignores dark ink (strokes, redaction
-        //    bars) and follows the illumination.
+        // 1. Background estimate with a MEDIAN blur (kernel via
+        //    documentKernel, ~4% of the long edge): the median ignores
+        //    dark ink (strokes, redaction bars) and follows the
+        //    illumination.
         // 2. Guarded divide: gray*255/bg flattens shadows and paper tint
         //    (paper -> pure white). The guard keeps pixels untouched where
         //    the estimate is dark (bg < 120: inside fat ink or deep shadow)
@@ -405,19 +494,12 @@ function handleFilter(msg) {
         //    The divide is written as an explicit JS loop: values are
         //    clamped to 0..255 by hand (Uint8Array writes wrap modulo 256
         //    instead of saturating like cv.divide does).
-        // 3. Fixed document levels (black 30 -> 0, white 238 -> 255):
-        //    content-independent so the look is identical page to page;
-        //    exposure variance is already removed by step 2, and a
-        //    histogram-based stretch (vendored calcHist) would be fragile.
+        // 3. Fixed document levels via documentLevelsLut().
         // 4. Light unsharp mask (sigma 1.2, amount 0.5) for crisp strokes.
         const gray = t.add(new cv.Mat());
         cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-        const longEdge = Math.max(width, height);
-        let k = Math.round(longEdge * 0.04);
-        if (k % 2 === 0) k += 1;
-        k = Math.max(31, k);
         const bg = t.add(new cv.Mat());
-        cv.medianBlur(gray, bg, k);
+        cv.medianBlur(gray, bg, documentKernel(Math.max(width, height)));
         const divided = t.add(new cv.Mat(height, width, cv.CV_8U));
         {
           const g = gray.data, b = bg.data, o = divided.data;
@@ -426,14 +508,8 @@ function handleFilter(msg) {
             o[p] = bb < 120 ? g[p] : Math.min(255, (g[p] * 255 / bb) | 0);
           }
         }
-        const lut = t.add(new cv.Mat(1, 256, cv.CV_8U));
-        const LEV_LO = 30, LEV_HI = 238;
-        for (let v = 0; v < 256; v++) {
-          const walked = v < LEV_LO ? 0 : Math.round(((v - LEV_LO) / (LEV_HI - LEV_LO)) * 255);
-          lut.data[v] = Math.min(255, walked);
-        }
         const leveled = t.add(new cv.Mat());
-        cv.LUT(divided, lut, leveled);
+        cv.LUT(divided, documentLevelsLut(t), leveled);
         const blurred = t.add(new cv.Mat());
         cv.GaussianBlur(leveled, blurred, new cv.Size(0, 0), 1.2);
         const sharp = t.add(new cv.Mat());
