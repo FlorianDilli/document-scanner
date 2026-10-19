@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Dokumenten-Scanner</title>
   <meta name="description" content="Kostenloser, privater Dokumenten-Scanner – alles läuft lokal in deinem Browser.">
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e3e3df">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f1ef">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d0d0f">
   <!-- Restrictive CSP: everything must come from this origin. No CDNs, no telemetry. -->
   <meta http-equiv="Content-Security-Policy"
@@ -29,10 +29,11 @@
 </head>
 <body>
   <header id="app-header">
-    <h1 id="app-title">
-      <img id="app-logo" src="./icons/logo.svg" alt="" width="40" height="40">
-      <span data-i18n="appTitle">Dokumenten-Scanner</span>
-    </h1>
+    <img id="app-logo" src="./icons/logo.svg" alt="" width="46" height="46">
+    <div id="app-heading">
+      <h1 id="app-title"><span data-i18n="appTitle">Dokumenten-Scanner</span></h1>
+      <p id="app-subtitle" data-i18n="appSubtitle">Scanne deine Dokumente und exportiere sie einfach.</p>
+    </div>
   </header>
 
   <main id="app-main">
@@ -42,14 +43,17 @@
         <div class="card-head">
           <h3 data-i18n="newScan">Neu scannen</h3>
         </div>
+        <p class="hint" data-i18n="newScanHint">Wähle eine Quelle, um ein Dokument zu scannen.</p>
         <div id="import-buttons">
           <button id="btn-camera" class="btn btn-tile" type="button">
             <span class="icon-slot" data-icon="camera"></span>
             <span data-i18n="takePhoto">Foto aufnehmen</span>
+            <span class="tile-arrow" data-icon="arrow"></span>
           </button>
           <button id="btn-gallery" class="btn btn-tile" type="button">
             <span class="icon-slot" data-icon="image"></span>
             <span data-i18n="fromGallery">Aus Galerie wählen</span>
+            <span class="tile-arrow" data-icon="arrow"></span>
           </button>
         </div>
       </div>
@@ -57,7 +61,10 @@
       <p id="empty-state" class="empty-state" data-i18n="emptyState">Noch keine Seiten. Fotografiere oder importiere ein Dokument, um zu beginnen.</p>
       <div id="home-footer" class="home-footer hidden">
         <span id="page-counter" class="page-counter"></span>
-          <button id="btn-export" class="btn btn-success" type="button" data-i18n="exportAction">Exportieren</button>
+          <button id="btn-export" class="btn btn-success" type="button">
+            <span class="icon-slot" data-icon="download"></span>
+            <span data-i18n="exportAction">Exportieren</span>
+          </button>
       </div>
     </section>
 
