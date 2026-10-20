@@ -117,7 +117,10 @@
 
       <div id="look-pane" class="pane hidden">
         <div id="edit-preview-wrap" class="edit-preview-wrap">
-          <canvas id="edit-preview"></canvas>
+          <div id="edit-preview-stack" class="edit-preview-stack">
+            <canvas id="edit-preview"></canvas>
+            <canvas id="edit-preview-next"></canvas>
+          </div>
           <div id="edit-spinner" class="preview-spinner hidden" aria-hidden="true">
             <svg viewBox="0 0 44 44" width="44" height="44" focusable="false" aria-hidden="true">
               <circle class="preview-spinner-track" cx="22" cy="22" r="19"></circle>

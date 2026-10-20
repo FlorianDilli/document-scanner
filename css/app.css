@@ -1093,15 +1093,27 @@ body.editor-open #app-main {
   /* Pinch and drag are handled by pageEditor.js, not the browser. */
   touch-action: none;
 }
+/* Both preview canvases share one stack, so the zoom transform moves
+   both: the incoming frame fades in over the current one. */
+.edit-preview-stack {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+}
 /* The canvas fills the well and is letterboxed inside it (object-fit),
    so the display box stays fixed while the zoom transform scales it. */
-#edit-preview {
+#edit-preview,
+#edit-preview-next {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform-origin: center center;
+}
+/* The upper canvas holds the frame that is fading in. */
+#edit-preview-next {
+  opacity: 0;
+  pointer-events: none;
 }
 /* Zoom buttons: desktop only. Phones zoom with pinch. */
 .zoom-controls {

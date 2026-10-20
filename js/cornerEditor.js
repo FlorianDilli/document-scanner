@@ -2,17 +2,19 @@
 // handles and a magnifier loupe.
 //
 // Coordinate systems:
-//   * image coords: pixels of the ORIGINAL working image
-//     (the page model's corner space)
-//   * display coords: CSS pixels on the canvas (the canvas is
-//     sized to its CSS box * devicePixelRatio; the context is
-//     scaled by dpr so all drawing happens in CSS px)
+//   * image coords: pixels of the ORIGINAL working image (the page
+//     model's corner space). The corners live here, so they stay on
+//     the same physical points of the photo when it is turned.
+//   * display coords: CSS pixels on the canvas (the canvas is sized
+//     to its CSS box * devicePixelRatio; the context is scaled by dpr
+//     so all drawing happens in CSS px)
 //   * the image is drawn "contain"-fitted, so a fit transform
 //     (scale + offset) maps between the two spaces.
-//   * the photo can be shown rotated (0 | 90 | 270 | 180, clockwise,
-//     same as the page rotation). Corners are PUBLIC in original
-//     image coords; internally they are kept in the rotated image
-//     space, so drawing, dragging and the loupe all stay simple.
+//   * the photo can be turned. `rotation` is the target (0 | 90 |
+//     180 | 270, clockwise, same as the page rotation); `angle` is
+//     the angle currently on screen. The two differ while a turn
+//     animates, so the photo can spin smoothly from one quarter
+//     turn to the next.
 
 const HANDLE_RADIUS = 22; // 44 px hit area (touch target)
 const KNOB_RADIUS = 12;   // drawn corner dot (CSS px)
@@ -20,6 +22,8 @@ const KNOB_GAP = 5;       // empty space between the outline and the dot
 const LOUPE_RADIUS = 70;  // loupe circle radius (CSS px)
 const LOUPE_ZOOM = 3;     // loupe magnification
 const LOUPE_OFFSET = 95;  // loupe offset from the finger (CSS px)
+const MOVE_MS = 420;      // corner move animation
+const TURN_MS = 480;      // rotation animation
 
 function cross(o, a, b) {
   return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
@@ -39,37 +43,14 @@ export function isConvexQuad(corners) {
   return sign !== 0;
 }
 
-// Maps an original-image point into the rotated image space (the
-// rotation is clockwise, as in the page pipeline). `w`/`h` are the
-// ORIGINAL image dimensions.
-function toRotatedSpace(p, rotation, w, h) {
-  switch (rotation) {
-    case 90: return { x: h - p.y, y: p.x };
-    case 180: return { x: w - p.x, y: h - p.y };
-    case 270: return { x: p.y, y: w - p.x };
-    default: return { x: p.x, y: p.y };
-  }
+function prefersReducedMotion() {
+  return typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-// Inverse of toRotatedSpace.
-function toOriginalSpace(q, rotation, w, h) {
-  switch (rotation) {
-    case 90: return { x: q.y, y: h - q.x };
-    case 180: return { x: w - q.x, y: h - q.y };
-    case 270: return { x: w - q.y, y: q.x };
-    default: return { x: q.x, y: q.y };
-  }
-}
-
-// Canvas transform that draws the original image in the rotated
-// image space (origin at the top-left of the rotated image).
-function applyRotationTransform(ctx, rotation, w, h) {
-  switch (rotation) {
-    case 90: ctx.translate(h, 0); ctx.rotate(Math.PI / 2); break;
-    case 180: ctx.translate(w, h); ctx.rotate(Math.PI); break;
-    case 270: ctx.translate(0, w); ctx.rotate(-Math.PI / 2); break;
-    default: break;
-  }
+// Ease-out cubic: fast at the start, gentle landing.
+function easeOut(t) {
+  return 1 - Math.pow(1 - t, 3);
 }
 
 export class CornerEditor {
@@ -78,18 +59,19 @@ export class CornerEditor {
     this.ctx = canvas.getContext('2d');
     this.onChange = onChange || (() => {});
     this.image = null;       // ImageBitmap (original orientation)
-    this.imageWidth = 0;     // displayed (rotated) size
-    this.imageHeight = 0;
     this.origWidth = 0;      // original bitmap size
     this.origHeight = 0;
-    this.rotation = 0;       // 0 | 90 | 180 | 270, clockwise
-    this.corners = null;     // [{x,y} TL, TR, BR, BL] in rotated image coords
+    this.rotation = 0;       // target rotation: 0 | 90 | 180 | 270, clockwise
+    this.angle = 0;          // angle on screen (degrees, clockwise)
+    this.corners = null;     // [{x,y} TL, TR, BR, BL] in original image coords
     this.guess = false;      // dashed outline while the frame is an unverified auto-detection
     this.dragIndex = -1;
     this.pointerPos = null;  // display coords of the active pointer
     this.dpr = window.devicePixelRatio || 1;
-    this.animFrame = null;   // pending animation frame of a running corner animation
-    this.animTarget = null;  // target corners of a running corner animation (rotated space)
+    this.turnFrame = null;   // rAF of the running rotation animation
+    this.turnTo = null;      // target angle of the running rotation animation
+    this.moveFrame = null;   // rAF of the running corner move animation
+    this.moveTo = null;      // target corners of the running corner move animation
 
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement);
@@ -102,7 +84,8 @@ export class CornerEditor {
   }
 
   destroy() {
-    this.cancelAnimation();
+    this.cancelTurn();
+    this.cancelMove();
     this.resizeObserver.disconnect();
     if (this.image) this.image.close();
   }
@@ -118,99 +101,137 @@ export class CornerEditor {
   }
 
   async setImage(bitmap, rotation = 0) {
-    this.cancelAnimation();
+    this.cancelTurn();
+    this.cancelMove();
     if (this.image) this.image.close();
     this.image = bitmap;
     this.origWidth = bitmap.width;
     this.origHeight = bitmap.height;
-    this.rotation = rotation;
-    this.updateDisplaySize();
+    this.rotation = ((Math.round(rotation) % 360) + 360) % 360;
+    // A new photo appears at its stored orientation – no animation.
+    this.angle = this.rotation;
     this.resize();
   }
 
-  updateDisplaySize() {
-    const swap = this.rotation === 90 || this.rotation === 270;
-    this.imageWidth = swap ? this.origHeight : this.origWidth;
-    this.imageHeight = swap ? this.origWidth : this.origHeight;
-  }
-
-  // Changes the displayed rotation. The current corners (edited or
-  // not) are kept on the same physical photo points.
+  // Turns the photo to a new quarter turn. The corners stay on the
+  // same physical points of the photo, so the frame turns with it.
   setRotation(rotation) {
-    if (rotation === this.rotation || !this.image) {
-      this.rotation = rotation;
+    const target = ((Math.round(rotation) % 360) + 360) % 360;
+    if (!this.image) {
+      this.rotation = target;
+      this.angle = target;
       return;
     }
-    this.cancelAnimation();
-    const orig = this.getCorners();
-    this.rotation = rotation;
-    this.updateDisplaySize();
-    if (orig) this.setCorners(orig);
-    else this.draw();
+    // A turn is always a single quarter turn – the shorter way round.
+    const delta = ((target - this.rotation + 540) % 360) - 180;
+    this.rotation = target;
+    if (delta === 0) {
+      // Already there (or already on the way): let the running
+      // animation finish instead of snapping.
+      if (!this.turnFrame) {
+        this.angle = target;
+        this.draw();
+      }
+      return;
+    }
+    this.animateAngle(this.angle, this.angle + delta);
+  }
+
+  // Spins the photo from `from` to `to` degrees (clockwise).
+  animateAngle(from, to, duration = TURN_MS) {
+    if (prefersReducedMotion()) {
+      this.cancelTurn();
+      this.angle = to;
+      this.draw();
+      return;
+    }
+    this.cancelTurn();
+    this.turnTo = to;
+    const start = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      this.angle = from + (to - from) * easeOut(t);
+      this.draw();
+      if (t < 1) {
+        this.turnFrame = requestAnimationFrame(step);
+      } else {
+        this.turnFrame = null;
+        this.turnTo = null;
+        this.angle = to;
+      }
+    };
+    this.turnFrame = requestAnimationFrame(step);
   }
 
   // `corners` are in ORIGINAL image coords.
   setCorners(corners) {
-    this.cancelAnimation();
-    this.corners = corners.map((c) =>
-      toRotatedSpace(c, this.rotation, this.origWidth, this.origHeight));
+    this.cancelMove();
+    this.corners = corners.map((c) => ({ x: c.x, y: c.y }));
     this.draw();
   }
 
   // Glides the frame to new corners (ORIGINAL image coords) instead of
-  // jumping there. Used by "Detect again": the rectangle moves
-  // smoothly into the detected position, so the photo never flashes.
-  animateTo(corners, duration = 420) {
-    if (!this.corners) {
+  // jumping there. Used by "Detect again" and by "whole picture":
+  // the rectangle moves smoothly into its new position.
+  animateTo(corners, duration = MOVE_MS) {
+    if (!this.corners || prefersReducedMotion()) {
       this.setCorners(corners);
       return;
     }
-    const reduce = typeof window.matchMedia === 'function'
-      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
-      this.setCorners(corners);
-      return;
-    }
-    const target = corners.map((c) =>
-      toRotatedSpace(c, this.rotation, this.origWidth, this.origHeight));
     const from = this.corners.map((c) => ({ x: c.x, y: c.y }));
-    this.cancelAnimation();
-    this.animTarget = target;
+    const to = corners.map((c) => ({ x: c.x, y: c.y }));
+    this.cancelMove();
+    this.moveTo = to;
     const start = performance.now();
     const step = (now) => {
       const t = Math.min(1, (now - start) / duration);
-      const e = 1 - Math.pow(1 - t, 3); // ease-out cubic
-      this.corners = target.map((c, i) => ({
+      const e = easeOut(t);
+      this.corners = to.map((c, i) => ({
         x: from[i].x + (c.x - from[i].x) * e,
         y: from[i].y + (c.y - from[i].y) * e,
       }));
       this.draw();
       if (t < 1) {
-        this.animFrame = requestAnimationFrame(step);
+        this.moveFrame = requestAnimationFrame(step);
       } else {
-        this.animFrame = null;
-        this.animTarget = null;
+        this.moveFrame = null;
+        this.moveTo = null;
       }
     };
-    this.animFrame = requestAnimationFrame(step);
+    this.moveFrame = requestAnimationFrame(step);
   }
 
-  // Stops a running corner animation.
-  cancelAnimation() {
-    if (this.animFrame) {
-      cancelAnimationFrame(this.animFrame);
-      this.animFrame = null;
+  // Stops the running rotation animation.
+  cancelTurn() {
+    if (this.turnFrame) {
+      cancelAnimationFrame(this.turnFrame);
+      this.turnFrame = null;
     }
-    this.animTarget = null;
+    this.turnTo = null;
   }
 
-  // Jumps to the end of a running corner animation (the frame is
-  // committed from here on, so it must not be left half-way).
+  // Stops the running corner move animation.
+  cancelMove() {
+    if (this.moveFrame) {
+      cancelAnimationFrame(this.moveFrame);
+      this.moveFrame = null;
+    }
+    this.moveTo = null;
+  }
+
+  // Snaps both animations to their end: the frame is committed from
+  // here on, so it must never be left half-way.
   finishAnimation() {
-    const target = this.animTarget;
-    if (!target) return;
-    this.cancelAnimation();
-    this.corners = target.map((c) => ({ x: c.x, y: c.y }));
+    if (this.turnTo !== null) {
+      const to = this.turnTo;
+      this.cancelTurn();
+      this.angle = to;
+    }
+    if (this.moveTo) {
+      const to = this.moveTo;
+      this.cancelMove();
+      this.corners = to.map((c) => ({ x: c.x, y: c.y }));
+    }
     this.draw();
   }
 
@@ -227,20 +248,45 @@ export class CornerEditor {
   // Returns the corners in ORIGINAL image coords (the page model space).
   getCorners() {
     if (!this.corners) return null;
-    return this.corners.map((c) =>
-      toOriginalSpace(c, this.rotation, this.origWidth, this.origHeight));
+    return this.corners.map((c) => ({ x: c.x, y: c.y }));
   }
 
-  // Fit transform: image drawn "contain" inside the canvas.
+  // The original image turned clockwise by the current angle: its
+  // corner points and the box they span.
+  rotatedBox() {
+    const a = (this.angle * Math.PI) / 180;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    const w = this.origWidth;
+    const h = this.origHeight;
+    const pts = [[0, 0], [w, 0], [w, h], [0, h]];
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const [x, y] of pts) {
+      const rx = x * cos - y * sin;
+      const ry = x * sin + y * cos;
+      if (rx < minX) minX = rx;
+      if (rx > maxX) maxX = rx;
+      if (ry < minY) minY = ry;
+      if (ry > maxY) maxY = ry;
+    }
+    return { cos, sin, minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+  }
+
+  // Fit transform: the turned image drawn "contain" inside the canvas.
   computeFit() {
     const rect = this.canvas.getBoundingClientRect();
     const cssW = rect.width;
     const cssH = rect.height;
-    const scale = Math.min(cssW / this.imageWidth, cssH / this.imageHeight);
+    const box = this.rotatedBox();
+    const scale = Math.min(cssW / box.width, cssH / box.height);
     return {
       scale,
-      offsetX: (cssW - this.imageWidth * scale) / 2,
-      offsetY: (cssH - this.imageHeight * scale) / 2,
+      box,
+      offsetX: (cssW - box.width * scale) / 2,
+      offsetY: (cssH - box.height * scale) / 2,
       cssW,
       cssH,
     };
@@ -248,12 +294,19 @@ export class CornerEditor {
 
   toImageCoords(dx, dy) {
     const f = this.computeFit();
-    return { x: (dx - f.offsetX) / f.scale, y: (dy - f.offsetY) / f.scale };
+    const { cos, sin, minX, minY } = f.box;
+    const rx = (dx - f.offsetX) / f.scale + minX;
+    const ry = (dy - f.offsetY) / f.scale + minY;
+    // Undo the turn.
+    return { x: rx * cos + ry * sin, y: -rx * sin + ry * cos };
   }
 
   toDisplayCoords(ix, iy) {
     const f = this.computeFit();
-    return { x: ix * f.scale + f.offsetX, y: iy * f.scale + f.offsetY };
+    const { cos, sin, minX, minY } = f.box;
+    const rx = ix * cos - iy * sin;
+    const ry = ix * sin + iy * cos;
+    return { x: (rx - minX) * f.scale + f.offsetX, y: (ry - minY) * f.scale + f.offsetY };
   }
 
   // Display coords of a pointer event (relative to the canvas).
@@ -280,7 +333,8 @@ export class CornerEditor {
   onPointerDown(e) {
     if (!this.corners) return;
     // A touch takes over from a running animation.
-    this.cancelAnimation();
+    this.cancelTurn();
+    this.cancelMove();
     const pos = this.eventPos(e);
     const idx = this.handleAt(pos);
     if (idx === -1) return;
@@ -298,8 +352,8 @@ export class CornerEditor {
     this.pointerPos = pos;
     const img = this.toImageCoords(pos.x, pos.y);
     // Clamp to the image bounds.
-    img.x = Math.max(0, Math.min(this.imageWidth, img.x));
-    img.y = Math.max(0, Math.min(this.imageHeight, img.y));
+    img.x = Math.max(0, Math.min(this.origWidth, img.x));
+    img.y = Math.max(0, Math.min(this.origHeight, img.y));
     this.corners[this.dragIndex] = img;
     this.draw();
     this.onChange(this.getCorners());
@@ -323,11 +377,12 @@ export class CornerEditor {
 
     const f = this.computeFit();
 
-    // Image (rotated to the displayed orientation).
+    // Image, turned by the current angle.
     ctx.save();
     ctx.translate(f.offsetX, f.offsetY);
     ctx.scale(f.scale, f.scale);
-    applyRotationTransform(ctx, this.rotation, this.origWidth, this.origHeight);
+    ctx.translate(-f.box.minX, -f.box.minY);
+    ctx.rotate((this.angle * Math.PI) / 180);
     ctx.drawImage(this.image, 0, 0);
     ctx.restore();
 
@@ -401,10 +456,11 @@ export class CornerEditor {
     const ctx = this.ctx;
     const f = this.computeFit();
     const rect = this.canvas.getBoundingClientRect();
+    const d = this.toDisplayCoords(corner.x, corner.y);
     // Loupe center: offset from the finger, away from the
     // corner, so it never sits under the finger.
-    let cx = this.pointerPos.x + (corner.x * f.scale + f.offsetX < this.pointerPos.x ? LOUPE_OFFSET : -LOUPE_OFFSET);
-    let cy = this.pointerPos.y + (corner.y * f.scale + f.offsetY < this.pointerPos.y ? LOUPE_OFFSET : -LOUPE_OFFSET);
+    let cx = this.pointerPos.x + (d.x < this.pointerPos.x ? LOUPE_OFFSET : -LOUPE_OFFSET);
+    let cy = this.pointerPos.y + (d.y < this.pointerPos.y ? LOUPE_OFFSET : -LOUPE_OFFSET);
     // Keep the loupe fully inside the canvas.
     cx = Math.max(LOUPE_RADIUS, Math.min(rect.width - LOUPE_RADIUS, cx));
     cy = Math.max(LOUPE_RADIUS, Math.min(rect.height - LOUPE_RADIUS, cy));
@@ -417,12 +473,17 @@ export class CornerEditor {
     // Backdrop for areas beyond the image edges.
     ctx.fillStyle = '#161616';
     ctx.fillRect(cx - LOUPE_RADIUS, cy - LOUPE_RADIUS, 2 * LOUPE_RADIUS, 2 * LOUPE_RADIUS);
-    // Draw the image transformed so the corner always maps exactly
-    // to the crosshair at the loupe center – even right at the
-    // image edges (no source-rect clamping, so no dead zones).
-    ctx.translate(cx - corner.x * f.scale * LOUPE_ZOOM, cy - corner.y * f.scale * LOUPE_ZOOM);
+    // Draw the image turned and magnified around the corner, so the
+    // corner always maps exactly to the crosshair at the loupe center
+    // – even right at the image edges (no source-rect clamping, so no
+    // dead zones).
+    const { cos, sin } = f.box;
+    const rx = corner.x * cos - corner.y * sin;
+    const ry = corner.x * sin + corner.y * cos;
+    ctx.translate(cx, cy);
     ctx.scale(f.scale * LOUPE_ZOOM, f.scale * LOUPE_ZOOM);
-    applyRotationTransform(ctx, this.rotation, this.origWidth, this.origHeight);
+    ctx.translate(-rx, -ry);
+    ctx.rotate((this.angle * Math.PI) / 180);
     ctx.drawImage(this.image, 0, 0);
     ctx.restore();
 

@@ -59,6 +59,8 @@ let detecting = false;
 // queue up instead of piling up concurrent CV jobs.
 let rendering = false;
 let renderQueued = false;
+// A cross-fade was asked for while a render was still running.
+let pendingFade = false;
 
 // Debounced persistence so a reload does not lose edits.
 let persistTimer = null;
@@ -112,7 +114,7 @@ function applyZoom() {
     panY = 0;
   }
   clampPan();
-  document.getElementById('edit-preview').style.transform =
+  document.getElementById('edit-preview-stack').style.transform =
     zoom === ZOOM_MIN ? '' : `translate(${panX}px, ${panY}px) scale(${zoom})`;
   document.getElementById('btn-zoom-in').disabled = zoom >= ZOOM_MAX;
   document.getElementById('btn-zoom-out').disabled = zoom <= ZOOM_MIN;
@@ -204,9 +206,57 @@ function initZoom() {
   applyZoom();
 }
 
-async function requestPreview() {
+// How long the preview takes to cross-fade into a new look
+// (document type, brightness, ...).
+const PREVIEW_FADE_MS = 300;
+let fadeTimer = null;
+
+function previewCanvases() {
+  return {
+    base: document.getElementById('edit-preview'),
+    next: document.getElementById('edit-preview-next'),
+  };
+}
+
+// Fades the freshly rendered frame over the current one, so a new
+// look dissolves into the old one instead of snapping into place.
+function crossfadePreview(base, next) {
+  const start = parseFloat(getComputedStyle(next).opacity) || 0;
+  next.style.transition = 'none';
+  next.style.opacity = String(start);
+  // Force a style flush so the browser sees the start value before
+  // the transition is armed.
+  void next.offsetWidth;
+  next.style.transition = `opacity ${PREVIEW_FADE_MS}ms ease`;
+  next.style.opacity = '1';
+  clearTimeout(fadeTimer);
+  fadeTimer = setTimeout(() => {
+    fadeTimer = null;
+    // The new frame is the current one from here on.
+    if (base.width !== next.width || base.height !== next.height) {
+      base.width = next.width;
+      base.height = next.height;
+    }
+    base.getContext('2d').drawImage(next, 0, 0);
+    next.style.transition = 'none';
+    next.style.opacity = '0';
+  }, PREVIEW_FADE_MS + 20);
+}
+
+// Drops a running fade: the direct render replaces the current frame.
+function dropPreviewFade(next) {
+  clearTimeout(fadeTimer);
+  fadeTimer = null;
+  next.style.transition = 'none';
+  next.style.opacity = '0';
+}
+
+async function requestPreview({ fade = false } = {}) {
   if (rendering) {
     renderQueued = true;
+    // A fade asked for while a render is running is honoured by the
+    // next pass of the loop below.
+    pendingFade = pendingFade || fade;
     return;
   }
   rendering = true;
@@ -215,8 +265,18 @@ async function requestPreview() {
   try {
     do {
       renderQueued = false;
+      const useFade = fade || pendingFade;
+      pendingFade = false;
       if (!currentPage) return;
-      await renderPreview(currentPage, document.getElementById('edit-preview'), previewMaxEdge());
+      const { base, next } = previewCanvases();
+      const maxEdge = previewMaxEdge();
+      if (useFade) {
+        await renderPreview(currentPage, next, maxEdge);
+        crossfadePreview(base, next);
+      } else {
+        await renderPreview(currentPage, base, maxEdge);
+        dropPreviewFade(next);
+      }
     } while (renderQueued);
   } catch (err) {
     console.error(err);
@@ -256,7 +316,8 @@ function buildFilterChips() {
       row.querySelectorAll('.chip').forEach((c) => {
         c.setAttribute('aria-pressed', String(c.dataset.filter === f.id));
       });
-      requestPreview();
+      // The new look fades in over the old one.
+      requestPreview({ fade: true });
       persistSoon();
     });
     row.appendChild(chip);
@@ -537,7 +598,8 @@ export function init(context) {
   document.getElementById('btn-redetect').addEventListener('click', runDetection);
   document.getElementById('btn-reset-crop').addEventListener('click', () => {
     if (!currentPage) return;
-    editor.setCorners(fullImageCorners());
+    // The frame glides out to the edges of the photo.
+    editor.animateTo(fullImageCorners());
   });
 
   document.getElementById('btn-rotate-left').addEventListener('click', () => {
