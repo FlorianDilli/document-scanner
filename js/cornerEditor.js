@@ -22,8 +22,9 @@ const KNOB_GAP = 5;       // empty space between the outline and the dot
 const LOUPE_RADIUS = 70;  // loupe circle radius (CSS px)
 const LOUPE_ZOOM = 3;     // loupe magnification
 const LOUPE_OFFSET = 95;  // loupe offset from the finger (CSS px)
-const MOVE_MS = 420;      // corner move animation
-const TURN_MS = 480;      // rotation animation
+const MOVE_MS = 200;      // corner move animation
+const TURN_MS = 420;      // rotation animation
+const ANIM_QUALITY = 0.6; // canvas resolution while an animation runs
 
 function cross(o, a, b) {
   return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
@@ -72,6 +73,10 @@ export class CornerEditor {
     this.turnTo = null;      // target angle of the running rotation animation
     this.moveFrame = null;   // rAF of the running corner move animation
     this.moveTo = null;      // target corners of the running corner move animation
+    this.sprite = null;      // display-sized copy of the photo
+    this.spriteKey = '';     // size the sprite was built for
+    this.quality = 1;        // canvas resolution factor (lower while animating)
+    this.drawDpr = 1;        // device pixel ratio the canvas is drawn with
 
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement);
@@ -95,9 +100,54 @@ export class CornerEditor {
     if (!parent) return;
     const rect = parent.getBoundingClientRect();
     this.dpr = window.devicePixelRatio || 1;
-    this.canvas.width = Math.max(1, Math.round(rect.width * this.dpr));
-    this.canvas.height = Math.max(1, Math.round(rect.height * this.dpr));
+    this.applyCanvasSize();
+    this.buildSprite();
     this.draw();
+  }
+
+  // The canvas backing store. While an animation runs it is scaled
+  // down: a quarter of the pixels means a quarter of the fill and
+  // blit work per frame, which is what makes a turn smooth on
+  // phones. The full resolution comes back when it ends.
+  applyCanvasSize() {
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = this.dpr * this.quality;
+    this.drawDpr = dpr;
+    this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    this.canvas.height = Math.max(1, Math.round(rect.height * dpr));
+  }
+
+  setQuality(q) {
+    if (this.quality === q) return;
+    this.quality = q;
+    this.applyCanvasSize();
+    // The new backing store starts out empty – repaint at once so
+    // the stage never flashes blank.
+    this.draw();
+  }
+
+  // A display-sized copy of the photo. Drawing the original bitmap
+  // every frame means the browser resamples the full photo (megapiles)
+  // per frame – far too slow on phones, and it is what made the
+  // rotation stutter. The copy is downscaled once, then blitted.
+  buildSprite() {
+    if (!this.image) return;
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    // The tightest fit (photo unturned) is the largest scale the
+    // photo ever reaches, so the copy is always detailed enough.
+    const s0 = Math.min(rect.width / this.origWidth, rect.height / this.origHeight);
+    const w = Math.max(1, Math.round(this.origWidth * s0 * this.dpr));
+    const h = Math.max(1, Math.round(this.origHeight * s0 * this.dpr));
+    const key = `${w}x${h}`;
+    if (key === this.spriteKey && this.sprite) return;
+    if (!this.sprite) this.sprite = document.createElement('canvas');
+    this.sprite.width = w;
+    this.sprite.height = h;
+    const sctx = this.sprite.getContext('2d');
+    sctx.imageSmoothingQuality = 'medium';
+    sctx.drawImage(this.image, 0, 0, w, h);
+    this.spriteKey = key;
   }
 
   async setImage(bitmap, rotation = 0) {
@@ -110,6 +160,8 @@ export class CornerEditor {
     this.rotation = ((Math.round(rotation) % 360) + 360) % 360;
     // A new photo appears at its stored orientation – no animation.
     this.angle = this.rotation;
+    this.spriteKey = '';
+    this.buildSprite();
     this.resize();
   }
 
@@ -147,6 +199,7 @@ export class CornerEditor {
     }
     this.cancelTurn();
     this.turnTo = to;
+    this.setQuality(ANIM_QUALITY);
     const start = performance.now();
     const step = (now) => {
       const t = Math.min(1, (now - start) / duration);
@@ -158,6 +211,8 @@ export class CornerEditor {
         this.turnFrame = null;
         this.turnTo = null;
         this.angle = to;
+        this.restoreQuality();
+        this.draw();
       }
     };
     this.turnFrame = requestAnimationFrame(step);
@@ -182,6 +237,7 @@ export class CornerEditor {
     const to = corners.map((c) => ({ x: c.x, y: c.y }));
     this.cancelMove();
     this.moveTo = to;
+    this.setQuality(ANIM_QUALITY);
     const start = performance.now();
     const step = (now) => {
       const t = Math.min(1, (now - start) / duration);
@@ -196,6 +252,8 @@ export class CornerEditor {
       } else {
         this.moveFrame = null;
         this.moveTo = null;
+        this.restoreQuality();
+        this.draw();
       }
     };
     this.moveFrame = requestAnimationFrame(step);
@@ -208,6 +266,7 @@ export class CornerEditor {
       this.turnFrame = null;
     }
     this.turnTo = null;
+    this.restoreQuality();
   }
 
   // Stops the running corner move animation.
@@ -217,6 +276,12 @@ export class CornerEditor {
       this.moveFrame = null;
     }
     this.moveTo = null;
+    this.restoreQuality();
+  }
+
+  // Full canvas resolution again once no animation is running.
+  restoreQuality() {
+    if (!this.turnFrame && !this.moveFrame) this.setQuality(1);
   }
 
   // Snaps both animations to their end: the frame is committed from
@@ -301,12 +366,17 @@ export class CornerEditor {
     return { x: rx * cos + ry * sin, y: -rx * sin + ry * cos };
   }
 
-  toDisplayCoords(ix, iy) {
-    const f = this.computeFit();
+  // Display coords of an original-image point, for a fit that was
+  // already computed for the current frame.
+  displayPoint(f, ix, iy) {
     const { cos, sin, minX, minY } = f.box;
     const rx = ix * cos - iy * sin;
     const ry = ix * sin + iy * cos;
     return { x: (rx - minX) * f.scale + f.offsetX, y: (ry - minY) * f.scale + f.offsetY };
+  }
+
+  toDisplayCoords(ix, iy) {
+    return this.displayPoint(this.computeFit(), ix, iy);
   }
 
   // Display coords of a pointer event (relative to the canvas).
@@ -317,10 +387,11 @@ export class CornerEditor {
 
   handleAt(pos) {
     if (!this.corners) return -1;
+    const f = this.computeFit();
     let best = -1;
     let bestDist = HANDLE_RADIUS;
     this.corners.forEach((c, i) => {
-      const d = this.toDisplayCoords(c.x, c.y);
+      const d = this.displayPoint(f, c.x, c.y);
       const dist = Math.hypot(d.x - pos.x, d.y - pos.y);
       if (dist < bestDist) {
         bestDist = dist;
@@ -369,13 +440,16 @@ export class CornerEditor {
 
   draw() {
     const ctx = this.ctx;
-    const dpr = this.dpr;
+    const dpr = this.drawDpr;
     const rect = this.canvas.getBoundingClientRect();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, rect.width, rect.height);
     if (!this.image || !this.corners) return;
 
+    // One fit per frame: reading the layout and doing the trigonometry
+    // once keeps the animation cheap.
     const f = this.computeFit();
+    const point = (c) => this.displayPoint(f, c.x, c.y);
 
     // Image, turned by the current angle.
     ctx.save();
@@ -383,11 +457,15 @@ export class CornerEditor {
     ctx.scale(f.scale, f.scale);
     ctx.translate(-f.box.minX, -f.box.minY);
     ctx.rotate((this.angle * Math.PI) / 180);
-    ctx.drawImage(this.image, 0, 0);
+    if (this.sprite) {
+      ctx.drawImage(this.sprite, 0, 0, this.origWidth, this.origHeight);
+    } else {
+      ctx.drawImage(this.image, 0, 0);
+    }
     ctx.restore();
 
     // Dim everything outside the quadrilateral (even-odd fill).
-    const [tl, tr, br, bl] = this.corners.map((c) => this.toDisplayCoords(c.x, c.y));
+    const [tl, tr, br, bl] = this.corners.map(point);
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, rect.width, rect.height);
@@ -429,7 +507,7 @@ export class CornerEditor {
 
     // Corner handles (small dots; the touch target stays HANDLE_RADIUS).
     this.corners.forEach((c, i) => {
-      const d = this.toDisplayCoords(c.x, c.y);
+      const d = point(c);
       ctx.save();
       ctx.beginPath();
       ctx.arc(d.x, d.y, KNOB_RADIUS, 0, Math.PI * 2);

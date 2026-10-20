@@ -260,8 +260,6 @@ async function requestPreview({ fade = false } = {}) {
     return;
   }
   rendering = true;
-  const spinner = document.getElementById('edit-spinner');
-  spinner.classList.remove('hidden');
   try {
     do {
       renderQueued = false;
@@ -283,7 +281,6 @@ async function requestPreview({ fade = false } = {}) {
     ctx.toast(ctx.t('errGeneric'));
   } finally {
     rendering = false;
-    spinner.classList.add('hidden');
   }
 }
 
