@@ -88,6 +88,8 @@ export class CornerEditor {
     this.dragIndex = -1;
     this.pointerPos = null;  // display coords of the active pointer
     this.dpr = window.devicePixelRatio || 1;
+    this.animFrame = null;   // pending animation frame of a running corner animation
+    this.animTarget = null;  // target corners of a running corner animation (rotated space)
 
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement);
@@ -100,6 +102,7 @@ export class CornerEditor {
   }
 
   destroy() {
+    this.cancelAnimation();
     this.resizeObserver.disconnect();
     if (this.image) this.image.close();
   }
@@ -115,6 +118,7 @@ export class CornerEditor {
   }
 
   async setImage(bitmap, rotation = 0) {
+    this.cancelAnimation();
     if (this.image) this.image.close();
     this.image = bitmap;
     this.origWidth = bitmap.width;
@@ -137,6 +141,7 @@ export class CornerEditor {
       this.rotation = rotation;
       return;
     }
+    this.cancelAnimation();
     const orig = this.getCorners();
     this.rotation = rotation;
     this.updateDisplaySize();
@@ -146,8 +151,66 @@ export class CornerEditor {
 
   // `corners` are in ORIGINAL image coords.
   setCorners(corners) {
+    this.cancelAnimation();
     this.corners = corners.map((c) =>
       toRotatedSpace(c, this.rotation, this.origWidth, this.origHeight));
+    this.draw();
+  }
+
+  // Glides the frame to new corners (ORIGINAL image coords) instead of
+  // jumping there. Used by "Detect again": the rectangle moves
+  // smoothly into the detected position, so the photo never flashes.
+  animateTo(corners, duration = 420) {
+    if (!this.corners) {
+      this.setCorners(corners);
+      return;
+    }
+    const reduce = typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      this.setCorners(corners);
+      return;
+    }
+    const target = corners.map((c) =>
+      toRotatedSpace(c, this.rotation, this.origWidth, this.origHeight));
+    const from = this.corners.map((c) => ({ x: c.x, y: c.y }));
+    this.cancelAnimation();
+    this.animTarget = target;
+    const start = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const e = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      this.corners = target.map((c, i) => ({
+        x: from[i].x + (c.x - from[i].x) * e,
+        y: from[i].y + (c.y - from[i].y) * e,
+      }));
+      this.draw();
+      if (t < 1) {
+        this.animFrame = requestAnimationFrame(step);
+      } else {
+        this.animFrame = null;
+        this.animTarget = null;
+      }
+    };
+    this.animFrame = requestAnimationFrame(step);
+  }
+
+  // Stops a running corner animation.
+  cancelAnimation() {
+    if (this.animFrame) {
+      cancelAnimationFrame(this.animFrame);
+      this.animFrame = null;
+    }
+    this.animTarget = null;
+  }
+
+  // Jumps to the end of a running corner animation (the frame is
+  // committed from here on, so it must not be left half-way).
+  finishAnimation() {
+    const target = this.animTarget;
+    if (!target) return;
+    this.cancelAnimation();
+    this.corners = target.map((c) => ({ x: c.x, y: c.y }));
     this.draw();
   }
 
@@ -216,6 +279,8 @@ export class CornerEditor {
 
   onPointerDown(e) {
     if (!this.corners) return;
+    // A touch takes over from a running animation.
+    this.cancelAnimation();
     const pos = this.eventPos(e);
     const idx = this.handleAt(pos);
     if (idx === -1) return;

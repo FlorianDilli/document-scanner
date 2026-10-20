@@ -726,6 +726,17 @@ body {
   max-width: 100%;
   line-height: 1.25;
 }
+/* While an action runs, its icon breathes in grey instead of blocking
+   the whole screen with a loading overlay. */
+.crop-actions .btn.is-busy { cursor: progress; }
+.crop-actions .btn.is-busy .icon {
+  color: var(--muted);
+  animation: iconPulse 1.1s ease-in-out infinite;
+}
+@keyframes iconPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
 
 /* ---------- page editor ---------- */
 
@@ -1111,7 +1122,44 @@ body.editor-open #app-main {
 @media (min-width: 700px) {
   .zoom-controls { display: flex; }
 }
-#edit-spinner { position: absolute; }
+/* Preview loading ring: centred over the preview well. It is drawn in
+   two tones – ink and paper white – so the ring stays readable on a
+   white document as well as on a dark photo, and it never covers the
+   preview with a full-screen overlay. */
+.preview-spinner {
+  position: absolute;
+  inset: 0;
+  /* Auto margins centre the ring inside the well without a transform
+     (the rotation animation owns the transform). */
+  margin: auto;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  pointer-events: none;
+}
+.preview-spinner svg {
+  display: block;
+  animation: spin 1.05s linear infinite;
+}
+.preview-spinner circle {
+  fill: none;
+  stroke-width: 2.5;
+}
+.preview-spinner-track { stroke: rgba(255, 255, 255, 0.22); }
+/* Two half circles, offset by half the circumference: a full ring
+   that is half ink, half white, and therefore visible on every
+   background. */
+.preview-spinner-arc-dark {
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-dasharray: 59.7 59.7;
+}
+.preview-spinner-arc-light {
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-linecap: round;
+  stroke-dasharray: 59.7 59.7;
+  stroke-dashoffset: -59.7;
+}
 
 .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
 

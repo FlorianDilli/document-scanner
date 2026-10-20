@@ -52,6 +52,9 @@ let bitmapPageId = null;
 // "guess" outline stand down (until the page is left / re-entered).
 let frameHintDismissed = false;
 
+// True while "Detect again" runs in the worker.
+let detecting = false;
+
 // Preview rendering is serialized: rapid slider moves
 // queue up instead of piling up concurrent CV jobs.
 let rendering = false;
@@ -311,19 +314,29 @@ async function ensureFrameEditor() {
 // import result, which is why it is hidden for pages whose detection
 // failed (see syncFrameHint). It remains useful as "restore the
 // auto-detected frame" after manual fiddling.
+//
+// There is no full-screen loading overlay: the button icon pulses in
+// grey while the worker is busy and the frame glides into the
+// detected position afterwards.
 async function runDetection() {
-  if (!currentPage) return;
-  ctx.showBusy(ctx.t('busyDetect'));
+  if (!currentPage || detecting) return;
+  detecting = true;
+  const page = currentPage;
+  const btn = document.getElementById('btn-redetect');
+  btn.classList.add('is-busy');
+  btn.setAttribute('aria-busy', 'true');
   try {
-    const { corners, detected, fullFrame } = await detectPageCorners(currentPage);
-    editor.setCorners(corners);
+    const { corners, detected, fullFrame } = await detectPageCorners(page);
+    // The user may have switched pages while the worker was busy.
+    if (currentPage !== page) return;
+    editor.animateTo(corners);
     // Persist the honest flags; corners stay editor-local until the
     // frame is committed.
     if (
-      detected !== currentPage.detected ||
-      fullFrame !== currentPage.fullFrame
+      detected !== page.detected ||
+      fullFrame !== page.fullFrame
     ) {
-      state.updatePage(currentPage.id, { detected, fullFrame });
+      state.updatePage(page.id, { detected, fullFrame });
       persistNow();
     }
     frameHintDismissed = false;
@@ -332,7 +345,9 @@ async function runDetection() {
     console.error(err);
     ctx.toast(ctx.t('errGeneric'));
   } finally {
-    ctx.hideBusy();
+    detecting = false;
+    btn.classList.remove('is-busy');
+    btn.removeAttribute('aria-busy');
   }
 }
 
@@ -367,6 +382,9 @@ function syncFrameHint() {
 // current quadrilateral is unusable.
 function commitFrame() {
   if (!currentPage || currentMode !== 'frame' || !editor.image) return true;
+  // A running "Detect again" animation is snapped to its end: the
+  // frame is committed from here on, never half-way.
+  editor.finishAnimation();
   const corners = editor.getCorners();
   if (!isConvexQuad(corners)) {
     ctx.toast(ctx.t('invalidFrame'));
