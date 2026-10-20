@@ -15,6 +15,8 @@
 //     space, so drawing, dragging and the loupe all stay simple.
 
 const HANDLE_RADIUS = 22; // 44 px hit area (touch target)
+const KNOB_RADIUS = 12;   // drawn corner dot (CSS px)
+const KNOB_GAP = 5;       // empty space between the outline and the dot
 const LOUPE_RADIUS = 70;  // loupe circle radius (CSS px)
 const LOUPE_ZOOM = 3;     // loupe magnification
 const LOUPE_OFFSET = 95;  // loupe offset from the finger (CSS px)
@@ -279,31 +281,47 @@ export class CornerEditor {
     ctx.restore();
 
     // Quad outline (dashed while it is an unverified guess).
+    // Every edge is trimmed at both ends so the line stops short of
+    // the corner dots: the outline reads as four separate strokes
+    // that are visibly disconnected from the knobs.
     ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(tl.x, tl.y);
-    ctx.lineTo(tr.x, tr.y);
-    ctx.lineTo(br.x, br.y);
-    ctx.lineTo(bl.x, bl.y);
-    ctx.closePath();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
     if (this.guess) ctx.setLineDash([7, 6]);
-    ctx.stroke();
+    const pts = [tl, tr, br, bl];
+    for (let i = 0; i < 4; i++) {
+      const a = pts[i];
+      const b = pts[(i + 1) % 4];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy);
+      const trim = KNOB_RADIUS + KNOB_GAP;
+      if (len <= trim * 2) continue;
+      const ux = dx / len;
+      const uy = dy / len;
+      ctx.beginPath();
+      ctx.moveTo(a.x + ux * trim, a.y + uy * trim);
+      ctx.lineTo(b.x - ux * trim, b.y - uy * trim);
+      ctx.stroke();
+    }
     ctx.restore();
 
-    // Corner handles (large touch targets).
+    // Corner handles (small dots; the touch target stays HANDLE_RADIUS).
     this.corners.forEach((c, i) => {
       const d = this.toDisplayCoords(c.x, c.y);
       ctx.save();
       ctx.beginPath();
-      ctx.arc(d.x, d.y, HANDLE_RADIUS, 0, Math.PI * 2);
+      ctx.arc(d.x, d.y, KNOB_RADIUS, 0, Math.PI * 2);
       // Active corner inverts to ink so it reads as "selected".
       ctx.fillStyle = i === this.dragIndex ? 'rgba(20, 20, 20, 0.92)' : 'rgba(255, 255, 255, 0.95)';
       ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#ffffff';
-      ctx.stroke();
+      // The dragged dot is ink, so it keeps a white rim to stay visible.
+      if (i === this.dragIndex) {
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+      }
       ctx.restore();
     });
 

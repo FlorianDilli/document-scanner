@@ -681,26 +681,50 @@ body {
   #view-export #btn-export-back { width: 44px; padding: 0; }
   #view-export #btn-export-back span[data-i18n] { display: none; }
 }
-/* Crop actions: four separate buttons in one centered row on every
-   width. Rotation is not a joined pair – both rotate buttons look
-   exactly like re-detect and reset. The buttons hug their content and
-   the row centers the group. Labels may wrap to two lines, the row
-   height stays put. */
+/* Crop actions: the four frame tools live in one floating panel –
+   a surface card with a hairline and a soft shadow. Inside it the
+   actions are borderless and stack the icon above the label, the way
+   the reference toolbar does. The panel is capped and centered so it
+   reads as a compact group on wide screens too. */
 .crop-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, auto));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
-  justify-content: center;
-  gap: 8px;
+  gap: 4px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 10px 8px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-float);
 }
 .crop-actions .btn {
-  min-height: 44px;
+  min-height: 0;
   min-width: 0;
-  padding: 8px 14px;
+  padding: 8px 6px;
+  flex-direction: column;
+  gap: 7px;
   text-align: center;
   line-height: 1.2;
   font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
   border-radius: var(--r-sm);
+}
+.crop-actions .btn:hover {
+  background: var(--surface-2);
+  border-color: transparent;
+  color: var(--ink);
+}
+.crop-actions .btn .icon { width: 26px; height: 26px; color: var(--ink); }
+.crop-actions .btn span[data-i18n] {
+  display: block;
+  max-width: 100%;
+  line-height: 1.25;
 }
 
 /* ---------- page editor ---------- */
@@ -954,10 +978,11 @@ body.editor-open #app-main {
    The frame actions become icon-only too: their labels ("Erneut
    erkennen", "Auf ganzes Bild") are long and would wrap to two lines,
    so the wording lives on in the markup for wider screens only. The
-   four equal buttons then sit centered in the row. */
+   four icons then sit centered in the panel. */
 @media (max-width: 699px) {
   #view-editor.in-frame #frame-stage { max-height: 62vh; }
-  .crop-actions .btn { min-width: 44px; }
+  .crop-actions { padding: 8px 4px; }
+  .crop-actions .btn { min-width: 0; padding: 8px 4px; }
   .crop-actions .btn span[data-i18n] { display: none; }
 }
 
