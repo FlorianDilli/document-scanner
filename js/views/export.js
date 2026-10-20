@@ -195,6 +195,11 @@ export function init(context) {
   ctx = context;
 
   document.getElementById('opt-filename').value = defaultFilename();
+  // On narrow screens the back button shows its arrow only – the
+  // label lives on the button as its accessible name.
+  document
+    .getElementById('btn-export-back')
+    .setAttribute('aria-label', ctx.t('back'));
   document.getElementById('btn-export-back').addEventListener('click', () => {
     ctx.navigate('home');
   });

@@ -1,71 +1,64 @@
 /* ==========================================================================
-   Document Scanner – monochrome "clean tile" design
-   Neutral light-grey canvas, white rounded tiles with soft hairline
-   outlines, ink (near-black) as the only emphasis color. The primary
-   action of every view is the single solid black element; secondary
-   actions are white tiles with a quiet border and destructive actions
-   are muted red text. Shadows stay soft and rare – hierarchy comes
-   from fill contrast, hairlines and size.
-   Mobile-first, with a matching inverted dark theme.
+   Document Scanner – flat monochrome design system
+   --------------------------------------------------------------------------
+   A pure 2D, black-and-white interface. Everything is drawn with fills
+   and 1px rules; there are no gradients, no glass, no soft "3D" bevels.
+   Depth comes from a strict four-step grey ramp plus hairlines.
 
-   Elevation ramp (identical semantics in both themes):
-     --bg      page canvas, behind everything
-     --sunken  recessed surface (photo wells, thumb backdrops, segment
-               tracks, field fills, progress rails) – always one step
-               AWAY from --card so a well reads as inset
-     --card    the standard raised tile (cards, toolbars, buttons, rails)
-     --raised  brightest/most prominent fill, for emphasis tiles nested
-               inside a card (import tiles)
-   Raised surfaces carry a hairline: --line-card for tiles, --line-btn
-   for controls. Wells (sunken) never get outlines.
-   Photo work uses --stage, a fixed near-black well, in both themes.
+     --canvas   the page behind everything
+     --surface  cards, tiles, bars (the only white in light mode)
+     --sunken   wells and tracks: fields, segmented tracks, photo wells
+     --ink      the single emphasis colour (near-black in light mode,
+                near-white in dark mode). One solid ink element per view
+                marks the primary action.
+
+   Typography: system sans, tight tracking on headings, uppercase
+   micro-labels (0.125em tracking) for section and setting labels, tabular
+   figures for every number.
+
+   Geometry: four radii (--r-xs 6, --r-sm 10, --r-md 14, --r-lg 18).
+   Rules: --rule for hairlines, --rule-strong for emphasised borders.
+   Shadows exist only where an element genuinely floats (bars, toasts,
+   banners) and are kept flat and neutral.
+
+   Mobile-first, with an exactly inverted dark theme: the ink swaps
+   polarity, every ramp step swaps with its counterpart.
    ========================================================================== */
 
 :root {
   color-scheme: light dark;
 
-  /* surfaces */
-  --bg: #f1f1ef;
-  --sunken: #e5e5e2;
-  --card: #fafaf8;
-  --raised: #ffffff;
-  --text: #17171a;
-  --text-dim: #6d6d70;
+  /* --- the grey ramp (light mode) --- */
+  --canvas: #ededeb;
+  --surface: #ffffff;
+  --surface-2: #f5f5f3;
+  --sunken: #e1e1de;
+  --ink: #0c0c0d;
+  --ink-2: #3b3b40;
+  --muted: #6e6e73;
 
-  /* hairlines for raised surfaces */
-  --line-card: 1px solid rgba(23, 23, 26, 0.08);
-  --line-btn: 1px solid rgba(23, 23, 26, 0.12);
+  /* --- rules --- */
+  --rule: rgba(12, 12, 13, 0.12);
+  --rule-soft: rgba(12, 12, 13, 0.07);
+  --rule-strong: rgba(12, 12, 13, 0.26);
 
-  /* fixed photo well (crop stage, look mode) – intentionally dark in
-     both themes so scanned documents are judged on neutral black */
-  --stage: #161616;
+  /* --- fixed photo well: near-black in both themes, so a scanned
+         document is always judged against neutral black --- */
+  --stage: #131313;
+  --stage-edge: rgba(255, 255, 255, 0.08);
 
-  /* dividers (hairlines are soft, never heavy outlines) */
-  --hairline: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  /* --- flat elevation for genuinely floating elements --- */
+  --shadow-float: 0 1px 1px rgba(12, 12, 13, 0.04), 0 8px 24px rgba(12, 12, 13, 0.10);
+  --shadow-drag: 0 12px 28px rgba(12, 12, 13, 0.18);
 
-  /* elevation: floating UI (banners, toasts, drag lift) + the soft
-     lift under emphasized tiles (import tiles, page tools) */
-  --shadow-tile: 0 1px 2px rgba(23, 23, 26, 0.04), 0 6px 16px rgba(23, 23, 26, 0.05);
-  --shadow-float: 0 10px 30px rgba(0, 0, 0, 0.12);
-  --shadow-drag: 0 14px 36px rgba(0, 0, 0, 0.2);
+  /* --- shapes --- */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-pill: 999px;
 
-  /* primary / solid actions */
-  --solid: #17171a;
-  --on-solid: #ffffff;
-  --accent: #17171a;
-  --on-accent: #ffffff;
-
-  /* status */
-  --danger: #b23120;
-  --danger-soft: #f6dcd7;
-  --success-text: #1a6b41;
-
-  /* shapes */
-  --radius: 20px;
-  --radius-sm: 12px;
-  --radius-pill: 999px;
-
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2317171a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230c0c0d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
   /* Safe-area insets get a hard cap: iOS 26 standalone PWAs (home
      screen web apps) report a bottom inset that still reserves room
@@ -86,30 +79,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d0d0f;
-    --sunken: #1c1c21;
-    --card: #232329;
-    --raised: #38383f;
-    --text: #f4f4f4;
-    --text-dim: #a7a7ad;
+    --canvas: #0b0b0c;
+    --surface: #161618;
+    --surface-2: #1d1d20;
+    --sunken: #232327;
+    --ink: #f4f4f2;
+    --ink-2: #c6c6c9;
+    --muted: #8c8c91;
 
-    --line-card: 1px solid rgba(244, 244, 244, 0.08);
-    --line-btn: 1px solid rgba(244, 244, 244, 0.14);
+    --rule: rgba(255, 255, 255, 0.14);
+    --rule-soft: rgba(255, 255, 255, 0.08);
+    --rule-strong: rgba(255, 255, 255, 0.3);
 
-    --shadow-tile: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-float: 0 10px 30px rgba(0, 0, 0, 0.5);
-    --shadow-drag: 0 14px 36px rgba(0, 0, 0, 0.6);
+    --shadow-float: 0 1px 1px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-drag: 0 12px 28px rgba(0, 0, 0, 0.6);
 
-    --solid: #f2f2f2;
-    --on-solid: #111111;
-    --accent: #f2f2f2;
-    --on-accent: #111111;
-
-    --danger: #ff7a6b;
-    --danger-soft: #3a2420;
-    --success-text: #7fd6a4;
-
-    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23f2f2f2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23f4f4f2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 }
 
@@ -118,8 +103,8 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--canvas);
+  color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 16px;
   /* Keep iOS from inflating fonts in landscape and never shrinking
@@ -146,10 +131,10 @@ body {
   flex-direction: column;
 }
 
-::selection { background: var(--accent); color: var(--on-accent); }
+::selection { background: var(--ink); color: var(--surface); }
 
 :is(.btn, .icon-btn, .chip, .mode-btn, .format-btn, .strip-thumb, select, input[type="text"], input[type="checkbox"], [tabindex], .page-card):focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -166,37 +151,48 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: calc(16px + var(--safe-top)) clamp(16px, 4vw, 28px) 14px;
-  background: var(--bg);
+  padding: calc(16px + var(--safe-top)) clamp(16px, 4vw, 28px) 16px;
+  background: var(--canvas);
+  /* A single hairline closes the masthead – the only horizontal rule
+     in the shell, so the header reads as a title bar. */
+  border-bottom: 1px solid var(--rule);
 }
 
 #app-title {
   margin: 0;
-  font-size: 1.65rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   line-height: 1.15;
 }
 
 /* one-line description under the title */
 #app-subtitle {
-  margin: 3px 0 0;
-  color: var(--text-dim);
-  font-size: 0.95rem;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
   line-height: 1.35;
+  letter-spacing: -0.005em;
 }
 
-/* brand logo */
+/* Brand logo: sits in its own outlined tile, so the mark reads as a
+   designed element instead of a floating graphic. */
 #app-logo {
   flex: none;
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
+  padding: 8px;
+  box-sizing: border-box;
+  object-fit: contain;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
 }
 
 /* ---------- app shell ---------- */
 
 #app-main {
-  padding: 20px clamp(16px, 4vw, 28px) calc(48px + var(--safe-bottom));
+  padding: 24px clamp(16px, 4vw, 28px) calc(48px + var(--safe-bottom));
   max-width: 1020px;
   /* Definite width. With only `margin: 0 auto` this flex item is
      sized as fit-content, and one child with a wide intrinsic size
@@ -224,7 +220,7 @@ body {
 .view {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
   /* Never grow past the shell: a child with wide intrinsic size
      (long labels, form fields with a default `size`) would
      otherwise inflate the whole view past the screen edge. */
@@ -239,99 +235,117 @@ body {
 .hidden { display: none !important; }
 
 /* ---------- buttons ----------
-   Hierarchy: .btn-primary / .btn-success = the one solid black action
-   of a view; .btn = white bordered secondary tile; .btn-danger =
-   text-weight destructive action that stays calm until pressed. */
+   Hierarchy: .btn-primary / .btn-success = the one solid ink action
+   of a view; .btn = outlined secondary control; .btn-danger = a
+   secondary control that inverts to ink on interaction. */
 
 .btn {
   min-height: 48px;
   min-width: 44px;
-  padding: 12px 22px;
+  padding: 12px 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border: var(--line-btn);
-  border-radius: var(--radius-pill);
-  background: var(--raised);
-  color: var(--text);
+  gap: 9px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   cursor: pointer;
   touch-action: manipulation;
   transition: transform 0.08s ease, background-color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
 }
-.btn:hover { background: color-mix(in srgb, var(--raised) 92%, var(--text)); }
+.btn:hover { border-color: var(--rule-strong); background: var(--surface-2); }
 .btn:active { transform: scale(0.98); }
 
 /* disabled state for action buttons (including icon-only variants) */
 .btn:disabled,
 .icon-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
   pointer-events: none;
   transform: none;
 }
 
-.btn-primary { background: var(--accent); color: var(--on-accent); font-weight: 700; border-color: transparent; }
-.btn-primary:hover { background: var(--accent); opacity: 0.86; }
+.btn-primary { background: var(--ink); color: var(--surface); font-weight: 700; border-color: var(--ink); }
+.btn-primary:hover { background: var(--ink); border-color: var(--ink); opacity: 0.85; }
 
-/* the solid "finish" action: ink pill, same weight as the primary */
+/* the solid "finish" action: a solid ink block, the same weight as
+   the primary */
 .btn-success {
-  background: var(--solid);
-  color: var(--on-solid);
+  background: var(--ink);
+  color: var(--surface);
   font-weight: 700;
-  border-color: transparent;
+  border-color: var(--ink);
 }
-.btn-success:hover { background: var(--solid); opacity: 0.86; }
+.btn-success:hover { background: var(--ink); border-color: var(--ink); opacity: 0.85; }
 
+/* Destructive without colour: an outlined control that inverts to a
+   solid ink block when it is pressed. The weight change carries the
+   meaning – the interface stays strictly black and white. */
 .btn-danger {
   background: transparent;
-  color: var(--danger);
+  color: var(--ink);
   font-weight: 600;
+  border-color: var(--rule-strong);
 }
-.btn-danger:hover { background: var(--danger-soft); }
+.btn-danger:hover { background: var(--sunken); border-color: var(--ink); }
 
-.btn-big { font-size: 1.1rem; padding: 16px 28px; min-height: 56px; }
+.btn-big { font-size: 1.0625rem; padding: 16px 28px; min-height: 56px; letter-spacing: -0.01em; }
 
-/* Equal-weight tile buttons (camera + gallery): the brightest fill,
-   an icon in front of the label and a trailing arrow. Neither is the
-   "primary" action. */
+/* Equal-weight tile buttons (camera + gallery): outlined panels with
+   the icon in a solid ink square, a label and a trailing arrow.
+   Neither is the "primary" action. */
 .btn-tile {
   justify-content: flex-start;
-  gap: 12px;
-  min-height: 92px;
-  padding: 18px 20px;
-  border-radius: var(--radius);
-  background: var(--raised);
-  font-size: 1rem;
-  font-weight: 600;
+  gap: 14px;
+  min-height: 88px;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  font-size: 0.9375rem;
+  font-weight: 650;
   text-align: left;
-  box-shadow: var(--shadow-tile);
 }
-.btn-tile:hover { background: color-mix(in srgb, var(--raised) 94%, var(--text)); }
-.btn-tile .icon { width: 26px; height: 26px; }
+.btn-tile:hover { background: var(--surface-2); border-color: var(--rule-strong); }
+.btn-tile .icon-slot {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--surface);
+}
+.btn-tile .icon { width: 22px; height: 22px; }
 
 /* trailing chevron-arrow of a tile: pushed to the far edge */
 .tile-arrow {
   display: inline-grid;
   place-items: center;
   margin-left: auto;
-  color: var(--text);
+  color: var(--muted);
+  transition: transform 0.15s ease, color 0.15s ease;
 }
-.tile-arrow .icon { width: 20px; height: 20px; }
+.tile-arrow .icon { width: 18px; height: 18px; }
+.btn-tile:hover .tile-arrow { transform: translateX(3px); color: var(--ink); }
 
 /* Round, icon-only confirm in the editor toolbar. */
 .btn.btn-done {
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
-  min-height: 52px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
   padding: 0;
   border-radius: 50%;
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
 }
-.btn-done .icon { width: 24px; height: 24px; }
+.btn-done:hover { background: var(--ink); border-color: var(--ink); opacity: 0.85; }
+.btn-done .icon { width: 22px; height: 22px; }
 
 /* Visually hidden, still announced to assistive tech. */
 .sr-only {
@@ -363,24 +377,24 @@ body {
   min-width: 44px;
   min-height: 44px;
   padding: 8px 16px;
-  border: var(--line-btn);
-  border-radius: var(--radius-pill);
-  background: var(--raised);
-  color: var(--text);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.08s ease, background-color 0.15s ease;
 }
-.icon-btn:hover { background: color-mix(in srgb, var(--raised) 92%, var(--text)); }
+.icon-btn:hover { background: var(--surface-2); border-color: var(--rule-strong); }
 .icon-btn:active { transform: scale(0.96); }
 
-/* ---------- cards (white tiles on the grey canvas, soft hairline) ---------- */
+/* ---------- cards ---------- */
 
 .card {
-  background: var(--card);
-  border: var(--line-card);
-  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
 }
 
 .card-head {
@@ -390,36 +404,43 @@ body {
   gap: 12px;
   flex-wrap: wrap;
 }
+/* Section titles are set as micro-labels: small, uppercase, tracked
+   out – the label of a panel, not a headline. */
 .card-head h3 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1;
 }
 
 /* ---------- home: import ---------- */
 
-/* The import section is a raised white panel; the two entry tiles
-   inside it own the brightest fill (pure white) with a soft lift –
-   the clearest step between the nested layers. */
 .import-card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   padding: 20px;
 }
 
 /* one-line description under the section title (gap compensated) */
-.import-card .hint { margin-top: -10px; }
+.import-card .hint { margin-top: -6px; }
 
-/* Camera and gallery sit side by side on every width, as equal tiles. */
+/* Camera and gallery sit side by side once there is room for their
+   labels; on narrow phones they stack into full-width rows, so the
+   icon, the label and the arrow never fight for the same line. */
 #import-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+@media (max-width: 559px) {
+  #import-buttons { grid-template-columns: 1fr; }
+}
 
-.hint { color: var(--text-dim); font-size: 0.95rem; line-height: 1.5; margin: 0; }
+.hint { color: var(--muted); font-size: 0.9375rem; line-height: 1.5; margin: 0; }
 
 /* ---------- home: page grid ---------- */
 
@@ -435,15 +456,18 @@ body {
 
 .page-card {
   position: relative;
-  background: var(--card);
-  border: var(--line-card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-tile);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 }
-.page-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-float); }
+.page-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--rule-strong);
+  box-shadow: var(--shadow-float);
+}
 .page-card:active { transform: scale(0.99); }
 
 /* The frame ratio is the page's exact proportion (set inline per
@@ -462,65 +486,73 @@ body {
   box-sizing: border-box;
 }
 
-/* circular ink badge with the sheet number */
+/* square ink tab with the sheet number */
 .page-card .page-num {
   position: absolute;
   top: 10px;
   left: 10px;
   z-index: 1;
-  width: 27px;
-  height: 27px;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ink);
+  color: var(--surface);
   border: 0;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   padding: 0;
-  border-radius: 50%;
+  border-radius: var(--r-xs);
 }
 
 .page-card .page-tools {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 .page-card .page-tools button {
-  min-width: 34px;
-  min-height: 34px;
+  min-width: 32px;
+  min-height: 32px;
   display: grid;
   place-items: center;
-  border: var(--line-btn);
-  border-radius: 50%;
-  background: var(--raised);
-  color: var(--text);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  color: var(--ink);
   font-size: 0.9rem;
   line-height: 1;
   cursor: pointer;
-  box-shadow: var(--shadow-tile);
   padding: 0;
   font: inherit;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
+.page-card .page-tools button:hover { border-color: var(--rule-strong); }
 .page-card .page-tools button:active { transform: scale(0.94); }
 .page-card .page-tools .icon { width: 16px; height: 16px; }
 
-/* delete affordance: only turns red on interaction, so the grid
-   stays calm but the destructive weight is visible */
+/* delete affordance: inverts to a solid ink block on interaction, so
+   the destructive weight is unmistakable without a single colour */
 .page-card .page-tools .btn-danger {
-  color: var(--text);
-  background: var(--raised);
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--rule);
 }
-.page-card .page-tools .btn-danger:active,
-.page-card .page-tools .btn-danger:focus-visible { color: var(--danger); }
+.page-card .page-tools .btn-danger:hover,
+.page-card .page-tools .btn-danger:focus-visible {
+  color: var(--surface);
+  background: var(--ink);
+  border-color: var(--ink);
+}
 
 /* drag & drop reorder: grip handle (pointer events, touch-first) */
 .page-card .grab-handle {
   touch-action: none;
   cursor: grab;
+  color: var(--muted);
 }
 .page-card .grab-handle:active { cursor: grabbing; }
 
@@ -536,19 +568,20 @@ body {
 /* hint that auto-detection failed for this page */
 .page-card .page-badge {
   position: absolute;
-  left: 12px;
-  bottom: 12px;
+  left: 10px;
+  bottom: 10px;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: var(--danger-soft);
-  color: var(--danger);
+  background: var(--ink);
+  color: var(--surface);
   border: 0;
-  font-size: 0.72rem;
+  font-size: 0.6875rem;
   font-weight: 700;
-  padding: 3px 9px;
-  border-radius: var(--radius-pill);
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  border-radius: var(--r-xs);
   pointer-events: none;
 }
 .page-card .page-badge .icon { width: 12px; height: 12px; }
@@ -557,7 +590,7 @@ body {
    width, so the primary action is always visible and reachable
    (thumb zone on phones). The page list gets matching bottom room
    below so the last cards are never hidden behind it. */
-#view-home { padding-bottom: 88px; }
+#view-home { padding-bottom: 92px; }
 .home-footer {
   position: fixed;
   right: calc(16px + env(safe-area-inset-right, 0px));
@@ -565,42 +598,50 @@ body {
   z-index: 8;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 8px 8px 8px 20px;
-  background: var(--raised);
-  border: var(--line-card);
-  border-radius: var(--radius-pill);
+  gap: 16px;
+  padding: 7px 7px 7px 18px;
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-float);
 }
-.page-counter { color: var(--text-dim); font-weight: 600; font-size: 0.95rem; white-space: nowrap; }
+.page-counter {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
 .home-footer-actions { display: flex; }
-.home-footer .btn-success { min-height: 48px; }
+.home-footer .btn-success { min-height: 46px; }
 
 .empty-state {
-  margin: 8px auto 0;
+  margin: 0;
   max-width: 560px;
   text-align: center;
-  color: var(--text-dim);
-  font-size: 0.95rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
   line-height: 1.55;
-  padding: 44px 24px;
-  background: var(--sunken);
-  border-radius: var(--radius);
+  padding: 48px 24px;
+  background: transparent;
+  /* A dashed rule marks the slot as "nothing here yet" – a flat,
+     drawn placeholder instead of a filled panel. */
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--r-lg);
 }
-/* little tilted document illustration */
+/* little line-art document illustration, drawn with rules only */
 .empty-state::before {
   content: "";
   display: block;
-  width: 44px;
-  height: 56px;
-  margin: 0 auto 16px;
-  border-radius: 8px;
-  transform: rotate(-4deg);
+  width: 52px;
+  height: 66px;
+  margin: 0 auto 18px;
+  border: 2px solid var(--rule-strong);
+  border-radius: var(--r-xs);
   background:
-    linear-gradient(var(--text-dim), var(--text-dim)) 9px 14px / 20px 3px no-repeat,
-    linear-gradient(var(--text-dim), var(--text-dim)) 9px 23px / 26px 3px no-repeat,
-    linear-gradient(var(--text-dim), var(--text-dim)) 9px 32px / 15px 3px no-repeat,
-    var(--card);
+    linear-gradient(var(--rule-strong), var(--rule-strong)) 10px 14px / 30px 2px no-repeat,
+    linear-gradient(var(--rule-strong), var(--rule-strong)) 10px 24px / 30px 2px no-repeat,
+    linear-gradient(var(--rule-strong), var(--rule-strong)) 10px 34px / 18px 2px no-repeat;
 }
 
 /* ---------- toolbars ---------- */
@@ -615,19 +656,31 @@ body {
   flex-wrap: wrap;
 }
 .toolbar-title {
-  font-weight: 800;
-  font-size: 1.2rem;
+  font-weight: 700;
+  font-size: 1.0625rem;
   letter-spacing: -0.02em;
   text-align: center;
 }
-/* Export toolbar: the title sits in a true centre column, independent
-   of the width of the back button on the left. */
+/* Export toolbar: the title is centred over the row on its own layer,
+   so the back button (which can be wide) can never push it out of
+   place. */
 #view-export .view-toolbar {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
 }
-#view-export .view-toolbar > :first-child { justify-self: start; }
-#view-export .view-toolbar > :last-child { justify-self: end; }
+#view-export .toolbar-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+/* On the narrowest screens the back button shrinks to its arrow; the
+   accessible name stays on the button itself. */
+@media (max-width: 479px) {
+  #view-export #btn-export-back { width: 44px; padding: 0; }
+  #view-export #btn-export-back span[data-i18n] { display: none; }
+}
 /* Crop actions: four separate buttons in one centered row on every
    width. Rotation is not a joined pair – both rotate buttons look
    exactly like re-detect and reset. The buttons hug their content and
@@ -638,15 +691,16 @@ body {
   grid-template-columns: repeat(4, minmax(0, auto));
   align-items: stretch;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
 .crop-actions .btn {
-  min-height: 40px;
+  min-height: 44px;
   min-width: 0;
-  padding: 8px 12px;
+  padding: 8px 14px;
   text-align: center;
   line-height: 1.2;
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
+  border-radius: var(--r-sm);
 }
 
 /* ---------- page editor ---------- */
@@ -678,7 +732,7 @@ body.editor-open #app-main {
   position: sticky;
   top: 0;
   z-index: 6;
-  background: var(--bg);
+  background: var(--canvas);
   padding-top: calc(10px + var(--safe-top));
 }
 
@@ -689,7 +743,7 @@ body.editor-open #app-main {
 #view-editor.in-frame {
   flex: 1 1 0%;
   min-height: 0;
-  gap: 10px;
+  gap: 12px;
 }
 #view-editor:not(.in-frame) #look-pane { flex: 1 0 auto; }
 
@@ -709,61 +763,63 @@ body.editor-open #app-main {
 #view-editor.in-frame #frame-pane {
   flex: 1 1 0%;
   min-height: 0;
-  gap: 10px;
+  gap: 12px;
 }
 #view-editor.in-frame .crop-actions { flex: none; }
 /* In frame mode the filmstrip is a normal flow item below the action
    row, never a sticky overlay on top of the buttons. */
 #view-editor.in-frame .page-filmstrip { flex: none; }
 
-/* Frame / Look mode switch: a segmented control on a grey track,
-   the selected segment is the solid ink pill. Lives in the top
+/* Frame / Look mode switch: a segmented control on a sunken track,
+   the selected segment is the solid ink block. Lives in the top
    toolbar between Back and Done. Auto margins center it whenever
    the row wraps and the switch lands on its own line. */
 .mode-switch {
   margin-inline: auto;
   display: inline-flex;
-  padding: 4px;
-  gap: 4px;
-  border-radius: var(--radius-pill);
+  padding: 3px;
+  gap: 3px;
+  border-radius: var(--r-md);
   background: var(--sunken);
   overflow: hidden;
 }
 .mode-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 6px 14px;
+  gap: 7px;
+  min-height: 34px;
+  padding: 6px 16px;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--r-sm);
   background: transparent;
-  color: var(--text);
+  color: var(--ink-2);
   font: inherit;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   cursor: pointer;
   touch-action: manipulation;
 }
 .mode-btn[aria-selected="true"] {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ink);
+  color: var(--surface);
   font-weight: 700;
 }
 
 /* Editor toolbar controls: 40px pills instead of the generic 48–52px
    blocks, so Back, the mode switch and Done sit on one calm line that
-   does not tower over the photo. The switch (4px track + 32px
+   does not tower over the photo. The switch (3px track + 34px
    segments) matches this height exactly. */
 #view-editor > .view-toolbar:first-child .btn {
-  min-height: 40px;
+  min-height: 42px;
   padding: 8px 16px;
+  border-radius: var(--r-sm);
 }
 #view-editor > .view-toolbar:first-child .btn.btn-done {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  border-radius: var(--r-sm);
 }
 #view-editor > .view-toolbar:first-child .btn-done .icon { width: 20px; height: 20px; }
 
@@ -774,9 +830,9 @@ body.editor-open #app-main {
    thumbs so it never crowds the buttons above it). Desktop: the
    same rail morphs into a fixed vertical strip on the left edge of
    the screen with much larger thumbs (see the media queries below).
-    In frame mode margin-top: auto sinks it below the stage; the
-    bottom gap comes from the editor's bottom padding (same gutter as
-    the sides).
+     In frame mode margin-top: auto sinks it below the stage; the
+     bottom gap comes from the editor's bottom padding (same gutter as
+     the sides).
 
    Opaque surface, no backdrop-filter: iOS 26 misplaces the blur
    layer of sticky elements at the top of the scroll container
@@ -819,9 +875,9 @@ body.editor-open #app-main {
   overflow-y: hidden;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
-  background: var(--card);
-  border: var(--line-card);
-  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
 }
 
 /* Thumbs keep their page's orientation: portrait slots are long
@@ -835,13 +891,13 @@ body.editor-open #app-main {
   aspect-ratio: var(--frame-aspect, 3 / 4);
   padding: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-xs);
   background: var(--sunken);
   overflow: hidden;
   cursor: pointer;
   touch-action: manipulation;
   transition: transform 0.08s ease, opacity 0.15s ease;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 /* Landscape pages: a wide frame whose long edge matches the portrait
    thumb's long edge, so both orientations stay within the rail. */
@@ -852,7 +908,7 @@ body.editor-open #app-main {
    never changes the thumb's box */
 .strip-thumb.current {
   opacity: 1;
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 .strip-thumb img {
@@ -863,24 +919,25 @@ body.editor-open #app-main {
   padding: 3px;
   box-sizing: border-box;
 }
-/* circular page badge, mirroring the home grid */
+/* square page badge, mirroring the home grid */
 .strip-num {
   position: absolute;
   top: 2px;
   left: 2px;
   z-index: 1;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   display: grid;
   place-items: center;
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ink);
+  color: var(--surface);
   border: 0;
-  font-size: 0.6rem;
+  font-size: 0.5625rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
   padding: 0;
-  border-radius: 50%;
+  border-radius: 4px;
 }
 
 /* Narrow phones: icon-only mode buttons keep the toolbar on one
@@ -942,8 +999,8 @@ body.editor-open #app-main {
     overflow-x: hidden;
     overflow-y: auto;
     scrollbar-width: thin;
-    background: var(--bg);
-    border-right: var(--hairline);
+    background: var(--canvas);
+    border-right: 1px solid var(--rule);
   }
   /* One preview per line: every page gets the full rail width, so
      mixed orientations stack cleanly instead of pairing up. */
@@ -952,9 +1009,9 @@ body.editor-open #app-main {
     width: 100%;
     margin-bottom: 12px;
     opacity: 1;
-    border-radius: 16px;
-    background: var(--card);
-    border: var(--line-card);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    border: 1px solid var(--rule);
   }
   body.editor-open #app-header,
   body.editor-open #app-main {
@@ -977,7 +1034,10 @@ body.editor-open #app-main {
   min-height: 0;
   background: var(--stage);
   border: 0;
-  border-radius: var(--radius);
+  border-radius: var(--r-lg);
+  /* A hairline of light defines the edge of the dark well against a
+     dark canvas; in light mode it is invisible on the black stage. */
+  box-shadow: inset 0 0 0 1px var(--stage-edge);
   overflow: hidden;
   touch-action: none;
 }
@@ -990,7 +1050,8 @@ body.editor-open #app-main {
   flex: 1 0 auto;
   background: var(--stage);
   border: 0;
-  border-radius: var(--radius);
+  border-radius: var(--r-lg);
+  box-shadow: inset 0 0 0 1px var(--stage-edge);
   min-height: 200px;
   overflow: hidden;
   /* Pinch and drag are handled by pageEditor.js, not the browser. */
@@ -1015,7 +1076,13 @@ body.editor-open #app-main {
   display: none;
   gap: 6px;
 }
-.zoom-controls .btn { min-width: 40px; min-height: 40px; padding: 0; background: var(--raised); }
+.zoom-controls .btn {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  background: var(--surface);
+  border-radius: var(--r-sm);
+}
 @media (min-width: 700px) {
   .zoom-controls { display: flex; }
 }
@@ -1025,42 +1092,51 @@ body.editor-open #app-main {
 
 .chip {
   min-height: 36px;
-  padding: 8px 16px;
-  border: var(--line-btn);
-  border-radius: var(--radius-pill);
-  background: var(--raised);
-  color: var(--text);
+  padding: 8px 14px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.8125rem;
+  letter-spacing: -0.005em;
   cursor: pointer;
-  transition: transform 0.08s ease, background-color 0.15s ease;
+  transition: transform 0.08s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
-.chip:hover { background: color-mix(in srgb, var(--raised) 92%, var(--text)); }
+.chip:hover { background: var(--surface-2); border-color: var(--rule-strong); }
 .chip:active { transform: scale(0.97); }
 .chip[aria-pressed="true"] {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ink);
+  color: var(--surface);
   font-weight: 700;
-  border-color: transparent;
+  border-color: var(--ink);
 }
 
-.sliders-card { padding: 8px 20px; }
+.sliders-card { padding: 4px 20px; }
 
 .slider-row {
   display: grid;
-  grid-template-columns: 96px 1fr 44px;
+  grid-template-columns: 108px 1fr 48px;
   align-items: center;
-  gap: 12px;
-  padding: 12px 0;
+  gap: 14px;
+  padding: 14px 0;
 }
-.slider-row + .slider-row { border-top: var(--hairline); }
-.slider-row label { font-weight: 600; font-size: 0.95rem; }
+.slider-row + .slider-row { border-top: 1px solid var(--rule-soft); }
+/* Setting labels: micro-labels, like the export rows. */
+.slider-row label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
 .slider-row .slider-val {
   text-align: right;
-  color: var(--text-dim);
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.875rem;
 }
 
 input[type="range"] {
@@ -1072,70 +1148,83 @@ input[type="range"] {
   background: transparent;
 }
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: var(--radius-pill);
+  height: 4px;
+  border-radius: var(--r-pill);
   background: var(--sunken);
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 24px;
-  height: 24px;
-  margin-top: -9px;
+  width: 20px;
+  height: 20px;
+  margin-top: -8px;
   border-radius: 50%;
-  background: var(--accent);
-  border: 3px solid var(--card);
-  box-shadow: 0 0 0 1px var(--accent);
+  background: var(--ink);
+  border: 0;
+  /* A gap of surface colour around the thumb keeps it readable on
+     the thin track – drawn, not shadowed. */
+  box-shadow: 0 0 0 3px var(--surface);
 }
 input[type="range"]::-moz-range-track {
-  height: 6px;
-  border-radius: var(--radius-pill);
+  height: 4px;
+  border-radius: var(--r-pill);
   background: var(--sunken);
 }
 input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--accent);
-  border: 3px solid var(--card);
+  background: var(--ink);
+  border: 0;
+  box-shadow: 0 0 0 3px var(--surface);
 }
 
 /* square icon-only action button (zoom controls) */
-.btn.btn-icon { padding: 10px; min-width: 48px; }
+.btn.btn-icon { padding: 10px; min-width: 48px; border-radius: var(--r-sm); }
 
 /* ---------- export ---------- */
 
 .export-options {
   display: flex;
   flex-direction: column;
-  padding: 6px 20px;
-  background: var(--card);
-  border: var(--line-card);
-  border-radius: var(--radius);
+  padding: 4px 20px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
 }
 .option-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   padding: 14px 0;
   /* Rows must be able to shrink inside the view; the filename
      field's intrinsic width (default `size`) would otherwise be
      wider than the screen on phones. */
   min-width: 0;
 }
-.option-row + .option-row { border-top: var(--hairline); }
-.option-row:first-child { padding-top: 12px; }
-.option-row:last-child { padding-bottom: 12px; }
-.option-row label { font-weight: 600; min-width: 0; }
+.option-row + .option-row { border-top: 1px solid var(--rule-soft); }
+.option-row:first-child { padding-top: 14px; }
+.option-row:last-child { padding-bottom: 14px; }
+/* Setting labels: micro-labels, tracked out, muted – the value
+   carries the weight. */
+.option-row label,
+.option-row .option-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  min-width: 0;
+}
 
 .option-row select,
 .option-row input[type="text"] {
   min-height: 44px;
   padding: 8px 14px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-sm);
   background: var(--sunken);
-  color: var(--text);
+  color: var(--ink);
   font: inherit;
   font-weight: 600;
   /* May shrink below the intrinsic form-field width; cap so the
@@ -1166,10 +1255,10 @@ input[type="range"]::-moz-range-thumb {
   -webkit-appearance: none;
   appearance: none;
   flex: none;
-  width: 52px;
-  height: 30px;
+  width: 50px;
+  height: 28px;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--r-pill);
   background: var(--sunken);
   position: relative;
   cursor: pointer;
@@ -1179,32 +1268,29 @@ input[type="range"]::-moz-range-thumb {
 .option-row input[type="checkbox"]::before {
   content: "";
   position: absolute;
-  top: 4px;
-  left: 4px;
+  top: 3px;
+  left: 3px;
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--text);
+  background: var(--ink);
   transition: transform 0.15s ease;
 }
-.option-row input[type="checkbox"]:checked { background: var(--accent); }
+.option-row input[type="checkbox"]:checked { background: var(--ink); }
 .option-row input[type="checkbox"]:checked::before {
   transform: translateX(22px);
-  background: var(--on-accent);
+  background: var(--surface);
 }
 
-/* Row labels that are not <label> (e.g. the format switch) */
-.option-row .option-label { font-weight: 600; min-width: 0; }
-
 /* Format choice (PDF / images): segmented control on a sunken
-   track, the selected segment is the solid ink pill – the same
+   track, the selected segment is the solid ink block – the same
    language as the editor's frame/look switch. */
 .format-switch {
   display: inline-flex;
   flex: none;
-  padding: 4px;
-  gap: 4px;
-  border-radius: var(--radius-pill);
+  padding: 3px;
+  gap: 3px;
+  border-radius: var(--r-md);
   background: var(--sunken);
   overflow: hidden;
 }
@@ -1215,18 +1301,18 @@ input[type="range"]::-moz-range-thumb {
   min-height: 40px;
   padding: 8px 18px;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--r-sm);
   background: transparent;
-  color: var(--text);
+  color: var(--ink-2);
   font: inherit;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   cursor: pointer;
   touch-action: manipulation;
 }
 .format-btn[aria-checked="true"] {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ink);
+  color: var(--surface);
   font-weight: 700;
 }
 
@@ -1234,23 +1320,29 @@ input[type="range"]::-moz-range-thumb {
 .format-hint {
   padding: 0 20px;
   margin: 0;
-  color: var(--text-dim);
-  font-size: 0.9rem;
+  color: var(--muted);
+  font-size: 0.875rem;
   line-height: 1.45;
 }
 
 .export-progress { display: flex; flex-direction: column; gap: 10px; }
 .progress-bar {
-  height: 10px;
-  border-radius: var(--radius-pill);
+  height: 6px;
+  border-radius: var(--r-pill);
   background: var(--sunken);
   overflow: hidden;
 }
 #export-progress-fill {
   height: 100%;
   width: 0%;
-  background: var(--accent);
+  background: var(--ink);
   transition: width 0.2s;
+}
+#export-progress-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 /* Export: the primary action is the last thing in the view; on phones
@@ -1270,13 +1362,16 @@ input[type="range"]::-moz-range-thumb {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  background: var(--raised);
-  border: var(--line-card);
-  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-float);
-  padding: 14px 18px;
+  padding: 12px 14px 12px 18px;
+  font-size: 0.9375rem;
+  font-weight: 600;
 }
-.banner > div { display: flex; gap: 10px; }
+.banner > div { display: flex; gap: 8px; }
+.banner .btn { min-height: 42px; padding: 8px 16px; border-radius: var(--r-sm); }
 
 /* Plain toasts: a hugging centered pill; long text wraps across
    its full width instead of being squeezed beside anything.
@@ -1292,15 +1387,27 @@ input[type="range"]::-moz-range-thumb {
   width: fit-content;
   z-index: 50;
   display: block;
-  background: var(--solid);
-  color: var(--on-solid);
+  background: var(--ink);
+  color: var(--surface);
   border: 0;
   padding: 12px 20px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--r-md);
   box-shadow: var(--shadow-float);
   max-width: calc(100vw - 32px);
   text-align: center;
+  font-weight: 600;
+  font-size: 0.9375rem;
   overflow-wrap: break-word;
+}
+
+/* On phones the home view keeps a floating export bar in the bottom
+   corner and the editor keeps its filmstrip rail there: the toast
+   steps above both so it never covers them. */
+@media (max-width: 699px) {
+  body:has(#view-home:not(.hidden)) .toast,
+  body:has(#view-editor:not(.hidden)) .toast {
+    bottom: calc(104px + var(--safe-bottom));
+  }
 }
 
 /* Toast with an action button (page deleted + undo, …): on phones
@@ -1316,8 +1423,8 @@ input[type="range"]::-moz-range-thumb {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px 14px;
-  border-radius: var(--radius);
-  padding: 14px 18px;
+  border-radius: var(--r-lg);
+  padding: 12px 12px 12px 18px;
   text-align: left;
 }
 .toast-action .toast-btn {
@@ -1325,9 +1432,12 @@ input[type="range"]::-moz-range-thumb {
   margin-left: auto;
   min-height: 38px;
   padding: 6px 16px;
-  background: var(--on-solid);
-  color: var(--solid);
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--surface);
+  border-radius: var(--r-sm);
 }
+.toast-action .toast-btn:hover { background: var(--surface-2); border-color: var(--surface); }
 
 /* Desktop: back to the compact single-row pill. */
 @media (min-width: 700px) {
@@ -1338,8 +1448,8 @@ input[type="range"]::-moz-range-thumb {
     width: fit-content;
     flex-wrap: nowrap;
     gap: 12px;
-    border-radius: var(--radius-pill);
-    padding: 10px 10px 10px 20px;
+    border-radius: var(--r-md);
+    padding: 8px 8px 8px 20px;
     max-width: min(560px, calc(100vw - 32px));
   }
 }
@@ -1357,15 +1467,15 @@ input[type="range"]::-moz-range-thumb {
      backdrop-filter layer after the element hides, smearing a ghost
      blur over whatever view comes next (WebKit bug 298709 family).
      A near-opaque dim does the same job without the ghost risk. */
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  background: color-mix(in srgb, var(--canvas) 94%, transparent);
 }
 .busy-overlay p { margin: 0; font-weight: 700; }
 
 .spinner {
   width: 44px;
   height: 44px;
-  border: 4px solid color-mix(in srgb, var(--text) 12%, transparent);
-  border-top-color: var(--accent);
+  border: 3px solid var(--sunken);
+  border-top-color: var(--ink);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
 }
@@ -1381,7 +1491,7 @@ input[type="range"]::-moz-range-thumb {
   /* Above busy overlay (60), toasts (50) and banners (40). */
   z-index: 70;
   display: flex;
-  background: #111111;
+  background: #000000;
 }
 #camera-video {
   flex: 1 1 0%;
@@ -1405,8 +1515,13 @@ input[type="range"]::-moz-range-thumb {
   position: absolute;
   left: 20px;
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
   box-shadow: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  padding: 0;
 }
 .btn-camera-shutter {
   width: 76px;
@@ -1438,6 +1553,7 @@ input[type="range"]::-moz-range-thumb {
   #import-buttons { grid-template-columns: 1fr 1fr; }
   .page-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .import-card { padding: 22px 24px; }
+  #app-title { font-size: 1.625rem; }
 }
 
 /* ---------- motion preferences ---------- */
