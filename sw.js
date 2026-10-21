@@ -12,7 +12,7 @@
 //   * The cache name is versioned; old caches are
 //     deleted on activate.
 
-const CACHE = 'scanner-v36';
+const CACHE = 'scanner-v37';
 
 // App shell + small vendor files (precached at install).
 const PRECACHE = [

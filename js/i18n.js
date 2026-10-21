@@ -3,12 +3,12 @@
 
 export const STRINGS = {
   appTitle: 'Dokumenten-Scanner',
-  appSubtitle: 'Scanne deine Dokumente und exportiere sie einfach.',
   newScan: 'Neu scannen',
   newScanHint: 'Wähle eine Quelle, um ein Dokument zu scannen.',
   takePhoto: 'Foto aufnehmen',
   fromGallery: 'Aus Galerie wählen',
   importHint: 'Fotos werden lokal verarbeitet – nichts verlässt dein Gerät.',
+  yourScans: 'Deine Scans',
   emptyState: 'Noch keine Seiten. Fotografiere oder importiere ein Dokument, um zu beginnen.',
   deleteAll: 'Alle löschen',
   exportAction: 'Exportieren',

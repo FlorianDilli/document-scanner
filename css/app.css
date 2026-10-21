@@ -166,17 +166,9 @@ body {
   line-height: 1.15;
 }
 
-/* one-line description under the title */
-#app-subtitle {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 0.875rem;
-  line-height: 1.35;
-  letter-spacing: -0.005em;
-}
-
-/* Brand logo: sits in its own outlined tile, so the mark reads as a
-   designed element instead of a floating graphic. */
+/* Brand logo: the bare mark directly on the canvas – no tile, no
+   outline behind it. The glyph itself (ink strokes that follow the
+   theme) carries the brand. */
 #app-logo {
   flex: none;
   width: 48px;
@@ -184,9 +176,6 @@ body {
   padding: 8px;
   box-sizing: border-box;
   object-fit: contain;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-md);
 }
 
 /* ---------- app shell ---------- */
@@ -418,15 +407,81 @@ body {
 
 /* ---------- home: import ---------- */
 
+/* The "Neu scannen" panel is the one dark surface of the home view
+   (like the photo stage): near-black in BOTH themes, so the two
+   source tiles read as light cards on ink, after the reference
+   design. All colours inside are pinned to the panel – they do not
+   swap in dark mode, because the panel keeps its polarity too. */
 .import-card {
+  --panel-ink: #f4f4f2;
+  --panel-ink-muted: rgba(244, 244, 242, 0.64);
+  --panel-tile: #ffffff;
+  --panel-tile-hover: #f5f5f3;
+  --panel-tile-ink: #0c0c0d;
+  --panel-tile-ink-muted: rgba(12, 12, 13, 0.5);
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 20px;
+  background: var(--stage);
+  border-color: var(--stage-edge);
+}
+
+.import-card .card-head h3 { color: var(--panel-ink-muted); }
+.import-card .hint { color: var(--panel-ink-muted); }
+
+/* Keyboard focus must stay visible on the dark panel. */
+.import-card .btn-tile:focus-visible { outline-color: var(--panel-ink); }
+
+.import-card .btn-tile {
+  border-color: transparent;
+  background: var(--panel-tile);
+  color: var(--panel-tile-ink);
+}
+.import-card .btn-tile:hover {
+  border-color: transparent;
+  background: var(--panel-tile-hover);
+}
+.import-card .btn-tile .icon-slot {
+  background: var(--panel-tile-ink);
+  color: var(--panel-tile);
+}
+.import-card .btn-tile .tile-arrow {
+  color: var(--panel-tile-ink-muted);
+}
+.import-card .btn-tile:hover .tile-arrow {
+  color: var(--panel-tile-ink);
+}
+
+/* Section label with a leading sparkle icon: the label row stays a
+   micro-label, the glyph just rides along. */
+.card-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* one-line description under the section title (gap compensated) */
 .import-card .hint { margin-top: -6px; }
+
+/* ---------- home: scan list head ---------- */
+
+/* "Deine Scans": document glyph + bold label directly above the
+   page grid. */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: -8px; /* gap compensation, cf. .import-card .hint */
+}
+.section-head .icon-slot { color: var(--ink); }
+.section-head h2 {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
 
 /* Camera and gallery sit side by side once there is room for their
    labels; on narrow phones they stack into full-width rows, so the

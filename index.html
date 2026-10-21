@@ -32,7 +32,6 @@
     <img id="app-logo" src="./icons/logo.svg" alt="" width="46" height="46">
     <div id="app-heading">
       <h1 id="app-title"><span data-i18n="appTitle">Dokumenten-Scanner</span></h1>
-      <p id="app-subtitle" data-i18n="appSubtitle">Scanne deine Dokumente und exportiere sie einfach.</p>
     </div>
   </header>
 
@@ -41,7 +40,10 @@
     <section id="view-home" class="view">
       <div id="import-card" class="card import-card">
         <div class="card-head">
-          <h3 data-i18n="newScan">Neu scannen</h3>
+          <h3 class="card-label">
+            <span class="icon-slot" data-icon="sparkle" data-icon-size="13"></span>
+            <span data-i18n="newScan">Neu scannen</span>
+          </h3>
         </div>
         <p class="hint" data-i18n="newScanHint">Wähle eine Quelle, um ein Dokument zu scannen.</p>
         <div id="import-buttons">
@@ -56,6 +58,10 @@
             <span class="tile-arrow" data-icon="arrow"></span>
           </button>
         </div>
+      </div>
+      <div class="section-head">
+        <span class="icon-slot" data-icon="doc" data-icon-size="24"></span>
+        <h2 data-i18n="yourScans">Deine Scans</h2>
       </div>
       <div id="page-grid" class="page-grid"></div>
       <p id="empty-state" class="empty-state" data-i18n="emptyState">Noch keine Seiten. Fotografiere oder importiere ein Dokument, um zu beginnen.</p>

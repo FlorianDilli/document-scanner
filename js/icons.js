@@ -65,6 +65,13 @@ const ICONS = {
   // close (leave live camera)
   close:
     '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  // upright four-point sparkle ("new scan" label) – two mirrored
+  // cubic curves per pair of tips keep the sides concave
+  sparkle:
+    '<path d="M12 2c.5 4.5 2.5 7 9 10-6.5 3-8.5 5.5-9 10-.5-4.5-2.5-7-9-10 6.5-3 8.5-5.5 9-10z"/>',
+  // plain document sheet with a folded corner (scan list title)
+  doc:
+    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
   // → into an import tile / forward action
   arrow:
     '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
