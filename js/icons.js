@@ -20,12 +20,21 @@ const ICONS = {
   // vertical sliders
   sliders:
     '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
-  // turn the page counter-clockwise: a sheet with a hooked arrow
-  // over its top-right corner (solid arrowhead pointing left)
+  // Turn the page counter-clockwise: a sheet with a hooked arrow
+  // over its top-right corner. This one glyph is a solid shape
+  // (reference artwork), so it is filled instead of stroked and is
+  // scaled down from its original 1920 grid.
   rotate:
-    '<rect x="3" y="10" width="11" height="11" rx="2" ry="2"/>' +
-    '<path d="M18.5 10A4.5 4.5 0 0 0 14 5.5"/>' +
-    '<path d="M14 5.5 16.4 4 16.4 7Z" fill="currentColor" stroke="none"/>',
+    '<g transform="translate(2.3 1.09) scale(0.011364)">' +
+    '<path fill="currentColor" stroke="none" fill-rule="evenodd" clip-rule="evenodd" ' +
+    'd="M1251.45 447.883 1120 316.432h160c176.73 0 320 143.269 320 320h106.67' +
+    'c0-235.641-191.03-426.666-426.67-426.666h-159.97l134.34-134.341L1178.94 0 915.833 263.111' +
+    'l260.197 260.196 75.42-75.424Zm28.55 405.45C1280 735.513 1184.49 640 1066.67 640H213.333' +
+    'C95.513 640 0 735.513 0 853.333v853.337C0 1824.49 95.513 1920 213.333 1920h853.337' +
+    'c117.82 0 213.33-95.51 213.33-213.33V853.333Zm-213.33-106.666H213.333' +
+    'c-58.91 0-106.666 47.756-106.666 106.666v853.337c0 58.91 47.756 106.66 106.666 106.66' +
+    'h853.337c58.91 0 106.66-47.75 106.66-106.66V853.333c0-58.91-47.75-106.666-106.66-106.666Z"/>' +
+    '</g>',
   // auto-detect (spark)
   wand:
     '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
