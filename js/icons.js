@@ -20,11 +20,12 @@ const ICONS = {
   // vertical sliders
   sliders:
     '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
-  // 90° rotation, counter-clockwise / clockwise
-  rotateL:
-    '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
-  rotateR:
-    '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/>',
+  // turn the page counter-clockwise: a sheet with a curved arrow
+  // hooking over its top-right corner (arrowhead pointing left)
+  rotate:
+    '<rect x="4" y="10" width="10" height="10" rx="2" ry="2"/>' +
+    '<path d="M19 10A6 6 0 0 0 13 4"/>' +
+    '<polyline points="16 1.5 13 4 16 6.5"/>',
   // auto-detect (spark)
   wand:
     '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',

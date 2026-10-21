@@ -681,14 +681,15 @@ body {
   #view-export #btn-export-back { width: 44px; padding: 0; }
   #view-export #btn-export-back span[data-i18n] { display: none; }
 }
-/* Crop actions: the four frame tools live in one floating panel –
-   a surface card with a hairline and a soft shadow. Inside it the
-   actions are borderless and stack the icon above the label, the way
-   the reference toolbar does. The panel is capped and centered so it
-   reads as a compact group on wide screens too. */
+/* Crop actions: the three frame tools live in one flat panel – a
+   surface card with a hairline, no shadow, like every other card in
+   the app. Inside it the actions are borderless and stack the icon
+   above the label, the way the reference toolbar does. The panel is
+   capped and centered so it reads as a compact group on wide screens
+   too. */
 .crop-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   gap: 4px;
   width: 100%;
@@ -698,7 +699,6 @@ body {
   background: var(--surface);
   border: 1px solid var(--rule);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-float);
 }
 .crop-actions .btn {
   min-height: 0;
@@ -989,7 +989,7 @@ body.editor-open #app-main {
    The frame actions become icon-only too: their labels ("Erneut
    erkennen", "Auf ganzes Bild") are long and would wrap to two lines,
    so the wording lives on in the markup for wider screens only. The
-   four icons then sit centered in the panel. */
+   three icons then sit centered in the panel. */
 @media (max-width: 699px) {
   #view-editor.in-frame #frame-stage { max-height: 62vh; }
   .crop-actions { padding: 8px 4px; }

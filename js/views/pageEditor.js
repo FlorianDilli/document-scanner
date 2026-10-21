@@ -599,7 +599,9 @@ export function init(context) {
     editor.animateTo(fullImageCorners());
   });
 
-  document.getElementById('btn-rotate-left').addEventListener('click', () => {
+  // One turn button: the icon shows the direction (counter-clockwise),
+  // so every click turns the page 90° that way.
+  document.getElementById('btn-rotate').addEventListener('click', () => {
     if (!currentPage) return;
     state.updatePage(currentPage.id, {
       rotation: (currentPage.rotation + 270) % 360,
@@ -610,16 +612,6 @@ export function init(context) {
     // The thumb's proportions are orientation-bound: rebuilding the
     // strip (cheap, thumbnails are keyed) turns the rotated preview
     // upright immediately.
-    refreshFilmstrip();
-  });
-  document.getElementById('btn-rotate-right').addEventListener('click', () => {
-    if (!currentPage) return;
-    state.updatePage(currentPage.id, {
-      rotation: (currentPage.rotation + 90) % 360,
-    });
-    editor.setRotation(currentPage.rotation);
-    requestPreview();
-    persistSoon();
     refreshFilmstrip();
   });
 
