@@ -41,6 +41,8 @@ let ctx = null;
 let editor = null;
 let currentPage = null;
 let currentMode = 'frame';
+// True while the editor screen is on stage.
+let editorOpen = false;
 
 // Frame editor state: bitmap of the ORIGINAL photo loaded into the
 // corner editor, and the page it belongs to.
@@ -565,6 +567,7 @@ function goBack() {
   // model keeps the last committed frame. Everything else was
   // applied + saved on the fly.
   persistNow();
+  editorOpen = false;
   ctx.navigate('home');
 }
 
@@ -572,6 +575,7 @@ async function done() {
   if (!currentPage) return;
   if (!commitFrame()) return;
   await persistNow();
+  editorOpen = false;
   ctx.navigate('home');
 }
 
@@ -621,6 +625,13 @@ export function init(context) {
 
   initZoom();
 
+  // The page previews follow the page state: a new document type
+  // dissolves into the thumbnails of the rails just like it dissolves
+  // into the big preview.
+  state.subscribe(() => {
+    if (editorOpen) refreshFilmstrip();
+  });
+
   wireSlider('slider-brightness', 'val-brightness', 'brightness');
   wireSlider('slider-contrast', 'val-contrast', 'contrast');
   wireSlider('slider-sharpen', 'val-sharpen', 'sharpen');
@@ -642,6 +653,7 @@ export async function show({ pageId, mode: requestedMode } = {}) {
     return;
   }
   currentPage = page;
+  editorOpen = true;
   // Always the same entry screen as after an import: Frame first
   // (an explicit mode param still wins, e.g. the import flow).
   currentMode = requestedMode === 'look' ? 'look' : 'frame';
