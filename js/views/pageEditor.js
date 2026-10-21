@@ -20,7 +20,7 @@
 
 import * as state from '../state.js';
 import * as storage from '../storage.js';
-import { CornerEditor, isConvexQuad } from '../cornerEditor.js';
+import { CornerEditor, isConvexQuad, TURN_MS } from '../cornerEditor.js';
 import { detectPageCorners, renderPreview } from '../pipeline.js';
 import { mountIcons } from '../icons.js';
 import { t } from '../i18n.js';
@@ -64,6 +64,9 @@ let pendingFade = false;
 
 // Debounced persistence so a reload does not lose edits.
 let persistTimer = null;
+
+// Delayed rebuild of the page previews after a turn.
+let turnRefreshTimer = null;
 
 // ---------- look mode: preview ----------
 
@@ -607,12 +610,13 @@ export function init(context) {
       rotation: (currentPage.rotation + 270) % 360,
     });
     editor.setRotation(currentPage.rotation);
-    requestPreview();
     persistSoon();
-    // The thumb's proportions are orientation-bound: rebuilding the
-    // strip (cheap, thumbnails are keyed) turns the rotated preview
-    // upright immediately.
-    refreshFilmstrip();
+    // The turn animates on the canvas; the Optik preview is not on
+    // screen in frame mode and renders itself when that mode is
+    // entered. The thumbs wait for the turn: rendering them would
+    // take CPU away from the animation and make it stutter.
+    clearTimeout(turnRefreshTimer);
+    turnRefreshTimer = setTimeout(refreshFilmstrip, TURN_MS + 80);
   });
 
   initZoom();

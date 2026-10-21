@@ -931,14 +931,16 @@ body.editor-open #app-main {
   overflow: hidden;
   cursor: pointer;
   touch-action: manipulation;
-  transition: transform 0.08s ease, opacity 0.15s ease;
+  transition: opacity 0.15s ease;
   opacity: 0.55;
 }
 /* Landscape pages: a wide frame whose long edge matches the portrait
    thumb's long edge, so both orientations stay within the rail. */
 .strip-thumb.landscape { width: var(--strip-long, 48px); }
-.strip-thumb:hover { transform: translateY(-2px); opacity: 1; }
-.strip-thumb:active { transform: translateY(1px); }
+/* The previews stay flat: no lifting on hover, no press-in on click –
+   the rail reads as one calm row instead of a set of bouncing tiles. */
+.strip-thumb:hover { opacity: 1; }
+.strip-thumb:active { opacity: 1; }
 /* current page: full opacity + an ink ring drawn as an outline so it
    never changes the thumb's box */
 .strip-thumb.current {

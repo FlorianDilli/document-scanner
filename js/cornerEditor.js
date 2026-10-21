@@ -23,8 +23,8 @@ const LOUPE_RADIUS = 70;  // loupe circle radius (CSS px)
 const LOUPE_ZOOM = 3;     // loupe magnification
 const LOUPE_OFFSET = 95;  // loupe offset from the finger (CSS px)
 const MOVE_MS = 200;      // corner move animation
-const TURN_MS = 420;      // rotation animation
-const ANIM_QUALITY = 0.6; // canvas resolution while an animation runs
+export const TURN_MS = 380; // rotation animation
+const ANIM_QUALITY = 0.7; // canvas resolution while an animation runs
 
 function cross(o, a, b) {
   return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
@@ -54,6 +54,14 @@ function easeOut(t) {
   return 1 - Math.pow(1 - t, 3);
 }
 
+// Ease-in-out cubic: the turn eases in and out, so the photo neither
+// lunges at the start nor crawls at the end.
+function easeInOut(t) {
+  return t < 0.5
+    ? 4 * t * t * t
+    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
 export class CornerEditor {
   constructor(canvas, { onChange } = {}) {
     this.canvas = canvas;
@@ -71,6 +79,7 @@ export class CornerEditor {
     this.dpr = window.devicePixelRatio || 1;
     this.turnFrame = null;   // rAF of the running rotation animation
     this.turnTo = null;      // target angle of the running rotation animation
+    this.turnScale = null;   // scale while the turn runs (null = fit the angle)
     this.moveFrame = null;   // rAF of the running corner move animation
     this.moveTo = null;      // target corners of the running corner move animation
     this.sprite = null;      // display-sized copy of the photo
@@ -134,9 +143,14 @@ export class CornerEditor {
     if (!this.image) return;
     const rect = this.canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-    // The tightest fit (photo unturned) is the largest scale the
-    // photo ever reaches, so the copy is always detailed enough.
-    const s0 = Math.min(rect.width / this.origWidth, rect.height / this.origHeight);
+    // The photo reaches its largest scale in one of its two
+    // orientations – the sprite is built for that one, so a turned
+    // photo never has to be upscaled (and stays sharp while it
+    // spins).
+    const s0 = Math.max(
+      Math.min(rect.width / this.origWidth, rect.height / this.origHeight),
+      Math.min(rect.width / this.origHeight, rect.height / this.origWidth)
+    );
     const w = Math.max(1, Math.round(this.origWidth * s0 * this.dpr));
     const h = Math.max(1, Math.round(this.origHeight * s0 * this.dpr));
     const key = `${w}x${h}`;
@@ -194,16 +208,26 @@ export class CornerEditor {
     if (prefersReducedMotion()) {
       this.cancelTurn();
       this.angle = to;
+      this.turnScale = null;
       this.draw();
       return;
     }
     this.cancelTurn();
     this.turnTo = to;
+    // The photo keeps its size while it turns: the scale glides from
+    // the fit of the start orientation to the fit of the end one.
+    // The plain "fit of the current angle" would shrink the photo
+    // towards the middle of the turn (a turned rectangle needs more
+    // room) and blow it up again – the photo would breathe.
+    const scaleFrom = this.containScale(from);
+    const scaleTo = this.containScale(to);
     this.setQuality(ANIM_QUALITY);
     const start = performance.now();
     const step = (now) => {
       const t = Math.min(1, (now - start) / duration);
-      this.angle = from + (to - from) * easeOut(t);
+      const e = easeInOut(t);
+      this.angle = from + (to - from) * e;
+      this.turnScale = scaleFrom + (scaleTo - scaleFrom) * e;
       this.draw();
       if (t < 1) {
         this.turnFrame = requestAnimationFrame(step);
@@ -211,6 +235,7 @@ export class CornerEditor {
         this.turnFrame = null;
         this.turnTo = null;
         this.angle = to;
+        this.turnScale = null;
         this.restoreQuality();
         this.draw();
       }
@@ -266,6 +291,7 @@ export class CornerEditor {
       this.turnFrame = null;
     }
     this.turnTo = null;
+    this.turnScale = null;
     this.restoreQuality();
   }
 
@@ -316,10 +342,10 @@ export class CornerEditor {
     return this.corners.map((c) => ({ x: c.x, y: c.y }));
   }
 
-  // The original image turned clockwise by the current angle: its
-  // corner points and the box they span.
-  rotatedBox() {
-    const a = (this.angle * Math.PI) / 180;
+  // The original image turned clockwise by `angle`: its corner points
+  // and the box they span.
+  rotatedBox(angle = this.angle) {
+    const a = (angle * Math.PI) / 180;
     const cos = Math.cos(a);
     const sin = Math.sin(a);
     const w = this.origWidth;
@@ -340,13 +366,27 @@ export class CornerEditor {
     return { cos, sin, minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
   }
 
+  // The scale that shows the photo turned by `angle` completely
+  // inside the stage ("contain").
+  containScale(angle) {
+    const rect = this.canvas.getBoundingClientRect();
+    const box = this.rotatedBox(angle);
+    if (!box.width || !box.height) return 1;
+    return Math.min(rect.width / box.width, rect.height / box.height);
+  }
+
   // Fit transform: the turned image drawn "contain" inside the canvas.
   computeFit() {
     const rect = this.canvas.getBoundingClientRect();
     const cssW = rect.width;
     const cssH = rect.height;
     const box = this.rotatedBox();
-    const scale = Math.min(cssW / box.width, cssH / box.height);
+    // While the photo turns, the scale comes from the animation (it
+    // glides from the fit of the start orientation to the fit of the
+    // end one) so the photo keeps its size instead of breathing.
+    const scale = this.turnScale !== null
+      ? this.turnScale
+      : Math.min(cssW / box.width, cssH / box.height);
     return {
       scale,
       box,
@@ -453,6 +493,9 @@ export class CornerEditor {
 
     // Image, turned by the current angle.
     ctx.save();
+    // The photo is resampled on every frame of a turn: medium
+    // smoothing keeps the edges from crawling.
+    ctx.imageSmoothingQuality = 'medium';
     ctx.translate(f.offsetX, f.offsetY);
     ctx.scale(f.scale, f.scale);
     ctx.translate(-f.box.minX, -f.box.minY);
