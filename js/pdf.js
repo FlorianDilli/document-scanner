@@ -172,8 +172,9 @@ export async function buildPdf(pages, options, onProgress, shouldCancel, onOcrPr
           }
         } catch (err) {
           // OCR failed for this page: export without a text layer.
-          // The UI reports this to the user.
-          page.ocrError = true;
+          // The UI reports this to the user. A cancelled export tears
+          // the OCR worker down on purpose – that is not a failure.
+          if (!(shouldCancel && shouldCancel())) page.ocrError = true;
         }
       }
     }

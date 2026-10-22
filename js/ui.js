@@ -3,7 +3,17 @@
 
 let toastTimer = null;
 
+// The action toast on screen, as its finish(result) function. Only one
+// exists at a time: it shares the single toast element with plain
+// messages, so starting anything new settles it first (result false).
+let activeAction = null;
+
+function settleAction() {
+  if (activeAction) activeAction(false);
+}
+
 export function toast(message, ms = 3200) {
+  settleAction();
   const el = document.getElementById('toast');
   el.textContent = message;
   el.classList.remove('toast-action');
@@ -13,8 +23,12 @@ export function toast(message, ms = 3200) {
 }
 
 // Toast with an action button (e.g. Undo). Returns a promise
-// that resolves true if the action was clicked.
+// that resolves true if the action was clicked, false when it timed
+// out or was superseded by another message.
 export function toastAction(message, actionLabel, ms = 5000) {
+  settleAction();
+  // A plain toast's hide timer must not hide the action early.
+  clearTimeout(toastTimer);
   return new Promise((resolve) => {
     const el = document.getElementById('toast');
     el.textContent = '';
@@ -28,11 +42,13 @@ export function toastAction(message, actionLabel, ms = 5000) {
     el.appendChild(btn);
     el.classList.remove('hidden');
     let done = false;
+    let timer = null;
     const finish = (val) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
       btn.removeEventListener('click', onClick);
+      if (activeAction === finish) activeAction = null;
       el.classList.add('hidden');
       el.classList.remove('toast-action');
       el.textContent = '';
@@ -40,7 +56,8 @@ export function toastAction(message, actionLabel, ms = 5000) {
     };
     const onClick = () => finish(true);
     btn.addEventListener('click', onClick);
-    const timer = setTimeout(() => finish(false), ms);
+    activeAction = finish;
+    timer = setTimeout(() => finish(false), ms);
   });
 }
 

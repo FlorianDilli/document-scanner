@@ -48,6 +48,15 @@ let editorOpen = false;
 // corner editor, and the page it belongs to.
 let bitmap = null;
 let bitmapPageId = null;
+// The corners the frame editor currently represents as "committed".
+// Changes are detected against this baseline, never against the page
+// model – so a value that changed behind the editor's back (e.g. a
+// detection that finished later) cannot be written back as a user edit.
+let frameBaseline = null;
+
+// Default look for a freshly imported page; "Zurücksetzen" restores it.
+const DEFAULT_FILTER = 'document';
+const DEFAULT_PARAMS = { brightness: 0, contrast: 0, sharpen: 0 };
 
 // Set by the first corner drag after a failed auto-detection: the
 // user took manual control, so the hint banner and the dashed
@@ -369,6 +378,7 @@ async function ensureFrameEditor() {
   bitmap = await createImageBitmap(currentPage.blob);
   await editor.setImage(bitmap, currentPage.rotation);
   editor.setCorners(currentPage.corners);
+  frameBaseline = currentPage.corners.map((c) => ({ x: c.x, y: c.y }));
   bitmapPageId = currentPage.id;
 }
 
@@ -393,15 +403,13 @@ async function runDetection() {
     // The user may have switched pages while the worker was busy.
     if (currentPage !== page) return;
     editor.animateTo(corners);
-    // Persist the honest flags; corners stay editor-local until the
-    // frame is committed.
-    if (
-      detected !== page.detected ||
-      fullFrame !== page.fullFrame
-    ) {
-      state.updatePage(page.id, { detected, fullFrame });
-      persistNow();
-    }
+    // Re-detection is an explicit request for the detected frame, so
+    // it is applied to the page right away. Corners and flags travel
+    // together, so the commit later cannot turn a fullFrame result
+    // into a "confirmed" one.
+    state.updatePage(page.id, { corners, detected, fullFrame });
+    frameBaseline = corners.map((c) => ({ x: c.x, y: c.y }));
+    persistNow();
     frameHintDismissed = false;
     syncFrameHint();
   } catch (err) {
@@ -453,10 +461,11 @@ function commitFrame() {
     ctx.toast(ctx.t('invalidFrame'));
     return false;
   }
-  if (JSON.stringify(corners) !== JSON.stringify(currentPage.corners)) {
+  if (JSON.stringify(corners) !== JSON.stringify(frameBaseline)) {
     // Committing a changed frame is the manual confirmation a failed
     // auto-detection cannot provide: clear the "check frame" state.
     state.updatePage(currentPage.id, { corners, detected: true, fullFrame: false });
+    frameBaseline = corners.map((c) => ({ x: c.x, y: c.y }));
     persistNow();
     // The page's pipeline inputs changed, so its filmstrip preview
     // is outdated – rebuild it (the cache generates a fresh one).
@@ -547,7 +556,7 @@ async function setMode(next) {
 // router re-enters show() with the same params).
 function applyStaticTexts() {
   for (const [id, key] of [
-    ['btn-editor-back', 'back'],
+    ['btn-editor-reset', 'resetPage'],
     ['btn-reset-crop', 'resetCrop'],
     ['mode-frame', 'modeFrame'],
     ['mode-look', 'modeLook'],
@@ -561,14 +570,51 @@ function applyStaticTexts() {
     .setAttribute('aria-label', ctx.t('filmstripLabel'));
 }
 
-function goBack() {
-  if (!currentPage) return;
-  // Frame drags are only in the editor until committed; the page
-  // model keeps the last committed frame. Everything else was
-  // applied + saved on the fly.
+// Resets everything about this page to its import state: detected
+// frame, no rotation, default filter and sliders. Asks first, because
+// it discards the user's manual work on the page.
+async function resetPage() {
+  if (!currentPage || detecting) return;
+  const ok = await ctx.confirmAction(ctx.t('confirmResetPage'));
+  if (!ok || !currentPage) return;
+  const page = currentPage;
+  let detection;
+  try {
+    detection = await detectPageCorners(page);
+  } catch (err) {
+    console.error(err);
+    ctx.toast(ctx.t('errGeneric'));
+    return;
+  }
+  // The user may have switched pages while the worker was busy.
+  if (currentPage !== page) return;
+
+  const params = { ...DEFAULT_PARAMS };
+  state.updatePage(page.id, {
+    corners: detection.corners,
+    detected: detection.detected,
+    fullFrame: detection.fullFrame,
+    rotation: 0,
+    filter: DEFAULT_FILTER,
+    params,
+  });
+  frameBaseline = detection.corners.map((c) => ({ x: c.x, y: c.y }));
+  frameHintDismissed = false;
+  // The frame editor is only touched when it shows this page; otherwise
+  // it loads the reset corners the next time it is opened.
+  if (bitmapPageId === page.id && editor.image) {
+    editor.setRotation(0);
+    editor.animateTo(detection.corners);
+  }
   persistNow();
-  editorOpen = false;
-  ctx.navigate('home');
+  refreshFilmstrip();
+  if (currentMode === 'look') {
+    buildFilterChips();
+    syncSliders();
+    await requestPreview();
+  } else {
+    syncFrameHint();
+  }
 }
 
 async function done() {
@@ -595,7 +641,7 @@ export function init(context) {
     },
   });
 
-  document.getElementById('btn-editor-back').addEventListener('click', goBack);
+  document.getElementById('btn-editor-reset').addEventListener('click', resetPage);
   document.getElementById('btn-editor-done').addEventListener('click', done);
   document.getElementById('mode-frame').addEventListener('click', () => setMode('frame'));
   document.getElementById('mode-look').addEventListener('click', () => setMode('look'));

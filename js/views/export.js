@@ -26,6 +26,21 @@ function defaultFilename() {
   return `scan-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.pdf`;
 }
 
+// The base name (without extension) last suggested in the field.
+// Lets a refresh tell the suggestion apart from a name the user typed.
+let suggestedBase = '';
+
+// Re-suggests today's name when the field still holds the previous
+// suggestion (or is empty). A custom name is never overwritten.
+function refreshDefaultFilename() {
+  const input = document.getElementById('opt-filename');
+  const current = input.value.trim().replace(/\.pdf$/i, '');
+  if (!current || current === suggestedBase) {
+    input.value = defaultFilename();
+  }
+  suggestedBase = defaultFilename().replace(/\.pdf$/i, '');
+}
+
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -110,6 +125,9 @@ async function startExport() {
   if (format === 'pdf') options.ocr = document.getElementById('opt-ocr').checked;
 
   cancelled = false;
+  // Failure flags describe the current export only: a page that failed
+  // earlier (or was cut off by a cancel) gets a fresh attempt.
+  for (const page of pages) page.ocrError = false;
   const progressBox = document.getElementById('export-progress');
   const startBtn = document.getElementById('btn-export-start');
   progressBox.classList.remove('hidden');
@@ -138,7 +156,7 @@ async function startExport() {
       setProgress(0, pages.length, ctx.t('busyPdf'));
       const blob = await buildPdf(pages, options, onProgress, shouldCancel, onOcrProgress);
       if (!blob) {
-        ctx.toast(ctx.t('cancel'));
+        ctx.toast(ctx.t('exportCancelled'));
         return;
       }
 
@@ -171,7 +189,7 @@ async function startExport() {
     setProgress(0, pages.length, ctx.t('busyImages'));
     const files = await buildImages(pages, options, onProgress, shouldCancel);
     if (!files) {
-      ctx.toast(ctx.t('cancel'));
+      ctx.toast(ctx.t('exportCancelled'));
       return;
     }
 
@@ -195,6 +213,7 @@ export function init(context) {
   ctx = context;
 
   document.getElementById('opt-filename').value = defaultFilename();
+  suggestedBase = defaultFilename().replace(/\.pdf$/i, '');
   // On narrow screens the back button shows its arrow only – the
   // label lives on the button as its accessible name.
   document
@@ -218,4 +237,6 @@ export async function show() {
   // Options keep their state; re-apply the labels so a language
   // switch shows the strings of the selected format.
   applyFormatUI();
+  // The app may stay open for days: the suggested date must be today's.
+  refreshDefaultFilename();
 }

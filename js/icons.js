@@ -38,6 +38,9 @@ const ICONS = {
   // auto-detect (spark)
   wand:
     '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  // counter-clockwise arrow (reset the page to its defaults)
+  reset:
+    '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
   // full image (reset crop)
   expand:
     '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',

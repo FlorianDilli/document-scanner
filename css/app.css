@@ -1046,6 +1046,7 @@ body.editor-open #app-main {
 @media (max-width: 479px) {
   .view-toolbar .mode-btn { padding: 6px 12px; }
   .view-toolbar .mode-btn span[data-i18n] { display: none; }
+  #btn-editor-reset span[data-i18n] { display: none; }
 }
 
 /* Phones: in frame mode the crop stage must not stretch all the way

@@ -491,7 +491,8 @@ async function importFiles(files) {
         filter: FILTER_DEFAULT,
         params: { brightness: 0, contrast: 0, sharpen: 0 },
         ocr: null,
-        detected: false,
+        // null = edge detection pending (neither found nor failed yet).
+        detected: null,
         fullFrame: false,
       };
       state.addPage(page);
@@ -507,36 +508,29 @@ async function importFiles(files) {
     return;
   }
 
-  // Detect the document on the first page, then open the page
-  // editor in Frame mode. Detection runs exactly once per page (here
-  // and in the queue below) – on these photos it is deterministic,
-  // so re-running it in the editor could not change the result. When
-  // it fails, the page keeps the full image as frame and flagged
-  // (detected:false): the card gets the "check frame" badge and the
-  // editor shows the persistent hint.
-  try {
-    const first = newPages[0];
-    const { corners, detected, fullFrame } = await detectPageCorners(first);
-    state.updatePage(first.id, { corners, detected, fullFrame });
-    await storage.savePage(first);
-  } catch (err) {
-    console.error(err);
-    ctx.toast(ctx.t('errGeneric'));
-  }
-  ctx.hideBusy();
-  ctx.navigate('editor', { pageId: newPages[0].id, mode: 'frame' });
-
-  // Background queue for the remaining pages.
-  for (let i = 1; i < newPages.length; i++) {
+  // Edge detection for every new page, while the fullscreen overlay
+  // stays up: the user only gets back to the app once all pages have
+  // their frame. Detection is deterministic on the photo, so it runs
+  // exactly once per page. A page whose detection fails keeps the full
+  // image as frame and is flagged (detected:false): it gets the
+  // "check frame" badge and the editor shows the persistent hint.
+  let failed = 0;
+  for (let i = 0; i < newPages.length; i++) {
     const page = newPages[i];
+    ctx.showBusy(ctx.t('detectProgress', { current: i + 1, total: newPages.length }));
     try {
       const { corners, detected, fullFrame } = await detectPageCorners(page);
       state.updatePage(page.id, { corners, detected, fullFrame });
-      await storage.savePage(page);
     } catch (err) {
-      console.warn('background detect failed', err);
+      console.error(err);
+      failed++;
+      state.updatePage(page.id, { detected: false, fullFrame: false });
     }
+    await storage.savePage(page);
   }
+  ctx.hideBusy();
+  if (failed > 0) ctx.toast(ctx.t('errGeneric'));
+  ctx.navigate('editor', { pageId: newPages[0].id, mode: 'frame' });
 }
 
 // ---------- init ----------
