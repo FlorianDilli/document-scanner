@@ -443,16 +443,23 @@ function handleFilter(msg) {
         cv.medianBlur(gray, bg, documentKernel(Math.max(width, height)));
         const divided = t.add(new cv.Mat(height, width, cv.CV_8UC4));
         {
+          // Hue-preserving divide. Channels are scaled by ONE gain per
+          // pixel; if a bright channel would exceed 255 the whole pixel
+          // is scaled down instead of clamping each channel (per-channel
+          // clamping pushed orange highlighter toward yellow). The guard
+          // is a smooth ramp between bg 100 and 140 rather than a hard
+          // switch, which left visible seams inside dark color areas.
           const s = src.data, b = bg.data, o = divided.data;
           for (let p = 0; p < o.length; p += 4) {
             const bb = b[p >> 2];
-            if (bb < 120) {
-              o[p] = s[p]; o[p + 1] = s[p + 1]; o[p + 2] = s[p + 2];
-            } else {
-              o[p] = Math.min(255, (s[p] * 255 / bb) | 0);
-              o[p + 1] = Math.min(255, (s[p + 1] * 255 / bb) | 0);
-              o[p + 2] = Math.min(255, (s[p + 2] * 255 / bb) | 0);
-            }
+            const w = bb <= 100 ? 0 : bb >= 140 ? 1 : (bb - 100) / 40;
+            const gain = bb > 0 ? (1 - w) + w * (255 / bb) : 1;
+            const r = s[p] * gain, g = s[p + 1] * gain, bl = s[p + 2] * gain;
+            const peak = Math.max(r, g, bl);
+            const k = peak > 255 ? 255 / peak : 1;
+            o[p] = (r * k) | 0;
+            o[p + 1] = (g * k) | 0;
+            o[p + 2] = (bl * k) | 0;
             o[p + 3] = s[p + 3];
           }
         }
