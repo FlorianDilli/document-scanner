@@ -4,8 +4,8 @@
 //   Frame ("Rahmen"): corner editor over the original photo –
 //   auto-detect, reset, drag corners (with loupe). Corners are
 //   committed when leaving the mode or via "Done".
-//   Look ("Optik"): filter chips, brightness / contrast / sharpen
-//   sliders and rotation over the live processed preview.
+//   Look ("Optik"): filter chips and rotation over the live processed
+//   preview.
 //
 // Opening rules:
 //   * the editor ALWAYS opens in Frame mode first – the same screen
@@ -29,7 +29,6 @@ import { renderPageList, setSidebarCurrent } from './sidebar.js';
 const FILTERS = [
   { id: 'original', key: 'filterPhoto' },
   { id: 'document', key: 'filterDocument' },
-  { id: 'document-color', key: 'filterDocumentColor' },
 ];
 
 // Preview resolution: render at the size the canvas is actually
@@ -66,8 +65,7 @@ let frameHintDismissed = false;
 // True while "Detect again" runs in the worker.
 let detecting = false;
 
-// Preview rendering is serialized: rapid slider moves
-// queue up instead of piling up concurrent CV jobs.
+// Preview rendering is serialized so multiple CV jobs do not pile up.
 let rendering = false;
 let renderQueued = false;
 // A cross-fade was asked for while a render was still running.
@@ -220,8 +218,7 @@ function initZoom() {
   applyZoom();
 }
 
-// How long the preview takes to cross-fade into a new look
-// (document type, brightness, ...).
+// How long the preview takes to cross-fade into a new look.
 const PREVIEW_FADE_MS = 300;
 let fadeTimer = null;
 
@@ -333,29 +330,6 @@ function buildFilterChips() {
     });
     row.appendChild(chip);
   }
-}
-
-function syncSliders() {
-  const p = currentPage.params;
-  document.getElementById('slider-brightness').value = p.brightness;
-  document.getElementById('slider-contrast').value = p.contrast;
-  document.getElementById('slider-sharpen').value = p.sharpen;
-  document.getElementById('val-brightness').textContent = String(p.brightness);
-  document.getElementById('val-contrast').textContent = String(p.contrast);
-  document.getElementById('val-sharpen').textContent = String(p.sharpen);
-}
-
-function wireSlider(id, valId, key) {
-  const slider = document.getElementById(id);
-  const val = document.getElementById(valId);
-  slider.addEventListener('input', () => {
-    const v = Number(slider.value);
-    val.textContent = String(v);
-    currentPage.params[key] = v;
-    state.updatePage(currentPage.id, { params: { ...currentPage.params } });
-    requestPreview();
-    persistSoon();
-  });
 }
 
 // ---------- frame mode ----------
@@ -532,7 +506,6 @@ async function enterPane() {
       syncFrameHint();
     } else {
       buildFilterChips();
-      syncSliders();
       await requestPreview();
     }
   } catch (err) {
@@ -571,7 +544,7 @@ function applyStaticTexts() {
 }
 
 // Resets everything about this page to its import state: detected
-// frame, no rotation, default filter and sliders. Asks first, because
+// frame, no rotation and default filter. Asks first, because
 // it discards the user's manual work on the page.
 async function resetPage() {
   if (!currentPage || detecting) return;
@@ -610,7 +583,6 @@ async function resetPage() {
   refreshFilmstrip();
   if (currentMode === 'look') {
     buildFilterChips();
-    syncSliders();
     await requestPreview();
   } else {
     syncFrameHint();
@@ -677,10 +649,6 @@ export function init(context) {
   state.subscribe(() => {
     if (editorOpen) refreshFilmstrip();
   });
-
-  wireSlider('slider-brightness', 'val-brightness', 'brightness');
-  wireSlider('slider-contrast', 'val-contrast', 'contrast');
-  wireSlider('slider-sharpen', 'val-sharpen', 'sharpen');
 
   // Re-render the preview when the display box or zoom changes.
   let resizeTimer = null;

@@ -1,5 +1,5 @@
 // views/home.js – home view: page list with thumbnails,
-// import (camera / gallery), drag-&-drop reorder, delete with undo.
+// import, drag-&-drop reorder, delete with undo.
 
 import * as state from '../state.js';
 import * as storage from '../storage.js';
@@ -538,13 +538,7 @@ async function importFiles(files) {
 export function init(context) {
   ctx = context;
 
-  document.getElementById('btn-camera').addEventListener('click', () => {
-    ctx.pickFromCamera().then(importFiles).catch((err) => {
-      console.error(err);
-      ctx.toast(ctx.t('errCamera'));
-    });
-  });
-  document.getElementById('btn-gallery').addEventListener('click', () => {
+  document.getElementById('btn-import').addEventListener('click', () => {
     ctx.pickFromGallery().then(importFiles).catch((err) => {
       console.error(err);
       ctx.toast(ctx.t('errGeneric'));

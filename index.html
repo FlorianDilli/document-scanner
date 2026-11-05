@@ -45,16 +45,11 @@
             <span data-i18n="newScan">Neu scannen</span>
           </h3>
         </div>
-        <p class="hint" data-i18n="newScanHint">Wähle eine Quelle, um ein Dokument zu scannen.</p>
+        <p class="hint" data-i18n="newScanHint">Importiere Bilder, um ein Dokument zu scannen.</p>
         <div id="import-buttons">
-          <button id="btn-camera" class="btn btn-tile" type="button">
-            <span class="icon-slot" data-icon="camera"></span>
-            <span data-i18n="takePhoto">Foto aufnehmen</span>
-            <span class="tile-arrow" data-icon="arrow"></span>
-          </button>
-          <button id="btn-gallery" class="btn btn-tile" type="button">
+          <button id="btn-import" class="btn btn-tile" type="button">
             <span class="icon-slot" data-icon="image"></span>
-            <span data-i18n="fromGallery">Aus Galerie wählen</span>
+            <span data-i18n="importAction">Importieren</span>
             <span class="tile-arrow" data-icon="arrow"></span>
           </button>
         </div>
@@ -64,7 +59,7 @@
         <h2 data-i18n="yourScans">Deine Scans</h2>
       </div>
       <div id="page-grid" class="page-grid"></div>
-      <p id="empty-state" class="empty-state" data-i18n="emptyState">Noch keine Seiten. Fotografiere oder importiere ein Dokument, um zu beginnen.</p>
+      <p id="empty-state" class="empty-state" data-i18n="emptyState">Noch keine Seiten. Importiere ein Dokument, um zu beginnen.</p>
       <div id="home-footer" class="home-footer hidden">
         <span id="page-counter" class="page-counter"></span>
           <button id="btn-export" class="btn btn-success" type="button">
@@ -87,7 +82,7 @@
             <span data-i18n="modeFrame">Rahmen</span>
           </button>
           <button id="mode-look" class="mode-btn" role="tab" aria-selected="false" type="button">
-            <span class="icon-slot" data-icon="sliders"></span>
+            <span class="icon-slot" data-icon="sparkle"></span>
             <span data-i18n="modeLook">Optik</span>
           </button>
         </div>
@@ -133,23 +128,6 @@
           </div>
         </div>
         <div id="filter-chips" class="chip-row"></div>
-        <div class="card sliders-card">
-          <div class="slider-row">
-            <label for="slider-brightness" data-i18n="brightness">Helligkeit</label>
-            <input type="range" id="slider-brightness" min="-100" max="100" value="0">
-            <span id="val-brightness" class="slider-val">0</span>
-          </div>
-          <div class="slider-row">
-            <label for="slider-contrast" data-i18n="contrast">Kontrast</label>
-            <input type="range" id="slider-contrast" min="-100" max="100" value="0">
-            <span id="val-contrast" class="slider-val">0</span>
-          </div>
-          <div class="slider-row">
-            <label for="slider-sharpen" data-i18n="sharpen">Schärfe</label>
-            <input type="range" id="slider-sharpen" min="0" max="100" value="0">
-            <span id="val-sharpen" class="slider-val">0</span>
-          </div>
-        </div>
       </div>
 
       <!-- Filmstrip page switcher: previews of all pages, tap to jump.
@@ -232,17 +210,6 @@
   <div id="busy-overlay" class="busy-overlay hidden">
     <div class="spinner"></div>
     <p id="busy-text"></p>
-  </div>
-
-  <!-- In-app camera capture: opens the camera directly (no file-picker menu) -->
-  <div id="camera-view" class="camera-view hidden" aria-hidden="true">
-    <video id="camera-video" autoplay playsinline muted></video>
-    <div class="camera-actions">
-      <button id="btn-camera-cancel" class="icon-btn" type="button">
-        <span class="icon-slot" data-icon="close"></span>
-      </button>
-      <button id="btn-camera-shutter" class="btn-camera-shutter" type="button" disabled></button>
-    </div>
   </div>
 
   <!-- Vendor libraries (classic scripts, self-hosted, pinned versions) -->

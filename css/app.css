@@ -408,8 +408,8 @@ body {
 /* ---------- home: import ---------- */
 
 /* The "Neu scannen" panel is the one dark surface of the home view
-   (like the photo stage): near-black in BOTH themes, so the two
-   source tiles read as light cards on ink, after the reference
+   (like the photo stage): near-black in BOTH themes, so the import
+   tile reads as a light card on ink, after the reference
    design. All colours inside are pinned to the panel – they do not
    swap in dark mode, because the panel keeps its polarity too. */
 .import-card {
@@ -483,16 +483,11 @@ body {
   line-height: 1;
 }
 
-/* Camera and gallery sit side by side once there is room for their
-   labels; on narrow phones they stack into full-width rows, so the
-   icon, the label and the arrow never fight for the same line. */
+/* Keep the single import action full-width at every viewport size. */
 #import-buttons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 12px;
-}
-@media (max-width: 559px) {
-  #import-buttons { grid-template-columns: 1fr; }
 }
 
 .hint { color: var(--muted); font-size: 0.9375rem; line-height: 1.5; margin: 0; }
@@ -1226,71 +1221,6 @@ body.editor-open #app-main {
   border-color: var(--ink);
 }
 
-.sliders-card { padding: 4px 20px; }
-
-.slider-row {
-  display: grid;
-  grid-template-columns: 108px 1fr 48px;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 0;
-}
-.slider-row + .slider-row { border-top: 1px solid var(--rule-soft); }
-/* Setting labels: micro-labels, like the export rows. */
-.slider-row label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.slider-row .slider-val {
-  text-align: right;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  font-size: 0.875rem;
-}
-
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 26px;
-  margin: 0;
-  background: transparent;
-}
-input[type="range"]::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: var(--r-pill);
-  background: var(--sunken);
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  margin-top: -8px;
-  border-radius: 50%;
-  background: var(--ink);
-  border: 0;
-  /* A gap of surface colour around the thumb keeps it readable on
-     the thin track – drawn, not shadowed. */
-  box-shadow: 0 0 0 3px var(--surface);
-}
-input[type="range"]::-moz-range-track {
-  height: 4px;
-  border-radius: var(--r-pill);
-  background: var(--sunken);
-}
-input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--ink);
-  border: 0;
-  box-shadow: 0 0 0 3px var(--surface);
-}
-
 /* square icon-only action button (zoom controls) */
 .btn.btn-icon { padding: 10px; min-width: 48px; border-radius: var(--r-sm); }
 
@@ -1594,76 +1524,9 @@ input[type="range"]::-moz-range-thumb {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ---------- in-app camera capture (mobile) ---------- */
-
-/* Full-screen live capture: the camera opens directly here
-   (getUserMedia) instead of behind a file-picker choice menu. */
-.camera-view {
-  position: fixed;
-  inset: 0;
-  /* Above busy overlay (60), toasts (50) and banners (40). */
-  z-index: 70;
-  display: flex;
-  background: #000000;
-}
-#camera-video {
-  flex: 1 1 0%;
-  min-width: 0;
-  min-height: 0;
-  width: 100%;
-  /* letterbox instead of cover: the preview must show exactly the
-     frame that the shutter will capture */
-  object-fit: contain;
-}
-.camera-actions {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(20px + var(--safe-bottom));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#btn-camera-cancel {
-  position: absolute;
-  left: 20px;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: none;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-}
-.btn-camera-shutter {
-  width: 76px;
-  height: 76px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border: 4px solid #ffffff;
-  border-radius: 50%;
-  background: transparent;
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: transform 0.08s ease;
-}
-.btn-camera-shutter::before {
-  content: "";
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #ffffff;
-}
-.btn-camera-shutter:hover { transform: scale(1.04); }
-.btn-camera-shutter:active { transform: scale(0.92); }
-.btn-camera-shutter:disabled { opacity: 0.5; cursor: default; transform: none; }
-
 /* ---------- desktop refinements ---------- */
 
 @media (min-width: 700px) {
-  #import-buttons { grid-template-columns: 1fr 1fr; }
   .page-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .import-card { padding: 22px 24px; }
   #app-title { font-size: 1.625rem; }
