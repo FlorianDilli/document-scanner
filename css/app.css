@@ -474,7 +474,7 @@ body {
 .import-seal:hover .import-seal-core { transform: translateX(-50%) scale(1.025); }
 .import-seal-label {
   position: absolute;
-  top: 194px;
+  top: 218px;
   left: 50%;
   width: 260px;
   height: 58px;
