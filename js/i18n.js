@@ -7,7 +7,7 @@ export const STRINGS = {
   newScanHint: 'Importiere Bilder, um ein Dokument zu scannen.',
   importAction: 'Importieren',
   importHint: 'Fotos werden lokal verarbeitet – nichts verlässt dein Gerät.',
-  yourScans: 'Deine Scans',
+  yourScans: 'Meine Scans',
   emptyState: 'Noch keine Seiten. Importiere ein Dokument, um zu beginnen.',
   deleteAll: 'Alle löschen',
   exportAction: 'Exportieren',

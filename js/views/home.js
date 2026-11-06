@@ -333,6 +333,7 @@ function render(pages) {
   grid.textContent = '';
   empty.classList.toggle('hidden', pages.length > 0);
   footer.classList.toggle('hidden', pages.length === 0);
+  counter.classList.toggle('hidden', pages.length === 0);
   counter.textContent = pageCountText(pages.length);
 
   pages.forEach((page, index) => {

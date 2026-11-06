@@ -39,33 +39,33 @@
     <!-- ============ HOME: page list ============ -->
     <section id="view-home" class="view">
       <div id="import-card" class="card import-card">
-        <div class="card-head">
-          <h3 class="card-label">
-            <span class="icon-slot" data-icon="sparkle" data-icon-size="13"></span>
-            <span data-i18n="newScan">Neu scannen</span>
-          </h3>
-        </div>
-        <p class="hint" data-i18n="newScanHint">Importiere Bilder, um ein Dokument zu scannen.</p>
         <div id="import-buttons">
-          <button id="btn-import" class="btn btn-tile" type="button">
-            <span class="icon-slot" data-icon="image"></span>
-            <span data-i18n="importAction">Importieren</span>
-            <span class="tile-arrow" data-icon="arrow"></span>
+          <button id="btn-import" class="btn import-seal" type="button" aria-label="Importieren">
+            <span class="import-seal-ring" aria-hidden="true"></span>
+            <span class="import-seal-core" aria-hidden="true">
+              <svg viewBox="0 0 100 100" focusable="false">
+                <path d="M34 22H22v20M66 22h12v20M78 58v20H58M42 78H22V58" />
+                <path d="M50 40v20M40 50h20" />
+              </svg>
+            </span>
+            <svg class="import-seal-label" viewBox="0 0 260 58" aria-hidden="true">
+              <defs><path id="import-label-arc" d="M16 2 Q130 114 244 2" /></defs>
+              <text><textPath href="#import-label-arc" startOffset="50%" text-anchor="middle" data-i18n="importAction">Importieren</textPath></text>
+            </svg>
           </button>
         </div>
       </div>
       <div class="section-head">
-        <span class="icon-slot" data-icon="doc" data-icon-size="24"></span>
-        <h2 data-i18n="yourScans">Deine Scans</h2>
+        <h2 data-i18n="yourScans">Meine Scans</h2>
+        <span id="page-counter" class="page-counter hidden"></span>
       </div>
       <div id="page-grid" class="page-grid"></div>
       <p id="empty-state" class="empty-state" data-i18n="emptyState">Noch keine Seiten. Importiere ein Dokument, um zu beginnen.</p>
       <div id="home-footer" class="home-footer hidden">
-        <span id="page-counter" class="page-counter"></span>
-          <button id="btn-export" class="btn btn-success" type="button">
-            <span class="icon-slot" data-icon="download"></span>
-            <span data-i18n="exportAction">Exportieren</span>
-          </button>
+        <button id="btn-export" class="btn btn-success" type="button">
+          <span class="icon-slot" data-icon="download"></span>
+          <span data-i18n="exportAction">Exportieren</span>
+        </button>
       </div>
     </section>
 

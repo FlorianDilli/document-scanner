@@ -171,11 +171,14 @@ body {
    theme) carries the brand. */
 #app-logo {
   flex: none;
-  width: 48px;
-  height: 48px;
-  padding: 8px;
+  width: 62px;
+  height: 62px;
+  padding: 11px;
   box-sizing: border-box;
   object-fit: contain;
+  border-radius: 50%;
+  background: #0c0c0d;
+  filter: brightness(0) invert(1);
 }
 
 /* ---------- app shell ---------- */
@@ -407,87 +410,106 @@ body {
 
 /* ---------- home: import ---------- */
 
-/* The "Neu scannen" panel is the one dark surface of the home view
-   (like the photo stage): near-black in BOTH themes, so the import
-   tile reads as a light card on ink, after the reference
-   design. All colours inside are pinned to the panel – they do not
-   swap in dark mode, because the panel keeps its polarity too. */
+/* The import action uses a stamp-like seal as the single focal point
+   of the home view. */
 .import-card {
-  --panel-ink: #f4f4f2;
-  --panel-ink-muted: rgba(244, 244, 242, 0.64);
-  --panel-tile: #ffffff;
-  --panel-tile-hover: #f5f5f3;
-  --panel-tile-ink: #0c0c0d;
-  --panel-tile-ink-muted: rgba(12, 12, 13, 0.5);
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 20px;
-  background: var(--stage);
-  border-color: var(--stage-edge);
-}
-
-.import-card .card-head h3 { color: var(--panel-ink-muted); }
-.import-card .hint { color: var(--panel-ink-muted); }
-
-/* Keyboard focus must stay visible on the dark panel. */
-.import-card .btn-tile:focus-visible { outline-color: var(--panel-ink); }
-
-.import-card .btn-tile {
-  border-color: transparent;
-  background: var(--panel-tile);
-  color: var(--panel-tile-ink);
-}
-.import-card .btn-tile:hover {
-  border-color: transparent;
-  background: var(--panel-tile-hover);
-}
-.import-card .btn-tile .icon-slot {
-  background: var(--panel-tile-ink);
-  color: var(--panel-tile);
-}
-.import-card .btn-tile .tile-arrow {
-  color: var(--panel-tile-ink-muted);
-}
-.import-card .btn-tile:hover .tile-arrow {
-  color: var(--panel-tile-ink);
-}
-
-/* Section label with a leading sparkle icon: the label row stays a
-   micro-label, the glyph just rides along. */
-.card-label {
-  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start;
+  min-height: 346px;
+  padding: 48px 0 12px;
+  background: transparent;
+  border: 0;
 }
 
-/* one-line description under the section title (gap compensated) */
-.import-card .hint { margin-top: -6px; }
+.import-seal {
+  position: relative;
+  width: 260px;
+  height: 286px;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  overflow: visible;
+}
+.import-seal:hover { border: 0; background: transparent; }
+.import-seal:focus-visible { outline-offset: 8px; }
+.import-seal-ring,
+.import-seal-core {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  display: grid;
+  place-items: center;
+  transform: translateX(-50%);
+  border-radius: 50%;
+}
+.import-seal-ring {
+  width: 236px;
+  height: 236px;
+  border: 7px dotted var(--ink);
+  transition: transform 0.15s ease;
+}
+.import-seal-core {
+  top: 21px;
+  width: 194px;
+  height: 194px;
+  background: var(--ink);
+  color: var(--canvas);
+  transition: transform 0.15s ease;
+}
+.import-seal-core svg { width: 112px; height: 112px; }
+.import-seal-core path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 7;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+.import-seal:hover .import-seal-ring { transform: translateX(-50%) scale(1.025); }
+.import-seal:hover .import-seal-core { transform: translateX(-50%) scale(1.025); }
+.import-seal-label {
+  position: absolute;
+  top: 194px;
+  left: 50%;
+  width: 260px;
+  height: 58px;
+  transform: translateX(-50%);
+  overflow: visible;
+  fill: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
 
 /* ---------- home: scan list head ---------- */
 
-/* "Deine Scans": document glyph + bold label directly above the
-   page grid. */
+/* Scan title and count share a ruled heading above the page grid. */
 .section-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: -8px; /* gap compensation, cf. .import-card .hint */
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--ink);
 }
-.section-head .icon-slot { color: var(--ink); }
 .section-head h2 {
   margin: 0;
-  font-size: 1.375rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 400;
+  letter-spacing: -0.025em;
   line-height: 1;
 }
 
-/* Keep the single import action full-width at every viewport size. */
 #import-buttons {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
+  display: flex;
+  justify-content: center;
 }
 
 .hint { color: var(--muted); font-size: 0.9375rem; line-height: 1.5; margin: 0; }
@@ -636,10 +658,8 @@ body {
 }
 .page-card .page-badge .icon { width: 12px; height: 12px; }
 
-/* Floating export bar: hovers in the bottom-right corner on every
-   width, so the primary action is always visible and reachable
-   (thumb zone on phones). The page list gets matching bottom room
-   below so the last cards are never hidden behind it. */
+/* Keep the export action reachable without moving the page count away
+   from its scan-list heading. */
 #view-home { padding-bottom: 92px; }
 .home-footer {
   position: fixed;
@@ -648,18 +668,13 @@ body {
   z-index: 8;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 7px 7px 7px 18px;
-  background: var(--surface);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-float);
+  padding: 0;
 }
 .page-counter {
   color: var(--muted);
-  font-weight: 600;
-  font-size: 0.8125rem;
-  letter-spacing: 0.02em;
+  font-weight: 500;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
   white-space: nowrap;
 }
 .home-footer-actions { display: flex; }
@@ -1528,8 +1543,17 @@ body.editor-open #app-main {
 
 @media (min-width: 700px) {
   .page-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-  .import-card { padding: 22px 24px; }
-  #app-title { font-size: 1.625rem; }
+  #app-main { max-width: 1280px; padding-top: 32px; }
+  #app-header { padding-left: max(28px, calc((100vw - 1280px) / 2)); padding-right: max(28px, calc((100vw - 1280px) / 2)); }
+  #app-title { font-family: Georgia, "Times New Roman", serif; font-size: 1.75rem; font-weight: 400; letter-spacing: 0.025em; text-transform: uppercase; }
+}
+
+@media (max-width: 480px) {
+  #app-logo { width: 48px; height: 48px; padding: 8px; }
+  .import-card { min-height: 260px; padding: 8px 0 0; }
+  .import-seal { transform: scale(0.82); transform-origin: center; margin: -24px 0; }
+  .section-head { padding-bottom: 12px; }
+  .page-counter { font-size: 1rem; }
 }
 
 /* ---------- motion preferences ---------- */
