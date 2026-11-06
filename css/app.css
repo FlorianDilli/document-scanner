@@ -529,7 +529,7 @@ body {
 .page-card {
   position: relative;
   background: var(--surface);
-  border: 1px solid var(--rule);
+  border: 0.75px solid var(--rule);
   border-radius: var(--r-lg);
   overflow: hidden;
   cursor: pointer;
@@ -564,14 +564,14 @@ body {
   top: 10px;
   left: 10px;
   z-index: 1;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   background: var(--ink);
   color: var(--surface);
   border: 0;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   padding: 0;
@@ -1214,18 +1214,11 @@ body.editor-open #app-main {
 .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .chip {
-  min-height: 36px;
-  padding: 8px 14px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: var(--r-md);
   font-weight: 600;
-  font-size: 0.8125rem;
   letter-spacing: -0.005em;
-  cursor: pointer;
-  transition: transform 0.08s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 .chip:hover { background: var(--surface-2); border-color: var(--rule-strong); }
 .chip:active { transform: scale(0.97); }

@@ -18,7 +18,6 @@
 
 const HANDLE_RADIUS = 22; // 44 px hit area (touch target)
 const KNOB_RADIUS = 12;   // drawn corner dot (CSS px)
-const KNOB_GAP = 5;       // empty space between the outline and the dot
 const LOUPE_RADIUS = 70;  // loupe circle radius (CSS px)
 const LOUPE_ZOOM = 3;     // loupe magnification
 const LOUPE_OFFSET = 95;  // loupe offset from the finger (CSS px)
@@ -522,9 +521,8 @@ export class CornerEditor {
     ctx.restore();
 
     // Quad outline (dashed while it is an unverified guess).
-    // Every edge is trimmed at both ends so the line stops short of
-    // the corner dots: the outline reads as four separate strokes
-    // that are visibly disconnected from the knobs.
+    // Trim to the dot's edge so every line connects cleanly to its
+    // corner marker without drawing over the dot.
     ctx.save();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
@@ -537,7 +535,7 @@ export class CornerEditor {
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const len = Math.hypot(dx, dy);
-      const trim = KNOB_RADIUS + KNOB_GAP;
+      const trim = KNOB_RADIUS;
       if (len <= trim * 2) continue;
       const ux = dx / len;
       const uy = dy / len;

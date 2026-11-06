@@ -314,7 +314,7 @@ function buildFilterChips() {
   row.textContent = '';
   for (const f of FILTERS) {
     const chip = document.createElement('button');
-    chip.className = 'chip';
+    chip.className = 'btn chip';
     chip.type = 'button';
     chip.textContent = t(f.key);
     chip.dataset.filter = f.id;
