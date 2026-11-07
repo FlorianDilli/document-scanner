@@ -5,7 +5,7 @@ export const STRINGS = {
   appTitle: 'Dokumenten-Scanner',
   newScan: 'Neu scannen',
   newScanHint: 'Importiere Bilder, um ein Dokument zu scannen.',
-  importAction: 'Importieren',
+  importAction: 'Neuer Scan',
   importHint: 'Fotos werden lokal verarbeitet – nichts verlässt dein Gerät.',
   yourScans: 'Meine Scans',
   emptyState: 'Noch keine Seiten. Importiere ein Dokument, um zu beginnen.',

@@ -410,81 +410,35 @@ body {
 
 /* ---------- home: import ---------- */
 
-/* The import action uses a stamp-like seal as the single focal point
-   of the home view. */
+/* The import action is the primary control on the home view. */
 .import-card {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  min-height: 346px;
-  padding: 48px 0 12px;
+  justify-content: center;
+  min-height: 0;
+  padding: 0 0 32px;
   background: transparent;
   border: 0;
 }
 
-.import-seal {
-  position: relative;
-  width: 260px;
-  height: 286px;
-  min-height: 0;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink);
-  overflow: visible;
+.import-button {
+  width: min(100%, 420px);
+  min-height: 76px;
+  border-radius: var(--r-lg);
+  gap: 14px;
+  font-size: 1.125rem;
 }
-.import-seal:hover { border: 0; background: transparent; }
-.import-seal:focus-visible { outline-offset: 8px; }
-.import-seal-ring,
-.import-seal-core {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  display: grid;
+.import-button:hover { background: var(--ink); border-color: var(--ink); opacity: 0.85; }
+.import-button .icon-slot {
+  display: inline-grid;
   place-items: center;
-  transform: translateX(-50%);
-  border-radius: 50%;
+  flex: none;
 }
-.import-seal-ring {
-  width: 236px;
-  height: 236px;
-  border: 7px dotted var(--ink);
-  transition: transform 0.15s ease;
-}
-.import-seal-core {
-  top: 21px;
-  width: 194px;
-  height: 194px;
-  background: var(--ink);
-  color: var(--canvas);
-  transition: transform 0.15s ease;
-}
-.import-seal-core svg { width: 112px; height: 112px; }
-.import-seal-core path {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 7;
-  stroke-linecap: square;
-  stroke-linejoin: miter;
-}
-.import-seal:hover .import-seal-ring { transform: translateX(-50%) scale(1.025); }
-.import-seal:hover .import-seal-core { transform: translateX(-50%) scale(1.025); }
-.import-seal-label {
-  position: absolute;
-  top: 218px;
-  left: 50%;
-  width: 260px;
-  height: 58px;
-  transform: translateX(-50%);
-  overflow: visible;
-  fill: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 27px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
+.import-button .icon { width: 40px; height: 40px; }
+.import-button:focus-visible { outline-offset: 4px; }
+.import-button:active { transform: scale(0.99); }
+.import-button .icon-documentPlus circle {
+  stroke-width: 1.7;
 }
 
 /* ---------- home: scan list head ---------- */
@@ -510,6 +464,7 @@ body {
 #import-buttons {
   display: flex;
   justify-content: center;
+  width: 100%;
 }
 
 .hint { color: var(--muted); font-size: 0.9375rem; line-height: 1.5; margin: 0; }
@@ -1543,8 +1498,7 @@ body.editor-open #app-main {
 
 @media (max-width: 480px) {
   #app-logo { width: 48px; height: 48px; padding: 8px; }
-  .import-card { min-height: 260px; padding: 8px 0 0; }
-  .import-seal { transform: scale(0.82); transform-origin: center; margin: -24px 0; }
+  .import-card { padding-bottom: 24px; }
   .section-head { padding-bottom: 12px; }
   .page-counter { font-size: 1rem; }
 }
