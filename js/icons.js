@@ -86,14 +86,9 @@ const ICONS = {
     '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
 };
 
-// Grip: a horizontal row of three filled dots (an ellipsis), the
-// quiet reorder affordance.
+// Opposing filled arrows make the page reorder handle explicit.
 function gripMarkup() {
-  let out = '';
-  for (const cx of [5, 12, 19]) {
-    out += `<circle cx="${cx}" cy="12" r="2" fill="currentColor" stroke="none"/>`;
-  }
-  return out;
+  return '<path fill="currentColor" stroke="none" d="M12 1 7 6v3l4-4v8h3V5l4 4V6l-5-5Zm3 8v8l-4-4v3l5 5 5-5v-3l-4 4V9h-2Z"/>';
 }
 
 // Build one icon element, e.g. ic('trash', 16).
