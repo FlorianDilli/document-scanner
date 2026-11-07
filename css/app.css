@@ -823,7 +823,10 @@ body.editor-open #app-main {
 #view-editor.in-frame .crop-actions { flex: none; }
 /* In frame mode the filmstrip is a normal flow item below the action
    row, never a sticky overlay on top of the buttons. */
-#view-editor.in-frame .page-filmstrip { flex: none; }
+#view-editor.in-frame .page-filmstrip {
+  flex: none;
+  margin-top: 0;
+}
 
 /* Frame / Look mode switch: a segmented control on a sunken track,
    the selected segment is the solid ink block. Lives in the top
@@ -1178,11 +1181,14 @@ body.editor-open #app-main {
 .chip:hover { background: var(--surface-2); border-color: var(--rule-strong); }
 .chip:active { transform: scale(0.97); }
 .chip[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--surface);
+  background: var(--surface-2);
+  color: var(--ink);
   font-weight: 700;
-  border-color: var(--ink);
+  border-color: transparent;
 }
+.filter-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.filter-actions .chip .icon { width: 26px; height: 26px; color: var(--ink); }
+.filter-actions .chip span:not(.icon-slot) { display: block; }
 
 /* square icon-only action button (zoom controls) */
 .btn.btn-icon { padding: 10px; min-width: 48px; border-radius: var(--r-sm); }

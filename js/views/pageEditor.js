@@ -27,8 +27,8 @@ import { t } from '../i18n.js';
 import { renderPageList, setSidebarCurrent } from './sidebar.js';
 
 const FILTERS = [
-  { id: 'original', key: 'filterPhoto' },
-  { id: 'document', key: 'filterDocument' },
+  { id: 'original', key: 'filterPhoto', icon: 'image' },
+  { id: 'document', key: 'filterDocument', icon: 'doc' },
 ];
 
 // Preview resolution: render at the size the canvas is actually
@@ -316,7 +316,13 @@ function buildFilterChips() {
     const chip = document.createElement('button');
     chip.className = 'btn chip';
     chip.type = 'button';
-    chip.textContent = t(f.key);
+    const icon = document.createElement('span');
+    icon.className = 'icon-slot';
+    icon.dataset.icon = f.icon;
+    const label = document.createElement('span');
+    label.textContent = t(f.key);
+    chip.append(icon, label);
+    mountIcons(chip);
     chip.dataset.filter = f.id;
     chip.setAttribute('aria-pressed', String(currentPage.filter === f.id));
     chip.addEventListener('click', () => {
