@@ -75,9 +75,9 @@ const ICONS = {
   // plain document sheet with a folded corner (scan list title)
   doc:
     '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
-  // stacked documents with an add badge
+  // stacked document sheets, ruled front page and add badge
   documentPlus:
-    '<path d="M15 4H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7"/><path d="M17 2H9a2 2 0 0 0-2 2v1"/><path d="M9 9h7M9 12h7M9 15h4"/><circle cx="17" cy="17" r="5.5" fill="var(--ink)"/><path d="M17 14.5v5M14.5 17h5"/>',
+    '<path d="M14 3 5 5l3 15 6-1"/><path d="M17 2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h5M17 2v10"/><path d="M9 6h7M9 9h7M9 12h7M9 15h6M9 18h3"/><circle cx="17.5" cy="17.5" r="5.25" fill="var(--ink)"/><path d="M17.5 15v5M15 17.5h5"/>',
   // → into an import tile / forward action
   arrow:
     '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',

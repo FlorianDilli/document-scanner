@@ -437,9 +437,6 @@ body {
 .import-button .icon { width: 40px; height: 40px; }
 .import-button:focus-visible { outline-offset: 4px; }
 .import-button:active { transform: scale(0.99); }
-.import-button .icon-documentPlus circle {
-  stroke-width: 1.7;
-}
 
 /* ---------- home: scan list head ---------- */
 
