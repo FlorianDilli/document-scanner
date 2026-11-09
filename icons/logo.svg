@@ -1,12 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
   <style>
-    #scanner-mark { --ink: #141416; --muted: #b8b8ba; }
+    #scanner-mark .ink { stroke: #141416; }
+    #scanner-mark .muted { stroke: #b8b8ba; }
     @media (prefers-color-scheme: dark) {
-      #scanner-mark { --ink: #f4f4f2; --muted: #77777a; }
+      #scanner-mark .ink { stroke: #f4f4f2; }
+      #scanner-mark .muted { stroke: #77777a; }
     }
   </style>
   <g id="scanner-mark" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <g stroke="var(--ink)" stroke-width="9">
+    <g class="ink" stroke-width="9">
       <path d="M32 65 V49 Q32 43 38 43 H53"/>
       <path d="M147 43 H162 Q168 43 168 49 V65"/>
       <path d="M168 135 V151 Q168 157 162 157 H147"/>
@@ -16,7 +18,7 @@
       <path d="M84 84 H108" stroke-width="7"/>
       <path d="M84 99 H120" stroke-width="7"/>
     </g>
-    <g stroke="var(--muted)" stroke-width="7">
+    <g class="muted" stroke-width="7">
       <path d="M84 118 H109"/>
       <path d="M84 133 H117"/>
     </g>
