@@ -78,18 +78,22 @@ const ICONS = {
   // document sheet with a filled folded corner, five ruled lines
   // and a circular add badge at the bottom-right corner, from the
   // reference artwork (960x862 grid). Unlike every other icon in
-  // this set it is a solid filled shape, not a stroked outline, so
-  // it is scaled down from its original grid like `rotate` above:
-  // scale 0.025 maps the 960 width onto the 24 box exactly, and
-  // the 862 height (21.55) is centred with a 1.225 offset. The
-  // artwork's #231F20 fill becomes currentColor so it inverts
-  // with the button (light on the solid ink primary, flipped in
-  // dark mode); the black/white mask paint stays untouched, as
-  // masks are luminance, not colour. The two masks knock a
-  // circular gap around the badge out of the sheet/lines, and
-  // knock the plus out of the badge, exactly as in the source.
+  // this set it is a solid filled shape, not a stroked outline.
+  // The artwork's visible bounds (x 221..699.8, y 116..714.5) are
+  // mapped onto the 24 box instead of the whole 960x862 canvas:
+  // scale 0.0401 maps the 598.5 height onto 24 exactly and the
+  // 478.8 width onto 19.2, centred horizontally (offset 2.4).
+  // Mapping the full canvas instead would shrink the glyph to
+  // ~60% of the box, which is why this icon looked small next to
+  // the button label. The artwork's #231F20 fill becomes
+  // currentColor so it inverts with the button (light on the
+  // solid ink primary, flipped in dark mode); the black/white
+  // mask paint stays untouched, as masks are luminance, not
+  // colour. The two masks knock a circular gap around the badge
+  // out of the sheet/lines, and knock the plus out of the badge,
+  // exactly as in the source.
   documentPlus:
-    '<g transform="translate(0 1.225) scale(0.025)">' +
+    '<g transform="translate(-6.462 -4.652) scale(0.0401)">' +
     '<defs stroke="none">' +
     '<mask id="doc-cutout"><rect width="960" height="862" fill="#ffffff"/>' +
     '<circle cx="592.5" cy="607.2" r="161.7" fill="#000000"/></mask>' +
