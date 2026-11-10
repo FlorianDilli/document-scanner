@@ -85,13 +85,17 @@ const ICONS = {
   // badge ring and plus at 1.5, ruled lines at 1.0): this icon
   // renders at 40 px while the rest of the set renders at
   // 18-26 px, so the default stroke scaled up to a visibly
-  // heavier weight than every other icon.
+  // heavier weight than every other icon. The one exception is
+  // the plus: in the reference it is a bold solid cross knocked
+  // out of the filled badge disc, not a thin stroked plus, so
+  // it keeps a heavy 2.8 stroke (disc fill var(--ink) = the
+  // reference's black, plus in currentColor = its white).
   documentPlus:
     '<path stroke-width="1.5" d="M15 2H6a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h12M18 5v16M15 2l3 3"/>' +
     '<path fill="currentColor" stroke="none" d="M15 2l3 3h-3z"/>' +
     '<path stroke-width="1" d="M8 6h5M7 9h8M7 12h8M7 15h6M7 18h4"/>' +
     '<circle cx="17" cy="17" r="5" fill="var(--ink)" stroke-width="1.5"/>' +
-    '<path stroke-width="1.5" d="M17 14.5v5M14.5 17h5"/>',
+    '<path stroke-width="2.8" d="M17 14v6M14 17h6"/>',
   // → into an import tile / forward action
   arrow:
     '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
