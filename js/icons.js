@@ -80,11 +80,13 @@ const ICONS = {
   // and a solid add badge at the bottom-right corner, matching
   // the reference artwork. The badge disc (fill = button colour)
   // knocks out the sheet edges and lines it overlaps, leaving
-  // the truncated edges seen in the reference.
+  // the truncated edges seen in the reference. The ruled lines
+  // are deliberately thinner (1.4 vs the 2 px outline) so they
+  // read as text at small sizes instead of merging into bars.
   documentPlus:
     '<path d="M15 2H6a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h12M18 5v16M15 2l3 3"/>' +
     '<path fill="currentColor" stroke="none" d="M15 2l3 3h-3z"/>' +
-    '<path d="M8 6h5M7 9h8M7 12h8M7 15h6M7 18h4"/>' +
+    '<path stroke-width="1.4" d="M8 6h5M7 9h8M7 12h8M7 15h6M7 18h4"/>' +
     '<circle cx="17" cy="17" r="5" fill="var(--ink)"/>' +
     '<path d="M17 14.5v5M14.5 17h5"/>',
   // → into an import tile / forward action
