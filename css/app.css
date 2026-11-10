@@ -167,13 +167,14 @@ body {
 }
 
 /* Brand mark on a light circular tile, with the SVG adapting its ink
-   strokes to the active color scheme. Sized to read as a proper
-   masthead mark next to the two-line title, not a small badge. */
+   strokes to the active color scheme. Sized large – a prominent
+   masthead mark next to the two-line title (double the original
+   mobile size), without dominating the header. */
 #app-logo {
   flex: none;
-  width: 84px;
-  height: 84px;
-  padding: 6px;
+  width: 120px;
+  height: 120px;
+  padding: 8px;
   box-sizing: border-box;
   object-fit: contain;
   border-radius: 50%;
@@ -1499,7 +1500,7 @@ body.editor-open #app-main {
 }
 
 @media (max-width: 480px) {
-  #app-logo { width: 64px; height: 64px; padding: 5px; }
+  #app-logo { width: 96px; height: 96px; padding: 6px; }
   .import-card { padding-bottom: 24px; }
   .section-head { padding-bottom: 12px; }
   .page-counter { font-size: 1rem; }
