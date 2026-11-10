@@ -75,9 +75,18 @@ const ICONS = {
   // plain document sheet with a folded corner (scan list title)
   doc:
     '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
-  // stacked document sheets, ruled front page and add badge
+  // document sheet with a filled folded corner, five ruled lines
+  // (first and last shorter, middle lines clipped by the badge)
+  // and a solid add badge at the bottom-right corner, matching
+  // the reference artwork. The badge disc (fill = button colour)
+  // knocks out the sheet edges and lines it overlaps, leaving
+  // the truncated edges seen in the reference.
   documentPlus:
-    '<path d="M14 5V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h1"/><path d="M17 5H9a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8M17 5v16"/><path d="M10 9h5M10 12h5M10 15h4"/><circle cx="17" cy="17" r="5" fill="var(--ink)"/><path d="M17 14.5v5M14.5 17h5"/>',
+    '<path d="M15 2H6a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h12M18 5v16M15 2l3 3"/>' +
+    '<path fill="currentColor" stroke="none" d="M15 2l3 3h-3z"/>' +
+    '<path d="M8 6h5M7 9h8M7 12h8M7 15h6M7 18h4"/>' +
+    '<circle cx="17" cy="17" r="5" fill="var(--ink)"/>' +
+    '<path d="M17 14.5v5M14.5 17h5"/>',
   // → into an import tile / forward action
   arrow:
     '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
