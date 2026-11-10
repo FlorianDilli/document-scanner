@@ -76,26 +76,43 @@ const ICONS = {
   doc:
     '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
   // document sheet with a filled folded corner, five ruled lines
-  // (first and last shorter, middle lines clipped by the badge)
-  // and a solid add badge at the bottom-right corner, matching
-  // the reference artwork. The badge disc (fill = button colour)
-  // knocks out the sheet edges and lines it overlaps, leaving
-  // the truncated edges seen in the reference. Every stroke in
-  // this icon is thinner than the 2 px system default (outline,
-  // badge ring and plus at 1.5, ruled lines at 1.0): this icon
-  // renders at 40 px while the rest of the set renders at
-  // 18-26 px, so the default stroke scaled up to a visibly
-  // heavier weight than every other icon. The one exception is
-  // the plus: in the reference it is a bold solid cross knocked
-  // out of the filled badge disc, not a thin stroked plus, so
-  // it keeps a heavy 2.8 stroke (disc fill var(--ink) = the
-  // reference's black, plus in currentColor = its white).
+  // and a circular add badge at the bottom-right corner, from the
+  // reference artwork (960x862 grid). Unlike every other icon in
+  // this set it is a solid filled shape, not a stroked outline, so
+  // it is scaled down from its original grid like `rotate` above:
+  // scale 0.025 maps the 960 width onto the 24 box exactly, and
+  // the 862 height (21.55) is centred with a 1.225 offset. The
+  // artwork's #231F20 fill becomes currentColor so it inverts
+  // with the button (light on the solid ink primary, flipped in
+  // dark mode); the black/white mask paint stays untouched, as
+  // masks are luminance, not colour. The two masks knock a
+  // circular gap around the badge out of the sheet/lines, and
+  // knock the plus out of the badge, exactly as in the source.
   documentPlus:
-    '<path stroke-width="1.5" d="M15 2H6a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h12M18 5v16M15 2l3 3"/>' +
-    '<path fill="currentColor" stroke="none" d="M15 2l3 3h-3z"/>' +
-    '<path stroke-width="1" d="M8 6h5M7 9h8M7 12h8M7 15h6M7 18h4"/>' +
-    '<circle cx="17" cy="17" r="5" fill="var(--ink)" stroke-width="1.5"/>' +
-    '<path stroke-width="2.8" d="M17 14v6M14 17h6"/>',
+    '<g transform="translate(0 1.225) scale(0.025)">' +
+    '<defs stroke="none">' +
+    '<mask id="doc-cutout"><rect width="960" height="862" fill="#ffffff"/>' +
+    '<circle cx="592.5" cy="607.2" r="161.7" fill="#000000"/></mask>' +
+    '<mask id="badge-cutout"><circle cx="592.5" cy="607.2" r="107.3" fill="#ffffff"/>' +
+    '<rect x="574" y="530" width="37" height="154.4" rx="6" fill="#000000"/>' +
+    '<rect x="515.3" y="588.7" width="154.4" height="37" rx="6" fill="#000000"/></mask>' +
+    '</defs>' +
+    '<g fill="currentColor" stroke="none">' +
+    '<g mask="url(#doc-cutout)">' +
+    '<path fill-rule="evenodd" d="M 292.5,116 L 541.5,116 L 655.5,230 L 655.5,625.5 ' +
+    'A 71.5,71.5 0 0,1 584,697 L 292.5,697 A 71.5,71.5 0 0,1 221,625.5 L 221,187.5 ' +
+    'A 71.5,71.5 0 0,1 292.5,116 Z M 292.5,149 A 38.5,38.5 0 0,0 254,187.5 L 254,625.5 ' +
+    'A 38.5,38.5 0 0,0 292.5,664 L 584,664 A 38.5,38.5 0 0,0 622.5,625.5 L 622.5,246.5 ' +
+    'L 581.5,246.5 A 55,55 0 0,1 526,191.5 L 526,149 Z"/>' +
+    '<rect x="338" y="238" width="200" height="25" rx="12.5"/>' +
+    '<rect x="300" y="316.5" width="276" height="25" rx="12.5"/>' +
+    '<rect x="300" y="395" width="276" height="25" rx="12.5"/>' +
+    '<rect x="300" y="473" width="276" height="25" rx="12.5"/>' +
+    '<rect x="300" y="551" width="276" height="25" rx="12.5"/>' +
+    '</g>' +
+    '<circle cx="592.5" cy="607.2" r="107.3" mask="url(#badge-cutout)"/>' +
+    '</g>' +
+    '</g>',
   // → into an import tile / forward action
   arrow:
     '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
