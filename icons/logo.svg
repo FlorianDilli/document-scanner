@@ -1,27 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
-  <style>
-    #scanner-mark .ink { stroke: #141416; }
-    #scanner-mark .muted { stroke: #b8b8ba; }
-    @media (prefers-color-scheme: dark) {
-      #scanner-mark .ink { stroke: #f4f4f2; }
-      #scanner-mark .muted { stroke: #77777a; }
-    }
-  </style>
-  <g id="scanner-mark" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <g class="ink" stroke-width="9">
-      <path d="M32 65 V49 Q32 43 38 43 H53"/>
-      <path d="M147 43 H162 Q168 43 168 49 V65"/>
-      <path d="M168 135 V151 Q168 157 162 157 H147"/>
-      <path d="M53 157 H38 Q32 157 32 151 V135"/>
-      <path d="M68 142 V47 H119 L138 66 V142 Q138 154 126 154 H80 Q68 154 68 142 Z"/>
-      <path d="M119 47 V66 H138" stroke-width="5"/>
-      <path d="M84 84 H108" stroke-width="7"/>
-      <path d="M84 99 H120" stroke-width="7"/>
-    </g>
-    <g class="muted" stroke-width="7">
-      <path d="M84 118 H109"/>
-      <path d="M84 133 H117"/>
-    </g>
-    <path d="M120 49 L136 65 H120 Z" fill="#ff795f" stroke="#141416" stroke-width="3"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1096" width="100%" height="100%">
+  <!-- Hintergrund -->
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Scanner-Rahmen (4 Eck-Winkel) -->
+  <g fill="none" stroke="#22252a" stroke-width="44" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Oben links -->
+    <path d="M 135 355 V 193 A 32 32 0 0 1 167 161 H 321"/>
+    <!-- Oben rechts -->
+    <path d="M 570 161 H 724 A 32 32 0 0 1 756 193 V 355"/>
+    <!-- Unten links -->
+    <path d="M 135 692 V 862 A 32 32 0 0 0 167 894 H 321"/>
+    <!-- Unten rechts -->
+    <path d="M 570 894 H 724 A 32 32 0 0 0 756 862 V 692"/>
   </g>
+
+  <!-- Dokument-Rahmen mit Eselsohr-Ausschnitt -->
+  <path fill="#22252a" fill-rule="evenodd" d="
+    M 311 243 H 525 L 639 357 V 753 A 60 60 0 0 1 579 813 H 311 A 60 60 0 0 1 251 753 V 303 A 60 60 0 0 1 311 243 Z
+    M 311 285 H 513 V 369 H 597 V 753 A 18 18 0 0 1 579 771 H 311 A 18 18 0 0 1 293 753 V 303 A 18 18 0 0 1 311 285 Z
+  "/>
+
+  <!-- Gefaltetes Eck (Eselsohr / rot-koralle) -->
+  <path d="M 535 292 L 592 348 H 535 Z" fill="#ec6e57"/>
+
+  <!-- Textzeilen im Dokument -->
+  <!-- Dunkle Zeilen (Absatz 1) -->
+  <rect x="335" y="431" width="152" height="34" rx="17" fill="#22252a"/>
+  <rect x="335" y="505" width="211" height="34" rx="17" fill="#22252a"/>
+
+  <!-- Graue Zeilen (Absatz 2) -->
+  <rect x="335" y="599" width="158" height="34" rx="17" fill="#c1c5c6"/>
+  <rect x="335" y="673" width="196" height="34" rx="17" fill="#c1c5c6"/>
 </svg>
