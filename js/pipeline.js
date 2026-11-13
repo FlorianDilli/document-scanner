@@ -152,8 +152,11 @@ export async function renderPreview(page, canvas, maxEdge = 800) {
   return canvas;
 }
 
-// Small JPEG thumbnail blob for the page list.
-export async function getThumbnail(page, maxEdge = 600) {
+// JPEG thumbnail blob for the page list. The home grid shows cards
+// up to ~200 CSS px wide (taller in portrait), so on HiDPI screens
+// (2-3 device px per CSS px) the long edge needs ~1200 px to stay
+// sharp instead of turning pixelated; 600 px upscaled ~3x.
+export async function getThumbnail(page, maxEdge = 1200) {
   const canvas = document.createElement('canvas');
   await renderPreview(page, canvas, maxEdge);
   const blob = await new Promise((resolve, reject) => {

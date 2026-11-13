@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1096" width="100%" height="100%">
-  <!-- Hintergrund -->
-  <rect width="100%" height="100%" fill="#ffffff"/>
+  <!-- Transparent background: the circle tile behind the logo
+       (see #app-logo in app.css) provides the background. -->
 
   <!-- Scanner-Rahmen (4 Eck-Winkel) -->
   <g fill="none" stroke="#22252a" stroke-width="44" stroke-linecap="round" stroke-linejoin="round">

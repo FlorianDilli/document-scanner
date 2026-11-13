@@ -9,6 +9,10 @@ import { newId } from '../state.js';
 import { ic } from '../icons.js';
 import { deletePage } from '../pageOps.js';
 const FILTER_DEFAULT = 'document'; // recommended default
+// Home cards are up to ~200 CSS px wide (~290 tall for portrait) and
+// shown at 2-3 device px per CSS px on HiDPI: render thumbnails at
+// 1200 px long edge so they stay sharp instead of pixelated.
+const HOME_THUMB_MAX_EDGE = 1200;
 
 let ctx = null;
 // Persistent thumbnail cache: pageId -> { url, key }.
@@ -380,7 +384,7 @@ function render(pages) {
         URL.revokeObjectURL(cached.url);
         thumbnailUrls.delete(page.id);
       }
-      getThumbnail(page)
+      getThumbnail(page, HOME_THUMB_MAX_EDGE)
         .then((blob) => {
           // Discard a stale result if the page changed in the meantime.
           if (pipelineKey(page) !== key) return;

@@ -122,9 +122,12 @@ const ICONS = {
     '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
 };
 
-// Opposing filled arrows make the page reorder handle explicit.
+// Page-reorder handle: two bold, opposing filled arrows (up on top,
+// down below) centred in the 24 box with a small gap between them,
+// so the up/down action reads at a glance in 16 px. The new SVG
+// replaces the previous thinner chevron grip.
 function gripMarkup() {
-  return '<path fill="currentColor" stroke="none" d="M12 1 7 6v3l4-4v8h3V5l4 4V6l-5-5Zm3 8v8l-4-4v3l5 5 5-5v-3l-4 4V9h-2Z"/>';
+  return '<path fill="currentColor" stroke="none" d="M12 2 19 9h-4v2.5H9V9H5L12 2Zm0 20-7-7h4v-2.5h6V15h4l-7 7Z"/>';
 }
 
 // Build one icon element, e.g. ic('trash', 16).

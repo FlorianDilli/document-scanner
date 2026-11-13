@@ -81,12 +81,13 @@ function applyFormatUI() {
   });
   document.getElementById('row-ocr').classList.toggle('hidden', !isPdf);
   document.getElementById('format-hint').classList.toggle('hidden', isPdf);
-  // The extension suffix sits outside the input box: ".pdf" for the
-  // PDF export, nothing for images (the per-page ".jpg" is appended
-  // automatically after the base name).
+  // The extension suffix sits outside the input box for both
+  // formats: ".pdf" for the PDF export, ".jpg" for images (the
+  // per-page page index is appended automatically after the
+  // base name, before that extension).
   const suffix = document.getElementById('opt-filename-suffix');
-  suffix.textContent = isPdf ? '.pdf' : '';
-  suffix.classList.toggle('hidden', !isPdf);
+  suffix.textContent = isPdf ? '.pdf' : '.jpg';
+  suffix.classList.remove('hidden');
   const startBtn = document.getElementById('btn-export-start');
   const key = isPdf ? 'startExport' : 'startExportImages';
   startBtn.setAttribute('data-i18n', key);

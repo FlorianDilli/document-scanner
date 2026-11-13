@@ -1254,8 +1254,9 @@ body.editor-open #app-main {
 
 /* The filename field can use a wider share than the selects; it is
    the widest control and its value fits once the row can flex. The
-   ".pdf" suffix sits OUTSIDE the input box (next to it), so it is
-   clear that only the name – not the file extension – is typed. */
+   file-extension suffix (".pdf" or ".jpg", depending on the format)
+   sits OUTSIDE the input box (next to it), so it is clear that only
+   the name – not the file extension – is typed. */
 .filename-field {
   display: flex;
   align-items: center;
