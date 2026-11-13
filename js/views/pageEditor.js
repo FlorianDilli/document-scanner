@@ -2,7 +2,7 @@
 // equally important modes:
 //
 //   Frame ("Rahmen"): corner editor over the original photo –
-//   auto-detect, reset, drag corners (with loupe). Corners are
+//   auto-detect, drag corners (with loupe). Corners are
 //   committed when leaving the mode or via "Done".
 //   Look ("Optik"): filter chips and rotation over the live processed
 //   preview.
@@ -52,10 +52,6 @@ let bitmapPageId = null;
 // model – so a value that changed behind the editor's back (e.g. a
 // detection that finished later) cannot be written back as a user edit.
 let frameBaseline = null;
-
-// Default look for a freshly imported page; "Zurücksetzen" restores it.
-const DEFAULT_FILTER = 'document';
-const DEFAULT_PARAMS = { brightness: 0, contrast: 0, sharpen: 0 };
 
 // Set by the first corner drag after a failed auto-detection: the
 // user took manual control, so the hint banner and the dashed
@@ -535,7 +531,6 @@ async function setMode(next) {
 // router re-enters show() with the same params).
 function applyStaticTexts() {
   for (const [id, key] of [
-    ['btn-editor-reset', 'resetPage'],
     ['btn-reset-crop', 'resetCrop'],
     ['mode-frame', 'modeFrame'],
     ['mode-look', 'modeLook'],
@@ -547,52 +542,6 @@ function applyStaticTexts() {
   document
     .getElementById('page-filmstrip')
     .setAttribute('aria-label', ctx.t('filmstripLabel'));
-}
-
-// Resets everything about this page to its import state: detected
-// frame, no rotation and default filter. Asks first, because
-// it discards the user's manual work on the page.
-async function resetPage() {
-  if (!currentPage || detecting) return;
-  const ok = await ctx.confirmAction(ctx.t('confirmResetPage'));
-  if (!ok || !currentPage) return;
-  const page = currentPage;
-  let detection;
-  try {
-    detection = await detectPageCorners(page);
-  } catch (err) {
-    console.error(err);
-    ctx.toast(ctx.t('errGeneric'));
-    return;
-  }
-  // The user may have switched pages while the worker was busy.
-  if (currentPage !== page) return;
-
-  const params = { ...DEFAULT_PARAMS };
-  state.updatePage(page.id, {
-    corners: detection.corners,
-    detected: detection.detected,
-    fullFrame: detection.fullFrame,
-    rotation: 0,
-    filter: DEFAULT_FILTER,
-    params,
-  });
-  frameBaseline = detection.corners.map((c) => ({ x: c.x, y: c.y }));
-  frameHintDismissed = false;
-  // The frame editor is only touched when it shows this page; otherwise
-  // it loads the reset corners the next time it is opened.
-  if (bitmapPageId === page.id && editor.image) {
-    editor.setRotation(0);
-    editor.animateTo(detection.corners);
-  }
-  persistNow();
-  refreshFilmstrip();
-  if (currentMode === 'look') {
-    buildFilterChips();
-    await requestPreview();
-  } else {
-    syncFrameHint();
-  }
 }
 
 async function done() {
@@ -619,7 +568,6 @@ export function init(context) {
     },
   });
 
-  document.getElementById('btn-editor-reset').addEventListener('click', resetPage);
   document.getElementById('btn-editor-done').addEventListener('click', done);
   document.getElementById('mode-frame').addEventListener('click', () => setMode('frame'));
   document.getElementById('mode-look').addEventListener('click', () => setMode('look'));

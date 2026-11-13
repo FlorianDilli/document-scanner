@@ -1,5 +1,5 @@
-// ui.js – shared UI helpers: toast messages, busy overlay,
-// confirm dialogs. Keeps view code free of DOM plumbing.
+// ui.js – shared UI helpers: toast messages and busy overlay.
+// Keeps view code free of DOM plumbing.
 
 let toastTimer = null;
 
@@ -68,10 +68,6 @@ export function showBusy(text) {
 
 export function hideBusy() {
   document.getElementById('busy-overlay').classList.add('hidden');
-}
-
-export function confirmAction(message) {
-  return Promise.resolve(window.confirm(message));
 }
 
 // Show a user-facing error (German message) and log details.

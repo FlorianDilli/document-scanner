@@ -15,30 +15,44 @@ let ctx = null;
 let cancelled = false;
 let currentPageIndex = 0;
 let format = 'pdf';
+// True while an export runs: a second tap on the start button must
+// not produce a second file.
+let exporting = false;
 
 // How many files go into a single share sheet: phones cap the
 // number of shared files, and each sheet costs the user one tap.
 const SHARE_CHUNK = 10;
 
+// Base name WITHOUT extension: the ".pdf" is shown as a suffix
+// outside the input box, so the field only ever holds the name
+// part – the user never has to type (or delete) a file extension.
 function defaultFilename() {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, '0');
-  return `scan-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.pdf`;
+  return `scan-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// The base name (without extension) last suggested in the field.
-// Lets a refresh tell the suggestion apart from a name the user typed.
+// Strips a file extension the user typed anyway, so the saved
+// file is always exactly "<base>.pdf" (never "<base>.pdf.pdf").
+function baseFilename(value) {
+  return (value || '').trim().replace(/\.(pdf|jpe?g)$/i, '').trim();
+}
+
+// The base name last suggested in the field. Lets a refresh tell
+// the suggestion apart from a name the user typed.
 let suggestedBase = '';
 
 // Re-suggests today's name when the field still holds the previous
 // suggestion (or is empty). A custom name is never overwritten.
 function refreshDefaultFilename() {
   const input = document.getElementById('opt-filename');
-  const current = input.value.trim().replace(/\.pdf$/i, '');
+  const current = baseFilename(input.value);
   if (!current || current === suggestedBase) {
     input.value = defaultFilename();
+  } else {
+    input.value = current;
   }
-  suggestedBase = defaultFilename().replace(/\.pdf$/i, '');
+  suggestedBase = defaultFilename();
 }
 
 function downloadBlob(blob, filename) {
@@ -67,6 +81,12 @@ function applyFormatUI() {
   });
   document.getElementById('row-ocr').classList.toggle('hidden', !isPdf);
   document.getElementById('format-hint').classList.toggle('hidden', isPdf);
+  // The extension suffix sits outside the input box: ".pdf" for the
+  // PDF export, nothing for images (the per-page ".jpg" is appended
+  // automatically after the base name).
+  const suffix = document.getElementById('opt-filename-suffix');
+  suffix.textContent = isPdf ? '.pdf' : '';
+  suffix.classList.toggle('hidden', !isPdf);
   const startBtn = document.getElementById('btn-export-start');
   const key = isPdf ? 'startExport' : 'startExportImages';
   startBtn.setAttribute('data-i18n', key);
@@ -103,6 +123,7 @@ async function deliverImages(files) {
 }
 
 async function startExport() {
+  if (exporting) return;
   const pages = state.getPages();
   if (!pages.length) {
     ctx.toast(ctx.t('emptyState'));
@@ -110,17 +131,15 @@ async function startExport() {
   }
 
   const filenameInput = document.getElementById('opt-filename');
-  let filename = filenameInput.value.trim() || defaultFilename();
-  if (format === 'pdf') {
-    if (!/\.pdf$/i.test(filename)) filename += '.pdf';
-  } else {
-    filename = filename.replace(/\.pdf$/i, '');
-  }
-  filenameInput.value = filename;
+  // The field holds only the base name; the extension is appended
+  // here (and shown as a suffix outside the box).
+  const base = baseFilename(filenameInput.value) || defaultFilename();
+  filenameInput.value = base;
+  const filename = format === 'pdf' ? `${base}.pdf` : base;
 
   const options = {
     quality: Number(document.getElementById('opt-quality').value),
-    filename,
+    filename: format === 'pdf' ? filename : base,
   };
   if (format === 'pdf') options.ocr = document.getElementById('opt-ocr').checked;
 
@@ -132,6 +151,7 @@ async function startExport() {
   const startBtn = document.getElementById('btn-export-start');
   progressBox.classList.remove('hidden');
   startBtn.disabled = true;
+  exporting = true;
 
   const onProgress = (current, total, phase) => {
     currentPageIndex = current;
@@ -160,23 +180,30 @@ async function startExport() {
         return;
       }
 
-      // Deliver: prefer the Web Share API on mobile so the
-      // user can save to Files or send the PDF; fall back to
-      // a plain download.
+      // Deliver the PDF exactly once: either via the Web Share
+      // API (mobile: save to Files / send) or via a plain download
+      // – never both. Dismissing the share sheet (AbortError) must
+      // NOT fall through to a download, otherwise one export
+      // produces two files (same rule as the image export).
       const file = new File([blob], filename, { type: 'application/pdf' });
-      let shared = false;
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      let canShareFile = false;
+      try {
+        canShareFile = Boolean(navigator.canShare && navigator.canShare({ files: [file] }));
+      } catch (err) {
+        canShareFile = false;
+      }
+      if (canShareFile) {
         try {
           await navigator.share({ files: [file], title: filename });
-          shared = true;
         } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.warn('share failed', err);
-            ctx.toast(ctx.t('shareFailed'));
-          }
+          if (err.name === 'AbortError') return;
+          console.warn('share failed', err);
+          ctx.toast(ctx.t('shareFailed'));
+          downloadBlob(blob, filename);
         }
+      } else {
+        downloadBlob(blob, filename);
       }
-      if (!shared) downloadBlob(blob, filename);
 
       // Report pages whose OCR failed (exported without text layer).
       const failed = pages.filter((p) => p.ocrError).length;
@@ -206,6 +233,7 @@ async function startExport() {
   } finally {
     progressBox.classList.add('hidden');
     startBtn.disabled = false;
+    exporting = false;
   }
 }
 
@@ -213,7 +241,7 @@ export function init(context) {
   ctx = context;
 
   document.getElementById('opt-filename').value = defaultFilename();
-  suggestedBase = defaultFilename().replace(/\.pdf$/i, '');
+  suggestedBase = defaultFilename();
   // On narrow screens the back button shows its arrow only – the
   // label lives on the button as its accessible name.
   document

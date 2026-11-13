@@ -77,8 +77,6 @@ export const STRINGS = {
   deletePage: 'Seite löschen',
   undo: 'Rückgängig',
   pageDeleted: 'Seite gelöscht',
-  resetPage: 'Zurücksetzen',
-  confirmResetPage: 'Alle Änderungen dieser Seite zurücksetzen (Rahmen, Drehung und Filter)?',
   detectProgress: 'Kanten werden erkannt… {current}/{total}',
   exportCancelled: 'Export abgebrochen.',
   pageCount: '{count} Seiten',

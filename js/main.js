@@ -7,7 +7,7 @@ import * as storage from './storage.js';
 import { applyI18n, t } from './i18n.js';
 import { mountIcons } from './icons.js';
 import { pickFromGallery } from './camera.js';
-import { toast, toastAction, showBusy, hideBusy, confirmAction } from './ui.js';
+import { toast, toastAction, showBusy, hideBusy } from './ui.js';
 import * as home from './views/home.js';
 import * as editor from './views/pageEditor.js';
 import * as exportView from './views/export.js';
@@ -53,7 +53,6 @@ const ctx = {
   toastAction,
   showBusy,
   hideBusy,
-  confirmAction,
   pickFromGallery,
 };
 

@@ -1009,7 +1009,6 @@ body.editor-open #app-main {
 @media (max-width: 479px) {
   .view-toolbar .mode-btn { padding: 6px 12px; }
   .view-toolbar .mode-btn span[data-i18n] { display: none; }
-  #btn-editor-reset span[data-i18n] { display: none; }
 }
 
 /* Phones: in frame mode the crop stage must not stretch all the way
@@ -1254,8 +1253,27 @@ body.editor-open #app-main {
 }
 
 /* The filename field can use a wider share than the selects; it is
-   the widest control and its value fits once the row can flex. */
-#opt-filename { max-width: 70%; }
+   the widest control and its value fits once the row can flex. The
+   ".pdf" suffix sits OUTSIDE the input box (next to it), so it is
+   clear that only the name – not the file extension – is typed. */
+.filename-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 70%;
+}
+.filename-field #opt-filename {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+.filename-suffix {
+  flex: none;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
 
 /* OCR checkbox as pill toggle */
 .option-row input[type="checkbox"] {

@@ -63,10 +63,6 @@
     <!-- ============ PAGE EDITOR: frame + look ============ -->
     <section id="view-editor" class="view hidden">
       <div class="view-toolbar">
-        <button id="btn-editor-reset" class="btn" type="button">
-          <span class="icon-slot" data-icon="reset"></span>
-          <span data-i18n="resetPage">Zurücksetzen</span>
-        </button>
         <div class="mode-switch" role="tablist">
           <button id="mode-frame" class="mode-btn" role="tab" aria-selected="true" type="button">
             <span class="icon-slot" data-icon="crop"></span>
@@ -165,7 +161,10 @@
         </div>
         <div class="option-row">
           <label for="opt-filename" data-i18n="filename">Dateiname</label>
-          <input type="text" id="opt-filename" value="scan.pdf">
+          <div class="filename-field">
+            <input type="text" id="opt-filename" value="scan">
+            <span class="filename-suffix" id="opt-filename-suffix" aria-hidden="true">.pdf</span>
+          </div>
         </div>
       </div>
       <p id="format-hint" class="format-hint hidden" data-i18n="formatHintImages"></p>
